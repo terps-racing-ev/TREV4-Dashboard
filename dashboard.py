@@ -149,7 +149,7 @@ def _pack_32bit(img_rgb: Image.Image, info: FBInfo) -> bytes:
     return bytes(out)
 
 
-def blit_image_to_fb(img: Image.Image, fb_path: str = "/dev/fb0") -> FBInfo:
+def blit_image_to_fb(img: Image.Image, fb_path: str = "~/dev/fb0") -> FBInfo:
     """
     Convert a Pillow image to the framebuffer format and blit it.
     Returns detected FBInfo.
@@ -190,7 +190,7 @@ def draw_box_text(
     text_color: Tuple[int, int, int] = (0, 0, 0),
     bg_color: Tuple[int, int, int] = (0, 0, 0),
     font_size: int = 48,
-    fb_path: str = "/dev/fb0",
+    fb_path: str = "~/dev/fb0",
 ) -> FBInfo:
     """
     Creates a full-screen image, draws a colored box with centered text, blits to fb0.
