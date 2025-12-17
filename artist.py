@@ -50,10 +50,10 @@ def simple_gauge(
     # Draw the label
     d.text(
         (x + LABEL_PADDING, y + LABEL_PADDING), 
-        data_str, 
+        label_str, 
         font=SMALL_FONT, 
         fill=text_color, 
-        anchor="mm"
+        anchor="lt"
     )
 
     data_font_size = _dim_to_font_size(w, h)
@@ -64,10 +64,10 @@ def simple_gauge(
     # Draw text centered at that point
     d.text(
         (cx, cy), 
-        label_str, 
+        data_str, 
         font=data_font, 
         fill=text_color, 
-        anchor="lt"
+        anchor="mm"
     )
 
     return img
