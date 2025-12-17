@@ -3,6 +3,7 @@
 import sys
 from pathlib import Path
 from typing import Tuple
+import numpy as np
 from PIL import Image
 
 FB0 = "/dev/fb0"
@@ -56,24 +57,30 @@ def get_fb0_info() -> Tuple[int, int, int, int]:
 
 
 def rgb_to_rgb565_bytes(img: Image.Image, stride: int) -> bytes:
-    """
-    Convert an RGB Pillow image to packed RGB565 with per-row stride padding.
-    """
+    """Fast RGB565 conversion using NumPy."""
     if img.mode != "RGB":
         img = img.convert("RGB")
-
-    w, h = img.size
-    px = img.load()
-
+    
+    # Convert to numpy array
+    arr = np.array(img, dtype=np.uint8)
+    h, w, _ = arr.shape
+    
+    # Extract RGB channels
+    r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+    
+    # Pack into RGB565 (16-bit)
+    rgb565 = ((r >> 3).astype(np.uint16) << 11) | \
+             ((g >> 2).astype(np.uint16) << 5) | \
+             (b >> 3).astype(np.uint16)
+    
+    # Convert to bytes (little-endian)
     out = bytearray(stride * h)
     for y in range(h):
-        row = y * stride
-        for x in range(w):
-            r, g, b = px[x, y]
-            rgb565 = ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3)
-            off = row + x * 2
-            out[off] = rgb565 & 0xFF
-            out[off + 1] = (rgb565 >> 8) & 0xFF
+        row_start = y * stride
+        rgb565_row = rgb565[y, :w]
+        # Pack as little-endian uint16
+        out[row_start:row_start + w*2] = rgb565_row.tobytes()
+    
     return bytes(out)
 
 
