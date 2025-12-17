@@ -18,6 +18,8 @@ This is intentionally minimal and avoids ioctl/mmap edge cases: it uses a simple
 
 from __future__ import annotations
 
+import os
+import sys
 from pathlib import Path
 from typing import Tuple
 
@@ -26,6 +28,30 @@ from PIL import Image, ImageDraw, ImageFont
 
 FB0 = "/dev/fb0"
 SYSFB = Path("/sys/class/graphics/fb0")
+
+
+def hide_cursor() -> None:
+    """Hide the blinking terminal cursor."""
+    # Method 1: ANSI escape code
+    sys.stdout.write("\033[?25l")
+    sys.stdout.flush()
+    
+    # Method 2: Disable cursor blink via sysfs (requires root)
+    try:
+        Path("/sys/class/graphics/fbcon/cursor_blink").write_text("0")
+    except Exception:
+        pass  # Ignore if we don't have permission
+
+
+def show_cursor() -> None:
+    """Show the terminal cursor again."""
+    sys.stdout.write("\033[?25h")
+    sys.stdout.flush()
+    
+    try:
+        Path("/sys/class/graphics/fbcon/cursor_blink").write_text("1")
+    except Exception:
+        pass
 
 
 def _read_text(p: Path) -> str:
@@ -122,4 +148,8 @@ def draw_box_text(
 
 
 if __name__ == "__main__":
-    draw_box_text("HELLO", box_xywh=(100, 100, 700, 300), box_color=(0, 255, 0), font_size=80)
+    hide_cursor()
+    try:
+        draw_box_text("HELLO", box_xywh=(100, 100, 700, 300), box_color=(16, 35, 92), font_size=500)
+    finally:
+        show_cursor()  # Restore cursor on exit
