@@ -49,7 +49,7 @@ def simple_gauge(
 
     # Draw the label
     d.text(
-        (cx + LABEL_PADDING, cy + LABEL_PADDING), 
+        (x + LABEL_PADDING, y + LABEL_PADDING), 
         data_str, 
         font=SMALL_FONT, 
         fill=text_color, 
@@ -63,7 +63,7 @@ def simple_gauge(
 
     # Draw text centered at that point
     d.text(
-        (x, y), 
+        (cx, cy), 
         label_str, 
         font=data_font, 
         fill=text_color, 
