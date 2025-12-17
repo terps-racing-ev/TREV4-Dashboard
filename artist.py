@@ -33,7 +33,7 @@ def simple_gauge(
 
     try:
         path_str = str(label_font_path) if label_font_path else None
-        label_font = ImageFont.truetype(path_str, data_font_size) if path_str else ImageFont.load_default()
+        label_font = ImageFont.truetype(path_str, label_font_size) if path_str else ImageFont.load_default()
     except Exception:
         label_font = ImageFont.load_default()
 

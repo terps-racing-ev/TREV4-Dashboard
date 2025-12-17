@@ -74,8 +74,8 @@ if __name__ == "__main__":
 
             simple_gauge(
                 frame,
-                "COUNTER",
-                str(frame),
+                label="COUNTER",
+                data=str(heartbeat),
                 box_xywh=(300, 100, 200, 150),
                 box_color=DARK_GRAY,
                 text_color=WHITE,
