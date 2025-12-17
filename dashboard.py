@@ -21,10 +21,11 @@ from __future__ import annotations
 import time
 from pathlib import Path
 from typing import Tuple
-
 from PIL import Image
-from artist import draw_box_text
-from fb_driver import blit, hide_cursor, show_cursor
+
+from artist import *
+from fb_driver import *
+from colors import *
 
 DISP_RES = 800, 480
 FPS_CAP = 20
@@ -92,9 +93,9 @@ if __name__ == "__main__":
         while True:
             dashboard.render_text_frame(
                 text=str(frame),
-                box_xywh=(100, 100, 700, 300),
-                box_color=(16, 35, 92),
-                text_color=(255, 255, 255),
+                box_xywh=(200, 200, 200, 150),
+                box_color=PRUSSIAN_BLUE,
+                text_color=WHITE,
                 font_size=96,
             )
             frame = (frame + 1) % 100

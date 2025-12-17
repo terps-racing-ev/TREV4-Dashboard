@@ -4,6 +4,8 @@ from typing import Optional, Tuple, Union
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
+from colors import *
+
 
 def draw_box_text(
     img: Image.Image,
