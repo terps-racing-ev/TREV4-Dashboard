@@ -67,7 +67,7 @@ if __name__ == "__main__":
     hide_cursor()
     limiter = FrameRateLimiter(FPS_CAP)
     dashboard = Dashboard(bg_color=DARK_GRAY)
-    frame = 0
+    heartbeat = 0
     try:
         while True:
             frame = dashboard.background.copy()
@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
             blit(frame)
 
-            frame = (frame + 1) % 100
+            heartbeat = (heartbeat + 1) % 100
             limiter.wait()
     finally:
         show_cursor()  # Restore cursor on exit
