@@ -75,12 +75,6 @@ if __name__ == "__main__":
                 label_str="COUNTER",
                 data_str=str(heartbeat),
                 box_xywh=(300, 100, 200, 150),
-                box_color=DARK_GRAY,
-                text_color=WHITE,
-                label_font_path=DEFAULT_FONT,
-                label_font_size=24,
-                data_font_path=DEFAULT_FONT,
-                data_font_size=96
             )
 
             blit(frame)
