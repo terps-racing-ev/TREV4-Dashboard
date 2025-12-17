@@ -16,7 +16,7 @@ LARGE_FONT = ImageFont.truetype(str(DEFAULT_FONT), 96)
 # what font size to choose based on box pixels
 SIZE_FONT_RATIO = 0.66
 
-LABEL_PADDING = 4
+LABEL_PADDING = 8
 
 
 def _dim_to_font_size(w: int, h: int) -> int:

@@ -12,22 +12,14 @@ SYSFB = Path("/sys/class/graphics/fb0")
 
 def hide_cursor() -> None:
     """Hide the blinking terminal cursor."""
-    # Method 1: ANSI escape code
-    sys.stdout.write("\033[?25l")
-    sys.stdout.flush()
-    
-    # Method 2: Disable cursor blink via sysfs (requires root)
+    # requires root
     try:
         Path("/sys/class/graphics/fbcon/cursor_blink").write_text("0")
     except Exception:
-        pass  # Ignore if we don't have permission
+        pass
 
 
 def show_cursor() -> None:
-    """Show the terminal cursor again."""
-    sys.stdout.write("\033[?25h")
-    sys.stdout.flush()
-    
     try:
         Path("/sys/class/graphics/fbcon/cursor_blink").write_text("1")
     except Exception:

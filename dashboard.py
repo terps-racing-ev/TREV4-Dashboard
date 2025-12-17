@@ -64,7 +64,7 @@ class Dashboard:
 if __name__ == "__main__":
     hide_cursor()
     limiter = FrameRateLimiter(FPS_CAP)
-    dashboard = Dashboard(bg_color=BLACK)
+    dashboard = Dashboard(bg_color=DARK_GRAY)
     heartbeat = 0
     try:
         while True:
@@ -74,7 +74,8 @@ if __name__ == "__main__":
                 frame,
                 label_str="COUNTER",
                 data_str=str(heartbeat),
-                box_xywh=(300, 100, 200, 150),
+                box_xywh=(300, 100, 200, 200),
+                box_color=None
             )
 
             blit(frame)
