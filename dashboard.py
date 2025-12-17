@@ -62,42 +62,31 @@ class Dashboard:
         """Create a base background layer once."""
         return Image.new("RGB", (self.xres, self.yres), bg_color)
 
-    def render_text_frame(
-        self,
-        text: str,
-        box_xywh: Tuple[int, int, int, int] = (50, 50, 500, 200),
-        box_color: Tuple[int, int, int] = (0, 200, 0),
-        text_color: Tuple[int, int, int] = (255, 255, 255),
-        font_size: int = 48,
-    ) -> None:
-        """Draw text onto a fresh frame and blit it."""
-        frame = self.background.copy()
-        draw_box_text(
-            frame,
-            text=text,
-            box_xywh=box_xywh,
-            box_color=box_color,
-            text_color=text_color,
-            font_path=self.font_path,
-            font_size=font_size,
-        )
-        blit(frame)
-
 
 if __name__ == "__main__":
     hide_cursor()
     limiter = FrameRateLimiter(FPS_CAP)
-    dashboard = Dashboard(bg_color=(23, 23, 23))
+    dashboard = Dashboard(bg_color=DARK_GRAY)
     frame = 0
     try:
         while True:
-            dashboard.render_text_frame(
-                text=str(frame),
-                box_xywh=(200, 200, 200, 150),
-                box_color=PRUSSIAN_BLUE,
+            frame = dashboard.background.copy()
+
+            simple_gauge(
+                frame,
+                "COUNTER",
+                str(frame),
+                box_xywh=(300, 100, 200, 150),
+                box_color=DARK_GRAY,
                 text_color=WHITE,
-                font_size=96,
+                label_font_path=DEFAULT_FONT,
+                label_font_size=24,
+                data_font_path=DEFAULT_FONT,
+                data_font_size=96
             )
+
+            blit(frame)
+
             frame = (frame + 1) % 100
             limiter.wait()
     finally:
