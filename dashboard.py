@@ -26,7 +26,7 @@ from PIL import Image
 from artist import draw_box_text
 from fb_driver import blit, hide_cursor, show_cursor
 
-SCREEN_RES = 800, 480
+DISP_RES = 800, 480
 FPS_CAP = 20
 ASSETS_DIR = Path(__file__).parent / "assets"
 DEFAULT_FONT = ASSETS_DIR / "fonts" / "monofonto rg.otf"
