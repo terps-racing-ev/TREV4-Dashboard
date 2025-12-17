@@ -84,18 +84,22 @@ def rgb_to_rgb565_bytes(img: Image.Image, stride: int) -> bytes:
     return bytes(out)
 
 
-def blit(img: Image.Image) -> None:
+# Initialize framebuffer info once at module load
+def _init_fb() -> int:
+    """Initialize and validate framebuffer, return stride."""
     xres, yres, bpp, stride = get_fb0_info()
     print(f"fb0: {xres}x{yres} bpp={bpp} stride={stride}")
-
+    
     if bpp != 16:
         raise RuntimeError(f"Unsupported fb bpp={bpp}. This script only supports 16bpp RGB565.")
+    
+    return stride
 
-    if img.size != (xres, yres):
-        img = img.resize((xres, yres), Image.NEAREST)
+_STRIDE = _init_fb()
 
-    payload = rgb_to_rgb565_bytes(img, stride)
-
-    # Simple write (no mmap). Requires correct size.
+def blit(img: Image.Image) -> None:
+    """Write image to framebuffer."""
+    payload = rgb_to_rgb565_bytes(img, _STRIDE)
+    
     with open(FB0, "wb", buffering=0) as fb:
         fb.write(payload)

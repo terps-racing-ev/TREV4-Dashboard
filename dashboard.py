@@ -24,9 +24,9 @@ from typing import Tuple
 
 from PIL import Image
 from artist import draw_box_text
-from fb_driver import get_fb0_info, blit, hide_cursor, show_cursor
+from fb_driver import blit, hide_cursor, show_cursor
 
-
+SCREEN_RES = 800, 480
 FPS_CAP = 20
 ASSETS_DIR = Path(__file__).parent / "assets"
 DEFAULT_FONT = ASSETS_DIR / "fonts" / "monofonto rg.otf"
@@ -51,7 +51,9 @@ class Dashboard:
     """Handles framebuffer drawing with a cached background."""
 
     def __init__(self, bg_color: Tuple[int, int, int] = (0, 0, 0), font_path: Path | None = None) -> None:
-        self.xres, self.yres, _, _ = get_fb0_info()
+        # Hardcoded target hardware resolution
+        self.xres, self.yres = DISP_RES
+
         self.font_path = font_path or DEFAULT_FONT
         self.background = self.create_background(bg_color)
 
@@ -93,7 +95,7 @@ if __name__ == "__main__":
                 box_xywh=(100, 100, 700, 300),
                 box_color=(16, 35, 92),
                 text_color=(255, 255, 255),
-                font_size=500,
+                font_size=96,
             )
             frame = (frame + 1) % 100
             limiter.wait()
