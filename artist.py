@@ -6,21 +6,36 @@ from PIL import Image, ImageDraw, ImageFont
 
 from colors import *
 
+ASSETS_DIR = Path(__file__).parent / "assets"
+DEFAULT_FONT = ASSETS_DIR / "fonts" / "monofonto rg.otf"
+
+SMALL_FONT = ImageFont.truetype(str(DEFAULT_FONT), 24)
+MEDIUM_FONT = ImageFont.truetype(str(DEFAULT_FONT), 48)
+LARGE_FONT = ImageFont.truetype(str(DEFAULT_FONT), 96)
+
+# what font size to choose based on box pixels
+SIZE_FONT_RATIO = 0.66
+
+LABEL_PADDING = 4
+
+
+def _dim_to_font_size(w: int, h: int) -> int:
+    return int(min(w, h) * SIZE_FONT_RATIO)
 
 def simple_gauge(
     img: Image.Image,
-    label: str,
-    data: str,
+    label_str: str,
+    data_str: str,
     box_xywh: Tuple[int, int, int, int] = (50, 50, 500, 200),
-    box_color: Tuple[int, int, int] = BLACK,
-    border_color: Tuple[int, int, int] = WHITE,
+    box_color: Tuple[int, int, int] | None = BLACK,
+    border_color: Tuple[int, int, int] | None = WHITE,
     text_color: Tuple[int, int, int] = WHITE,
-    label_font_path: Optional[Union[str, Path]] = None,
-    label_font_size: int = 48,
-    data_font_path: Optional[Union[str, Path]] = None,
-    data_font_size: int = 48,
 ) -> Image.Image:
-    """Draw a colored box with centered text onto the provided image."""
+    """
+    Draw a simple gauge onto the provided image.
+    label in the top left corner
+    data autosized in the middle
+    """
     d = ImageDraw.Draw(img)
 
     x, y, w, h = box_xywh
@@ -31,23 +46,28 @@ def simple_gauge(
         width=4
     )
 
-    try:
-        path_str = str(label_font_path) if label_font_path else None
-        label_font = ImageFont.truetype(path_str, label_font_size) if path_str else ImageFont.load_default()
-    except Exception:
-        label_font = ImageFont.load_default()
 
-    try:
-        path_str = str(data_font_path) if data_font_path else None
-        data_font = ImageFont.truetype(path_str, data_font_size) if path_str else ImageFont.load_default()
-    except Exception:
-        data_font = ImageFont.load_default()
+    # Draw the label
+    d.text(
+        (cx + LABEL_PADDING, cy + LABEL_PADDING), 
+        data_str, 
+        font=SMALL_FONT, 
+        fill=text_color, 
+        anchor="mm"
+    )
 
+    data_font_size = _dim_to_font_size(w, h)
+    data_font = ImageFont.truetype(str(DEFAULT_FONT), data_font_size)
     # Center point of box
     cx, cy = x + w // 2, y + h // 2
-    # Draw text centered at that point
-    d.text((cx, cy), data, font=data_font, fill=text_color, anchor="mm")
 
-    d.text((x, y), label, font=label_font, fill=text_color, anchor="lt")
+    # Draw text centered at that point
+    d.text(
+        (x, y), 
+        label_str, 
+        font=data_font, 
+        fill=text_color, 
+        anchor="lt"
+    )
 
     return img

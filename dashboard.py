@@ -29,8 +29,6 @@ from colors import *
 
 DISP_RES = 800, 480
 FPS_CAP = 20
-ASSETS_DIR = Path(__file__).parent / "assets"
-DEFAULT_FONT = ASSETS_DIR / "fonts" / "monofonto rg.otf"
 
 
 class FrameRateLimiter:
@@ -66,7 +64,7 @@ class Dashboard:
 if __name__ == "__main__":
     hide_cursor()
     limiter = FrameRateLimiter(FPS_CAP)
-    dashboard = Dashboard(bg_color=DARK_GRAY)
+    dashboard = Dashboard(bg_color=BLACK)
     heartbeat = 0
     try:
         while True:
@@ -74,8 +72,8 @@ if __name__ == "__main__":
 
             simple_gauge(
                 frame,
-                label="COUNTER",
-                data=str(heartbeat),
+                label_str="COUNTER",
+                data_str=str(heartbeat),
                 box_xywh=(300, 100, 200, 150),
                 box_color=DARK_GRAY,
                 text_color=WHITE,
