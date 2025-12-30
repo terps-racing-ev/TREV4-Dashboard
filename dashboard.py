@@ -26,6 +26,7 @@ from PIL import Image
 from artist import *
 from fb_driver import *
 from colors import *
+from can_manager import *
 
 DISP_RES = 800, 480
 FPS_CAP = 20
@@ -65,15 +66,25 @@ if __name__ == "__main__":
     hide_cursor()
     limiter = FrameRateLimiter(FPS_CAP)
     dashboard = Dashboard(bg_color=DARK_GRAY)
+    
+    # Initialize CAN manager
+    can_manager = get_can_manager()
+    can_manager.load_dbc()
+    can_manager.start_can_listener()
+    
     heartbeat = 0
     try:
         while True:
+            can_manager.read_can_messages(timeout=0.0)
+            
             frame = dashboard.background.copy()
 
+            speed = can_manager.get_signal_value("Speed")
+            
             simple_gauge(
                 frame,
-                label_str="COUNTER",
-                data_str=str(heartbeat),
+                label_str="SPEED",
+                data_str=str(speed),
                 box_xywh=(300, 100, 200, 200),
                 box_color=None
             )
@@ -83,4 +94,5 @@ if __name__ == "__main__":
             heartbeat = (heartbeat + 1) % 100
             limiter.wait()
     finally:
+        can_manager.stop()
         show_cursor()  # Restore cursor on exit
