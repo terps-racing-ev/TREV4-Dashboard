@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Color palette for the racing dashboard."""
 
 
 PRUSSIAN_BLUE = (16, 35, 92)
