@@ -41,19 +41,35 @@ class Dashboard:
         # TODO read from a json config
 
         # Get data
-        if self.shared_data:
-            speed = self.shared_data.get_signal("Speed")
-        else:
-            speed = None
+        speed = self.shared_data.get_signal("Speed")
+        apps = self.shared_data.get_signal("APPS")
         
         display_value = speed if speed is not None else 0
+        display_apps = apps if apps is not None else 0
         
         simple_gauge(
             frame,
-            label_str="SPEED",
-            data_str=str(display_value),
-            box_xywh=(300, 100, 200, 200),
-            box_color=None
+            label="SPEED",
+            value=display_value,
+            min_val=0,
+            max_val=99,
+            decimal_places=0,
+            box_xywh=(300, 100, 300, 300)
+        )
+
+        unsigned_linear_gauge(
+            frame,
+            value=display_apps,
+            min_val=0,
+            max_val=100,
+            box_xywh=(50, 50, 500, 100),
+            orientation="horizontal",
+            box_color=None,
+            border_color=WHITE,
+            fill_color=GREEN,
+            text_color=WHITE,
+            show_value=True,
+            decimals=0
         )
         
         return frame

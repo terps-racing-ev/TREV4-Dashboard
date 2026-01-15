@@ -37,8 +37,9 @@ BU_:
 
 
 
-BO_ 2158739747 GenMsg: 8 Vector__XXX
-	SG_ Speed : 0|16@1- (0.1,0) [-250|250] "mph" Vector__XXX
+BO_ 2158739747 test: 8 Vector__XXX
+	SG_ Speed : 0|16@1- (0.1,0) [-99|99] "mph" Vector__XXX
+	SG_ APPS : 16|16@1- (0.1,0) [0|100] "" Vector__XXX
 
 
 BA_DEF_ SG_  "SPN" INT 0 524287;

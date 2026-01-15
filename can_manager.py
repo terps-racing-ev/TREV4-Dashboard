@@ -67,10 +67,6 @@ class CANManager:
             print(f"Error loading .dbc file: {e}")
             return False
     
-    def get_signal_value(self, signal_name: str) -> Optional[Any]:
-        """Get a signal value by name from shared data."""
-        return self.shared_data.get_signal(signal_name)
-    
     def decode_message(self, msg: can.Message) -> Dict[str, Any]:
         """Decode a CAN message and update shared data."""
         if self.db is None:
@@ -78,11 +74,11 @@ class CANManager:
         
         try:
             # Find the message definition by arbitration ID
-            message = self.db.get_message_by_frame_id(msg.arbitration_id)
+            dbc_message = self.db.get_message_by_frame_id(msg.arbitration_id)
             # Decode the message data
-            decoded = message.decode(msg.data)
-            # Update shared data
-            self.shared_data.update(msg.arbitration_id, decoded)
+            decoded = dbc_message.decode(msg.data)
+            # Update shared data (now keyed by signal name)
+            self.shared_data.update(decoded)
             return decoded
         except KeyError:
             # Message ID not in database
@@ -109,17 +105,6 @@ class CANManager:
             print(f"Error starting CAN listener: {e}")
             return False
     
-    def read_can_messages(self, timeout: float = 0.0):
-        if self.bus is None:
-            return
-        
-        while True:
-            msg = self.bus.recv(timeout=timeout)
-            if msg is not None:
-                self.decode_message(msg)
-            else:
-                break
-    
     def run_rx_thread(self) -> None:
         """
         RX thread main loop. Continuously reads CAN messages.
@@ -137,10 +122,8 @@ class CANManager:
         self._rx_thread_active = True
         
         try:
-            # TODO is this sus with the deactivate in main
             while self._rx_thread_active:
-                # Block indefinitely waiting for a message (no timeout)
-                msg = self.bus.recv(timeout=None)
+                msg = self.bus.recv(timeout=0.1)
                 if msg is not None:
                     self.decode_message(msg)
         except Exception as e:
@@ -162,30 +145,22 @@ class CANManager:
             while self._rx_thread_active:
                 # Generate simulated data for each message in the database
                 for message in self.db.messages:
-                    if not self._rx_thread_active:
-                        break
                     
                     # Create random signal values
                     sim_signals = {}
                     for signal in message.signals:
-                        # Random value within signal min/max range
-                        if signal.minimum is not None and signal.maximum is not None:
-                            value = random.uniform(signal.minimum, signal.maximum)
-                        else:
-                            # Default range if not specified
-                            value = random.uniform(0, 100)
+                        value = self.shared_data.get_signal(signal.name) or 0
                         
-                        # Handle integer signals
-                        if signal.is_signed or (signal.scale == 1 and signal.offset == 0):
-                            value = int(value)
+                        value += 1
+                        if value >= signal.maximum:
+                            value = signal.minimum
                         
                         sim_signals[signal.name] = value
                     
                     # Update shared data
-                    self.shared_data.update(message.frame_id, sim_signals)
+                    self.shared_data.update(sim_signals)
                 
-                # Sleep to simulate message rate (adjust for realism)
-                time.sleep(0.05)  # 20 Hz update rate
+                time.sleep(0.05)
         except Exception as e:
             print(f"RX simulation thread error: {e}")
         finally:
@@ -228,11 +203,3 @@ class CANManager:
         if self.bus:
             self.bus.shutdown()
             self.bus = None
-
-_can_manager = None
-
-def get_can_manager(sim_mode: bool = False) -> CANManager:
-    global _can_manager
-    if _can_manager is None:
-        _can_manager = CANManager(sim_mode=sim_mode)
-    return _can_manager

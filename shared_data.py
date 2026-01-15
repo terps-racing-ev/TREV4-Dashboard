@@ -6,61 +6,45 @@ from typing import Dict, Any, Optional
 
 
 class LatestValuesTable:
-    """Thread-safe table of latest CAN message values keyed by CAN ID."""
+    """Thread-safe table of latest CAN signal values keyed by signal name."""
     
     def __init__(self):
         self._lock = threading.RLock()
-        self._table: Dict[int, Dict[str, Any]] = {}
+        self._table: Dict[str, Dict[str, Any]] = {}  # signal_name -> {value, timestamp}
     
-    def update(self, can_id: int, decoded_signals: Dict[str, Any]) -> None:
+    def update(self, decoded_signals: Dict[str, Any]) -> None:
         """
-        Update the table with decoded signals for a CAN ID.
+        Update the table with decoded signals.
         
         Args:
-            can_id: CAN arbitration ID (frame ID)
             decoded_signals: Dictionary of signal_name: value pairs
         """
+        timestamp = time.perf_counter()
         with self._lock:
-            self._table[can_id] = {
-                'signals': decoded_signals,
-                'timestamp': time.perf_counter(),
-            }
+            for signal_name, value in decoded_signals.items():
+                self._table[signal_name] = {
+                    'value': value,
+                    'timestamp': timestamp,
+                }
     
     def get_signal(self, signal_name: str) -> Optional[Any]:
         """
-        Get a signal value by name (searches all message entries).
+        Get a signal value by name.
         Returns the value or None if not found.
         """
         with self._lock:
-            for can_id, entry in self._table.items():
-                if signal_name in entry['signals']:
-                    return entry['signals'][signal_name]
+            entry = self._table.get(signal_name)
+            if entry:
+                return entry['value']
         return None
     
-    # TODO useful? maybe
-    def get_snapshot(self) -> Dict[int, Dict[str, Any]]:
+    def get_snapshot(self) -> Dict[str, Any]:
         """
-        Get a thread-safe snapshot of the entire table.
+        Get a thread-safe snapshot of all signal values.
         Returns a copy to avoid lock contention during rendering.
         """
         with self._lock:
-            # Deep copy the dict
             return {
-                can_id: {
-                    'signals': entry['signals'].copy(),
-                    'timestamp': entry['timestamp'],
-                }
-                for can_id, entry in self._table.items()
+                signal_name: entry['value']
+                for signal_name, entry in self._table.items()
             }
-    
-    # Prolly don't need
-    def get_signals_for_id(self, can_id: int) -> Optional[Dict[str, Any]]:
-        """
-        Get all signals decoded from a specific CAN ID.
-        Returns None if CAN ID not in table.
-        """
-        with self._lock:
-            entry = self._table.get(can_id)
-            if entry:
-                return entry['signals'].copy()
-        return None
