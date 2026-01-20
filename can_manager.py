@@ -10,13 +10,15 @@ import cantools
 
 from shared_data import LatestValuesTable
 
+BAUD_RATE = 500000
+
 # Note: This requires the pi to have can-init.service
 
 class CANManager:
     
-    def __init__(self, shared_data: LatestValuesTable, sim_mode: bool = False):
+    def __init__(self, shared_data: LatestValuesTable, dbc_path: Path, sim_mode: bool = False):
         self.db: Optional[cantools.database.Database] = None
-        self.dbc_path: Optional[Path] = None
+        self.dbc_path = dbc_path
         self.bus: Optional[can.Bus] = None
         
         # Shared state for latest values
@@ -28,50 +30,18 @@ class CANManager:
         
         # Simulation mode
         self.sim_mode = sim_mode
-        
-    def search_usb_for_dbc(self) -> Optional[Path]:
-        # TODO figure out usb
-        search_paths = [
-            #"/media/*",
-            #"/media/*/",
-            #"/media/calebjllee/*",
-            ".",  # current directory for testing
-        ]
-        
-        for search_path in search_paths:
-            pattern = f"{search_path}/**/*.dbc"
-            dbc_files = glob.glob(pattern, recursive=True)
-            if dbc_files:
-                dbc_path = Path(dbc_files[0])
-                print(f"Found .dbc file at: {dbc_path}")
-                return dbc_path
-        
-        print("No .dbc file found on USB ports")
-        return None
     
-    def load_dbc(self, dbc_path: Optional[Path] = None) -> bool:
-        if dbc_path is None:
-            dbc_path = self.search_usb_for_dbc()
-        
-        if dbc_path is None:
-            print("No .dbc file to load")
-            return False
-        
+    def load_dbc(self) -> bool:        
         try:
-            self.db = cantools.database.load_file(str(dbc_path))
-            self.dbc_path = dbc_path
-            print(f"Successfully loaded .dbc file: {dbc_path}")
-            print(f"Database contains {len(self.db.messages)} messages")
+            self.db = cantools.database.load_file(str(self.dbc_path))
+            print(f"Loaded {len(self.db.messages)} message(s) from dbc")
             return True
         except Exception as e:
             print(f"Error loading .dbc file: {e}")
             return False
     
     def decode_message(self, msg: can.Message) -> Dict[str, Any]:
-        """Decode a CAN message and update shared data."""
-        if self.db is None:
-            return {}
-        
+        """Decode a CAN message and update shared data."""       
         try:
             # Find the message definition by arbitration ID
             dbc_message = self.db.get_message_by_frame_id(msg.arbitration_id)
@@ -88,7 +58,7 @@ class CANManager:
             return {}
     
     # TODO support two busses
-    def start_can_listener(self, interface: str = 'can0', bitrate: int = 500000) -> bool:
+    def start_can_listener(self, interface: str = 'can0', bitrate: int = BAUD_RATE) -> bool:
         if self.sim_mode:
             print("CAN simulation mode enabled - no hardware interface")
             return True

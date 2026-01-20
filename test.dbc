@@ -38,8 +38,14 @@ BU_:
 
 
 BO_ 2158739747 test: 8 Vector__XXX
-	SG_ Speed : 0|16@1- (0.1,0) [-99|99] "mph" Vector__XXX
-	SG_ APPS : 16|16@1- (0.1,0) [0|100] "" Vector__XXX
+	SG_ Speed : 0|16@1- (0.1,0) [0|99] "mph" Vector__XXX
+	SG_ APPS : 16|16@1- (0.1,0) [-230|230] "" Vector__XXX
+
+BO_ 2147540653 tiretemp: 8 Vector__XXX
+	SG_ TTempFL : 0|16@1- (0.1,0) [0|99] "C" Vector__XXX
+	SG_ TTempFR : 16|16@1- (0.1,0) [0|99] "C" Vector__XXX
+	SG_ TTempBL : 32|16@1- (0.1,0) [0|99] "C" Vector__XXX
+	SG_ TTempBR : 48|16@1- (0.1,0) [0|99] "C" Vector__XXX
 
 
 BA_DEF_ SG_  "SPN" INT 0 524287;
