@@ -1,5 +1,6 @@
 import cantools
 
+
 db_file = cantools.database.load_file('CONTROLS.dbc')
 
 for message in db_file.messages:
