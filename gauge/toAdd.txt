@@ -1,1 +1,0 @@
-show value, vertical, pos and neg color, for linear gauges
