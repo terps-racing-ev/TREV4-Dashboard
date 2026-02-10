@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="TRlogo.png">
+    <title>TREV4 Gauge Builder</title>
+</head>
+
+<body>
+    <header id="header">
+        <!-- <img src="TRlogo.png" alt="EV Dash Logo" id="logo" width="10%" height="10%" style="position: absolute; top: 0; left: 0;"> -->
+        <h1>TREV4 Gauge Builder</h1>
+    </header>
+    <div>
+        Width: <input type="number" id="width" value="800" min="1">
+        Height: <input type="number" id="height" value="480" min="1">
+        <button id="generate">Generate</button>
+    </div>
+    <br>
+    <div id="container">
+        <div id="define_gauge" class = "section">
+            <h3>Add Gauge</h4>
+                <h4>Gauge Values</h6>
+                    <label for="gauges">Gauge Type</label>
+                    <select name="gauges" id="gauge_type">
+                        <option value="simple">Simple</option>
+                        <option value="signed_linear">Signed Linear</option>
+                    </select> <br>
+                    Signal Name <input type="text" id="gauge_signal" placeholder="Signal Name"> <br>
+
+                    Label <input type="text" id="gauge_label" placeholder="Label"> <br>
+
+                    Min and Max Values <input type="number" id="gauge_min" placeholder="Min" style="width: 5em;" min="0">
+                    <input type="number" id="gauge_max" placeholder="Max" style="width: 5em;" min="1"> <br>
+
+                    <label id="decimals">Decimal Places</label>
+                    <input type="number" id="gauge_decimals" placeholder="Decimal Places" style="width: 5em;"> <br>
+
+                    <h4> Gauge Properties</h4>
+                    Gauge Position <input type="number" id="gauge_x" placeholder="X" style="width: 5em;">
+                    <input type="number" id="gauge_y" placeholder="Y" style="width: 5em;"> <br>
+
+                    Gauge Size <input type="number" id="gauge_width" placeholder="Width" style="width: 5em;">
+                    <input type="number" id="gauge_height" placeholder="Height" style="width: 5em;"> <br>
+
+                    Box Color <input type="color" id="gauge_box_color" name="box_color" value="#fff"> <br>
+
+                    Border Color <input type="color" id="gauge_border_color" name="border_color" value="#fff"> <br>
+
+                    Text Color <input type="color" id="gauge_text_color" name="text_color" value="#fff"> <br><br>
+
+                    <span id="signed_linear_options">
+                        Positive Color <input type="color" id="gauge_positive_color" name="positive_color" value="#00ff00"> <br>
+                        Negative Color <input type="color" id="gauge_negative_color" name="negative_color" value="#ff0000"> <br>
+                        Vertical <input type="checkbox" id="gauge_vertical">
+                        Show Value<input type="checkbox" id="gauge_show_value">
+                    </span> <br>
+
+                    <button id="add_gauge">Add Gauge</button>
+
+                    <br><br>
+                    
+                    
+        </div>
+
+        
+
+        <canvas class="section" id="canvas" width="800" height="480" style="border:1px solid #000000;">
+        </canvas>
+    </div>
+
+    <button id="export">Export JSON</button>
+
+    <script type="module" src="Gauge.js"></script>
+    <script type="module" src="index.js"></script>
+</body>
+
+</html>
