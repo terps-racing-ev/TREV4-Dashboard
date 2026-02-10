@@ -1,0 +1,49 @@
+{
+  "display": {
+    "width": 800,
+    "height": 480,
+    "bg_color": [0, 100, 0]
+  },
+  "gauges": [
+    {
+      "type": "SimpleGauge",
+      "signal": "Speed",
+      "label": "SPEED",
+      "min_val": 0,
+      "max_val": 99,
+      "box_xywh": [280, 100, 240, 240],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": [255, 255, 255],
+      "text_color": [255, 255, 255]
+    },
+    {
+      "type": "SimpleGauge",
+      "signal": "TTempFL",
+      "label": "TTEMPFL",
+      "min_val": 0,
+      "max_val": 99,
+      "box_xywh": [120, 120, 120, 120],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": [255, 255, 255],
+      "text_color": [255, 255, 255]
+    },
+    {
+      "type": "SignedLinearGauge",
+      "signal": "APPS",
+      "label": "TORQUE",
+      "min_val": -230,
+      "max_val": 230,
+      "box_xywh": [750, 50, 20, 350],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": [255, 255, 255],
+      "pos_color": [0, 255, 0],
+      "neg_color": [255, 0, 0],
+      "text_color": [255, 255, 255],
+      "vertical": true,
+      "show_value": false
+    }
+  ]
+}
