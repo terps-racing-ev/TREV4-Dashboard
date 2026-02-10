@@ -118,7 +118,7 @@ addGaugeBtn.addEventListener("click", function () {
     activeGauges.push(new Gauge(toAdd));
 
     refreshGauges();
-    
+
     exportData.gauges.push(toAdd);
 });
 
@@ -127,9 +127,18 @@ canvas.addEventListener("click", function (e) {
 
     for (let gauge of activeGauges) {
         if (gauge.contains(mousePos.x, mousePos.y)) {
-            alert(`You clicked on gauge: ${gauge.data.label}`);
+            const result = confirm(`Delete "${gauge.data.label}"?`);
+
+            if (result) {
+                console.log("deleting gauge");
+                activeGauges = activeGauges.filter(g => g !== gauge);
+                exportData.gauges = exportData.gauges.filter(g => g !== gauge.data);
+                refreshGauges();
+            } else {
+                console.log("not deleting gauge");
+            }
             break;
-        } 
+        }
     }
 })
 

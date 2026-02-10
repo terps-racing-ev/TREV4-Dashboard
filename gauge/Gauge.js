@@ -27,7 +27,15 @@ export default class Gauge{
 
     draw(ctx) {
         ctx.strokeRect(this.x, this.y, this.width, this.height);
-        ctx.fillText(this.data.label, this.x + 5, this.y + 15);
-        alert("drew a shape");
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = "14px Arial";
+        ctx.fillStyle = "black";    
+
+        const centerX = this.x + this.width / 2;
+        const centerY = this.y + this.height / 2;
+
+        ctx.fillText(this.data.label, centerX, centerY);
     }
 }
