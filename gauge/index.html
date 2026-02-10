@@ -5,14 +5,18 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="styles.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <link rel="icon" type="image/png" href="TRlogo.png">
+    <title>TREV4 Gauge Builder</title>
 </head>
 
 <body>
-    <h1>Amazing Gauge Builder V1</h1>
+    <header id="header">
+        <img src="TRlogo.png" alt="EV Dash Logo" id="logo" width="10%" height="10%" style="position: absolute; top: 0; left: 0;">
+        <h1>TREV4 Gauge Builder</h1>
+    </header>
     <div>
-        Width: <input type="number" id="width" value="800">
-        Height: <input type="number" id="height" value="480">
+        Width: <input type="number" id="width" value="800" min="1">
+        Height: <input type="number" id="height" value="480" min="1">
         <button id="generate">Generate</button>
     </div>
     <br>
@@ -29,8 +33,8 @@
 
                     Label <input type="text" id="gauge_label" placeholder="Label"> <br>
 
-                    Min and Max Values <input type="number" id="gauge_min" placeholder="Min" style="width: 5em;">
-                    <input type="number" id="gauge_max" placeholder="Max" style="width: 5em;"> <br>
+                    Min and Max Values <input type="number" id="gauge_min" placeholder="Min" style="width: 5em;" min="0">
+                    <input type="number" id="gauge_max" placeholder="Max" style="width: 5em;" min="1"> <br>
 
                     <label id="decimals">Decimal Places</label>
                     <input type="number" id="gauge_decimals" placeholder="Decimal Places" style="width: 5em;"> <br>

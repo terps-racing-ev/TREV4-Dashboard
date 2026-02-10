@@ -21,7 +21,7 @@ var exportData = {
     display: {
         width: Number(canvasWidth.value),
         height: Number(canvasHeight.value),
-        bg_color: [0, 100, 0]
+        bg_color: [255, 255, 255]
     },
     gauges: []
 };
@@ -45,6 +45,7 @@ generateBtn.addEventListener("click", function() {
     canvas.style.display = "inline";
     canvas.style.width = canvasWidth.value + "px";
     canvas.style.height = canvasHeight.value + "px";
+    canvas.style.backgroundColor =`rgb(${exportData.display.bg_color.join(',')})`;
     createGaugeMenu.style.display = "inline";
 
     exportData.display.width = Number(canvasWidth.value);
