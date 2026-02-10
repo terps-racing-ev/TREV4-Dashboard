@@ -1,3 +1,13 @@
 body{
     text-align: center;
 }
+
+#container{
+    flex: auto;
+    display: flex;
+    justify-content: center;
+}
+
+.section{
+    margin: 1em;
+}
