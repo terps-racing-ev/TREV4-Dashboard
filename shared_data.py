@@ -9,7 +9,7 @@ class LatestValuesTable:
     """Thread-safe table of latest CAN signal values keyed by signal name."""
     
     def __init__(self):
-        self._locks: Dict[str, Any] = {}
+        self._locks: Dict[str, Any] = {} # signal_name -> RLock 
         self._table: Dict[str, Dict[str, Any]] = {}  # signal_name -> {value, timestamp}
     
     def update(self, decoded_signals: Dict[str, Any]) -> None:
