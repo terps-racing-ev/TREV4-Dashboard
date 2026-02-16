@@ -10,7 +10,7 @@ class LatestValuesTable:
     
     def __init__(self):
         self._locks: Dict[str, Any] = {} # signal_name -> RLock 
-        self._table: Dict[str, Dict[str, Any]] = {}  # signal_name -> {value, timestamp}
+        self._table: Dict[str, Dict[str, Any]] = {}  # signal_name -> {value, timestamp in seconds}
     
     def update(self, decoded_signals: Dict[str, Any]) -> None:
         """
@@ -29,7 +29,7 @@ class LatestValuesTable:
                 }
                 
     
-    def get_signal(self, signal_name: str) -> Optional[Any]:
+    def get_signal(self, signal_name: str, timeout: float = 1e7) -> Optional[Any]: # big number so that it doesn't timeout by default 
         """
         Get a signal value by name.
         Returns the value or None if not found.
@@ -37,8 +37,9 @@ class LatestValuesTable:
         with self._locks.setdefault(signal_name, threading.RLock()):
             entry = self._table.get(signal_name)
             if entry:
-                return entry['value']
-
+                elapsed = time.perf_counter() - entry['timestamp']
+                if elapsed < timeout:
+                    return entry['value']
         return None
     
     def get_snapshot(self) -> Dict[str, Any]:
