@@ -14,7 +14,7 @@ from graphics_driver import *
 from colors import *
 from shared_data import LatestValuesTable
 
-FPS_CAP = 30
+FPS_CAP = 60
 
 class Dashboard:
     """Handles rendering to a Pygame surface."""
@@ -74,6 +74,7 @@ class Dashboard:
             border_color = tuple(cfg.get("border_color", WHITE))
             text_color = tuple(cfg.get("text_color", WHITE))
             
+            gauge_type = gauge_type.replace(" ", "")
             if gauge_type == "SimpleGauge":
                 return SimpleGauge(
                     signal=signal,

@@ -53,7 +53,7 @@ def main():
         return
     
     print("Searching for config.json...")
-    config_path = search_for_file("config.json", SEARCH_PATHS)
+    config_path = search_for_file("test gauges.json", SEARCH_PATHS)
     if not config_path:
         return
     
