@@ -2,6 +2,8 @@
 """
 Handles RX, TX, and UI threads
 """
+import pygame
+pygame.init()
 
 import threading
 import time
