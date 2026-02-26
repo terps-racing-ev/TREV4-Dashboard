@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 from typing import Tuple
 import pygame
+import threading
 
 from gauges import *
 from graphics_driver import *
@@ -25,12 +26,20 @@ class Dashboard:
         self.config_path = config_path
         
         # Default values
-        self.font_path = "assets\fonts\monofonto rg.otf"
+        self.font_path = "assets/fonts/monofonto rg.otf"
         self.bg_color = BLACK
         self.xres, self.yres = 800, 480
         self.gauges = []
 
         self._ui_thread_active = False
+        
+        # Warning screen state
+        self._warning_lock = threading.Lock()
+        self._warning_active = False
+        self._warning_color = WHITE
+        self._warning_text = "WARNING"
+        self._warning_start_time = 0
+        self._warning_duration = 0
         
         # Load config and instantiate gauges
         if not self.load_config():
@@ -141,6 +150,51 @@ class Dashboard:
         fill_surface(surface, self.bg_color)
         return surface
     
+    def warning_screen(self, color: Tuple[int, int, int], text: str, duration: float) -> None:
+        """
+        Display a warning screen overlay with specified color and text for a duration.
+        
+        Args:
+            color: RGB tuple for the warning screen color (e.g., RED, YELLOW)
+            text: Text to display in the center of the screen
+            duration: How long to show the warning in seconds
+        """
+        with self._warning_lock:
+            self._warning_active = True
+            self._warning_color = color
+            self._warning_text = text
+            self._warning_start_time = time.time()
+            self._warning_duration = duration
+    
+    def _draw_warning_overlay(self, frame: pygame.Surface) -> None:
+        """Draw the warning overlay on the frame if active."""
+        with self._warning_lock:
+            if not self._warning_active:
+                return
+            
+            # Check if warning duration has elapsed
+            elapsed = time.time() - self._warning_start_time
+            if elapsed > self._warning_duration:
+                self._warning_active = False
+                return
+            
+            # Create semi-transparent overlay
+            overlay = create_surface(self.xres, self.yres)
+            overlay.fill(self._warning_color)
+            overlay.set_alpha(200)  # 200/255 opacity for visibility
+            
+            # Blit overlay onto frame
+            frame.blit(overlay, (0, 0))
+            
+            # Draw text in center
+            try:
+                font = pygame.font.Font(self.font_path, 48)
+                text_surf = font.render(self._warning_text, True, WHITE)
+                text_rect = text_surf.get_rect(center=(self.xres // 2, self.yres // 2))
+                frame.blit(text_surf, text_rect)
+            except Exception as e:
+                print(f"Error rendering warning text: {e}")
+    
     def render_frame(self) -> pygame.Surface:
         """
         Create a surface using the data from the shared state.
@@ -152,6 +206,9 @@ class Dashboard:
         # Update all gauges
         for gauge in self.gauges:
             gauge.update(frame)
+        
+        # Draw warning overlay if active
+        self._draw_warning_overlay(frame)
         
         return frame
     
@@ -174,6 +231,9 @@ class Dashboard:
                         print("\nWindow closed by user")
                         cleanup()
                         sys.exit(0)
+                    elif event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_SPACE:
+                            self.warning_screen(RED, "Good Test", 1.0)
                                 
                 frame = self.render_frame()
                 blit_surface(frame)

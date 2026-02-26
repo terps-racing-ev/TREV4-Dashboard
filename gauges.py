@@ -19,21 +19,21 @@ def _get_small_font():
     global _SMALL_FONT
     if _SMALL_FONT is None:
         pygame.font.init()
-        _SMALL_FONT = pygame.font.Font(DEFAULT_FONT, 24)
+        _SMALL_FONT = pygame.font.Font(None, 24)
     return _SMALL_FONT
 
 def _get_medium_font():
     global _MEDIUM_FONT
     if _MEDIUM_FONT is None:
         pygame.font.init()
-        _MEDIUM_FONT = pygame.font.Font(DEFAULT_FONT, 48)
+        _MEDIUM_FONT = pygame.font.Font(None, 48)
     return _MEDIUM_FONT
 
 def _get_large_font():
     global _LARGE_FONT
     if _LARGE_FONT is None:
         pygame.font.init()
-        _LARGE_FONT = pygame.font.Font(DEFAULT_FONT, 96)
+        _LARGE_FONT = pygame.font.Font(None, 96)
     return _LARGE_FONT
 
 BORDER_WIDTH = 4
@@ -138,7 +138,7 @@ class Gauge:
         pygame.font.init()
         template = self._template_str()
         size = _dim_to_font_size(self.w, self.h, template)
-        return pygame.font.Font(DEFAULT_FONT, size)
+        return pygame.font.Font(None, size)
 
     def _format_value(self, value: int | float) -> str:
         return _normalize_chars(value, self.min_val, self.max_val, self.decimal_places)
@@ -390,4 +390,45 @@ class SignedLinearGauge(Gauge):
                 value_rect = value_text.get_rect(midright=(self.x + self.w - LABEL_PADDING, self.cy))
             surface.blit(value_text, value_rect)
 
+        return surface
+
+
+class HeatTileGauge(Gauge):
+    def __init__(self, signal, min_val, max_val, box_xywh, color_gradient, border_color = WHITE, text_color = WHITE, shared_data = None, default_value = 0):   
+        super().__init__(signal, min_val, max_val, box_xywh, decimal_places = 0, box_color = BLACK, border_color = border_color, text_color = text_color, shared_data = shared_data, default_value = default_value)
+        self.color_gradient = color_gradient
+
+    @staticmethod
+    def lerp_color(start, end, t):
+        t = max(0.0, min(1.0, t))
+
+        r = int(start[0] + (end[0] - start[0]) * t)
+        g = int(start[1] + (end[1] - start[1]) * t)
+        b = int(start[2] + (end[2] - start[2]) * t)
+
+        return (r, g, b)
+    @staticmethod
+    def lerp_colors(self, colors, t):
+        t = max(0.0, min(1.0, t))
+        n = len(colors) - 1
+        pos = t * n
+        i = min(int(pos), n - 1)
+        return self.lerp_color(colors[i], colors[i + 1], pos - i)
+    def update(self, surface: pygame.Surface) -> pygame.Surface:
+        value = self._current_value()
+        
+        # Calculate ratio for color interpolation
+        clamped = max(self.min_val, min(value, self.max_val))
+        ratio = 0.0 if self.max_val == self.min_val else (clamped - self.min_val) / (self.max_val - self.min_val)
+        
+        # Get interpolated color based on signal value
+        box_color = self.lerp_colors(self.color_gradient, ratio)
+        
+        # Draw background with interpolated color
+        if box_color is not None:
+            pygame.draw.rect(surface, box_color, (self.x, self.y, self.w, self.h))
+        
+        # Draw border
+        self._draw_border(surface)
+        
         return surface
