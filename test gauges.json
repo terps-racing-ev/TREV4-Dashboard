@@ -1,0 +1,144 @@
+{
+  "display": {
+    "width": 800,
+    "height": 480,
+    "bg_color": [
+      0,
+      0,
+      0
+    ]
+  },
+  "gauges": [
+    {
+      "type": "SimpleGauge",
+      "label": "Speed",
+      "signal": "Speed",
+      "min_val": 0,
+      "max_val": 99,
+      "box_xywh": [10, 10, 200, 200],
+      "box_color": [0,0,0],
+      "border_color": [255, 255, 255],
+      "text_color": [255, 255, 255],
+      "decimal_places": 0
+    },
+    {
+      "type": "SimpleGauge",
+      "label": "ttempfl",
+      "signal": "TTempFL",
+      "min_val": "",
+      "max_val": "",
+      "box_xywh": [
+        200,
+        200,
+        300,
+        50
+      ],
+      "box_color": [
+        0,
+        0,
+        0
+      ],
+      "border_color": [
+        255,
+        255,
+        255
+      ],
+      "text_color": [
+        255,
+        255,
+        255
+      ],
+      "decimal_places": 0
+    },
+    {
+      "type": "Label",
+      "label": "TREV4",
+      "box_xywh": [
+        200,
+        50,
+        100,
+        40
+      ],
+      "box_color": [
+        0,
+        0,
+        0
+      ],
+      "border_color": [
+        255,
+        255,
+        255
+      ],
+      "text_color": [
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "type": "SignedLinearGauge",
+      "label": "TORQUE",
+      "box_xywh": [
+        600,
+        20,
+        50,
+        200
+      ],
+      "box_color": [
+        0,
+        0,
+        0
+      ],
+      "border_color": [
+        255,
+        255,
+        255
+      ],
+      "text_color": [
+        255,
+        255,
+        255
+      ],
+      "signal": "APPS",
+      "min_val": -230,
+      "max_val": 230,
+      "positive_color": [
+        0,
+        255,
+        0
+      ],
+      "negative_color": [
+        255,
+        0,
+        0
+      ],
+      "vertical": true,
+      "show_value": false
+    },
+    {
+      "type": "Label",
+      "label": "colorful",
+      "box_xywh": [
+        40,
+        420,
+        50,
+        50
+      ],
+      "box_color": [
+        255,
+        0,
+        0
+      ],
+      "border_color": [
+        0,
+        251,
+        255
+      ],
+      "text_color": [
+        89,
+        255,
+        0
+      ]
+    }
+  ]
+}
