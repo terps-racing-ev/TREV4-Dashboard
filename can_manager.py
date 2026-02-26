@@ -95,6 +95,7 @@ class CANManager:
             while self._rx_thread_active:
                 msg = self.bus.recv(timeout=0.1)
                 if msg is not None:
+                    print(msg)
                     self.decode_message(msg)
         except Exception as e:
             print(f"RX thread error: {e}")

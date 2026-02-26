@@ -12,6 +12,7 @@ from shared_data import LatestValuesTable
 from can_manager import CANManager
 from dashboard import Dashboard
 
+DISPLAYSURF=pygame.display.set_mode((0,0), pygame.FULLSCREEN)
 
 def search_for_file(filename: str, search_paths: list | None = None) -> Path | None:
     """
@@ -42,7 +43,7 @@ def search_for_file(filename: str, search_paths: list | None = None) -> Path | N
 def main():
 
     # Simulate values if you don't have CAN hardware
-    SIM_MODE = True
+    SIM_MODE = False 
     
     SEARCH_PATHS = ["."]  # TODO: add USB mount paths
     

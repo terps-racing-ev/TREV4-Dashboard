@@ -8,8 +8,8 @@ import pygame
 
 # KMSDRM setup for Linux: direct GPU access, avoids framebuffer bottleneck
 if platform.system() == "Linux":
-    os.environ["SDL_VIDEODRIVER"] = "kmsdrm"
-    os.environ["SDL_AUDIODRIVER"] = "dummy"
+    os.environ["SDL_VIDEO_DRIVER"] = "kmsdrm"
+    os.environ["SDL_AUDIO_DRIVER"] = "dummy"
 
 # Initialize Pygame
 pygame.init()

@@ -8,7 +8,9 @@ import math
 from colors import *
 from shared_data import LatestValuesTable
 
-DEFAULT_FONT = "assets/fonts/monofonto rg.otf"
+#default font causing crontab errors on start
+#DEFAULT_FONT = "assets/fonts/monofonto rg.otf"
+DEFAULT_FONT = "/home/dashfull/Desktop/evdash/TREV4-Dashboard/monofonto_rg.otf"
 
 # Lazy-loaded fonts (initialized on first access)
 _SMALL_FONT = None
