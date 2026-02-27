@@ -2,9 +2,172 @@
   "display": {
     "width": 800,
     "height": 480,
-    "bg_color": [0, 100, 0]
+    "bg_color": [10, 10, 12]
   },
   "gauges": [
+    {
+      "type": "StatusBar",
+      "box_xywh": [0, 0, 800, 26]
+    },
+    {
+      "type": "SpeedArcGauge",
+      "signal": "Speed",
+      "label": "SPEED",
+      "min_val": 0,
+      "max_val": 99,
+      "cx": 400,
+      "cy": 260,
+      "radius": 130,
+      "unit": "MPH",
+      "decimal_places": 0
+    },
+    {
+      "type": "RPMBar",
+      "signal": "RPM",
+      "label": "RPM",
+      "min_val": 0,
+      "max_val": 6000,
+      "box_xywh": [10, 32, 780, 22],
+      "decimal_places": 0
+    },
+    {
+      "type": "SoCRingGauge",
+      "signal": "StateOfCharge",
+      "label": "SOC",
+      "min_val": 0,
+      "max_val": 100,
+      "cx": 80,
+      "cy": 290,
+      "radius": 58
+    },
+    {
+      "type": "VerticalBarGauge",
+      "signal": "PackVoltage",
+      "label": "VOLTS",
+      "min_val": 0,
+      "max_val": 600,
+      "box_xywh": [18, 60, 32, 200],
+      "fill_color": [0, 210, 220],
+      "show_value": true,
+      "decimal_places": 0
+    },
+    {
+      "type": "VerticalBarGauge",
+      "signal": "PackCurrent",
+      "label": "AMPS",
+      "min_val": 0,
+      "max_val": 300,
+      "box_xywh": [56, 60, 32, 200],
+      "fill_color": [255, 160, 0],
+      "show_value": true,
+      "decimal_places": 0
+    },
+    {
+      "type": "VerticalBarGauge",
+      "signal": "APPS",
+      "label": "TORQUE",
+      "min_val": -230,
+      "max_val": 230,
+      "box_xywh": [750, 60, 36, 200],
+      "signed": true,
+      "pos_color": [40, 220, 80],
+      "neg_color": [220, 30, 30],
+      "show_value": false,
+      "decimal_places": 0
+    },
+    {
+      "type": "NumericCard",
+      "signal": "InverterTemp",
+      "label": "INV TEMP",
+      "min_val": 0,
+      "max_val": 100,
+      "box_xywh": [660, 60, 82, 38],
+      "unit": "°C",
+      "decimal_places": 0,
+      "warn_pct": 0.85,
+      "crit_pct": 0.95
+    },
+    {
+      "type": "NumericCard",
+      "signal": "MotorTemp",
+      "label": "MOT TEMP",
+      "min_val": 0,
+      "max_val": 120,
+      "box_xywh": [660, 103, 82, 38],
+      "unit": "°C",
+      "decimal_places": 0,
+      "warn_pct": 0.85,
+      "crit_pct": 0.95
+    },
+    {
+      "type": "NumericCard",
+      "signal": "PackTemp",
+      "label": "BAT TEMP",
+      "min_val": 0,
+      "max_val": 60,
+      "box_xywh": [660, 146, 82, 38],
+      "unit": "°C",
+      "decimal_places": 0,
+      "warn_pct": 0.85,
+      "crit_pct": 0.95
+    },
+    {
+      "type": "TireTempsWidget",
+      "cx": 400,
+      "cy": 415,
+      "FL": "TTempFL",
+      "FR": "TTempFR",
+      "RL": "TTempRL",
+      "RR": "TTempRR",
+      "min_val": 20,
+      "max_val": 120
+    },
+    {
+      "type": "WarningLights",
+      "cx": 400,
+      "cy": 360,
+      "IMD": "FaultIMD",
+      "AMS": "FaultAMS",
+      "BSPD": "FaultBSPD",
+      "APPS": "FaultAPPS",
+      "BRAKE": "FaultBrake"
+    },
+    {
+      "type": "NumericCard",
+      "signal": "LVBatteryVoltage",
+      "label": "LV BATT",
+      "min_val": 10,
+      "max_val": 16,
+      "box_xywh": [10, 390, 130, 36],
+      "unit": "V",
+      "decimal_places": 1,
+      "warn_pct": 0.25,
+      "crit_pct": 0.15
+    },
+    {
+      "type": "NumericCard",
+      "signal": "ThrottlePct",
+      "label": "THROTTLE",
+      "min_val": 0,
+      "max_val": 100,
+      "box_xywh": [660, 390, 130, 36],
+      "unit": "%",
+      "decimal_places": 0,
+      "warn_pct": 0.9,
+      "crit_pct": 1.0
+    },
+    {
+      "type": "NumericCard",
+      "signal": "BrakePressure",
+      "label": "BRAKE",
+      "min_val": 0,
+      "max_val": 100,
+      "box_xywh": [660, 432, 130, 36],
+      "unit": "%",
+      "decimal_places": 0,
+      "warn_pct": 0.9,
+      "crit_pct": 1.0
+    },
     {
       "type": "SimpleGauge",
       "signal": "Speed",
@@ -18,16 +181,19 @@
       "text_color": [255, 255, 255]
     },
     {
-      "type": "SimpleGauge",
-      "signal": "TTempFL",
-      "label": "TTEMPFL",
+      "type": "UnsignedLinearGauge",
+      "signal": "StateOfCharge",
+      "label": "SOC",
       "min_val": 0,
-      "max_val": 99,
-      "box_xywh": [120, 120, 120, 120],
-      "decimal_places": 0,
-      "box_color": null,
-      "border_color": [255, 255, 255],
-      "text_color": [255, 255, 255]
+      "max_val": 100,
+      "box_xywh": [18, 58, 32, 200],
+      "box_color": [18, 18, 22],
+      "border_color": [36, 36, 44],
+      "fill_color": [0, 210, 220],
+      "text_color": [180, 180, 190],
+      "vertical": true,
+      "show_value": true,
+      "decimal_places": 0
     },
     {
       "type": "SignedLinearGauge",
@@ -35,15 +201,15 @@
       "label": "TORQUE",
       "min_val": -230,
       "max_val": 230,
-      "box_xywh": [750, 50, 20, 350],
-      "decimal_places": 0,
-      "box_color": null,
-      "border_color": [255, 255, 255],
-      "pos_color": [0, 255, 0],
-      "neg_color": [255, 0, 0],
-      "text_color": [255, 255, 255],
+      "box_xywh": [750, 58, 36, 200],
+      "box_color": [18, 18, 22],
+      "border_color": [36, 36, 44],
+      "pos_color": [40, 220, 80],
+      "neg_color": [220, 30, 30],
+      "text_color": [180, 180, 190],
       "vertical": true,
-      "show_value": false
+      "show_value": false,
+      "decimal_places": 0
     }
   ]
 }
