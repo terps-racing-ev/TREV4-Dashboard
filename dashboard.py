@@ -10,6 +10,9 @@ from typing import Tuple
 import pygame
 
 from gauges import *
+from new_gauges import (SpeedArcGauge, VerticalBarGauge, NumericCard,
+                        TireTempsWidget, SoCRingGauge, RPMBar,
+                        StatusBar, WarningLights)
 from graphics_driver import *
 from colors import *
 from shared_data import LatestValuesTable
@@ -25,7 +28,7 @@ class Dashboard:
         self.config_path = config_path
         
         # Default values
-        self.font_path = "assets\fonts\monofonto rg.otf"
+        self.font_path = "monofonto_rg.otf"
         self.bg_color = BLACK
         self.xres, self.yres = 800, 480
         self.gauges = []
@@ -73,7 +76,7 @@ class Dashboard:
             box_color = cfg.get("box_color")
             border_color = tuple(cfg.get("border_color", WHITE))
             text_color = tuple(cfg.get("text_color", WHITE))
-            
+
             gauge_type = gauge_type.replace(" ", "")
             if gauge_type == "SimpleGauge":
                 return SimpleGauge(
@@ -128,6 +131,117 @@ class Dashboard:
                     show_value=show_value,
                     shared_data=self.shared_data,
                 )
+            elif gauge_type == "SpeedArcGauge":
+                return SpeedArcGauge(
+                    signal=signal,
+                    label=label,
+                    min_val=min_val,
+                    max_val=max_val,
+                    cx=cfg.get("cx", box_xywh[0]),
+                    cy=cfg.get("cy", box_xywh[1]),
+                    radius=cfg.get("radius", box_xywh[2]),
+                    shared_data=self.shared_data,
+                    unit=cfg.get("unit", "MPH"),
+                    decimal_places=decimal_places,
+                )
+            elif gauge_type == "VerticalBarGauge":
+                fill_color = cfg.get("fill_color")
+                if fill_color is not None:
+                    fill_color = tuple(fill_color)
+                pos_color = cfg.get("pos_color")
+                if pos_color is not None:
+                    pos_color = tuple(pos_color)
+                neg_color = cfg.get("neg_color")
+                if neg_color is not None:
+                    neg_color = tuple(neg_color)
+                return VerticalBarGauge(
+                    signal=signal,
+                    label=label,
+                    min_val=min_val,
+                    max_val=max_val,
+                    x=box_xywh[0],
+                    y=box_xywh[1],
+                    w=box_xywh[2],
+                    h=box_xywh[3],
+                    shared_data=self.shared_data,
+                    fill_color=fill_color,
+                    show_value=cfg.get("show_value", True),
+                    unit=cfg.get("unit", ""),
+                    decimal_places=decimal_places,
+                    signed=cfg.get("signed", False),
+                    pos_color=pos_color,
+                    neg_color=neg_color,
+                )
+            elif gauge_type == "NumericCard":
+                return NumericCard(
+                    signal=signal,
+                    label=label,
+                    min_val=min_val,
+                    max_val=max_val,
+                    x=box_xywh[0],
+                    y=box_xywh[1],
+                    w=box_xywh[2],
+                    h=box_xywh[3],
+                    shared_data=self.shared_data,
+                    unit=cfg.get("unit", ""),
+                    decimal_places=decimal_places,
+                    warn_pct=cfg.get("warn_pct", 0.85),
+                    crit_pct=cfg.get("crit_pct", 0.95),
+                )
+            elif gauge_type == "TireTempsWidget":
+                return TireTempsWidget(
+                    cx=cfg.get("cx", box_xywh[0]),
+                    cy=cfg.get("cy", box_xywh[1]),
+                    FL=cfg.get("FL"),
+                    FR=cfg.get("FR"),
+                    RL=cfg.get("RL"),
+                    RR=cfg.get("RR"),
+                    shared_data=self.shared_data,
+                    min_val=min_val,
+                    max_val=max_val,
+                )
+            elif gauge_type == "SoCRingGauge":
+                return SoCRingGauge(
+                    signal=signal,
+                    cx=cfg.get("cx", box_xywh[0]),
+                    cy=cfg.get("cy", box_xywh[1]),
+                    radius=cfg.get("radius", box_xywh[2]),
+                    shared_data=self.shared_data,
+                    min_val=min_val,
+                    max_val=max_val,
+                    label=label,
+                )
+            elif gauge_type == "RPMBar":
+                return RPMBar(
+                    signal=signal,
+                    x=box_xywh[0],
+                    y=box_xywh[1],
+                    w=box_xywh[2],
+                    h=box_xywh[3],
+                    shared_data=self.shared_data,
+                    min_val=min_val,
+                    max_val=max_val,
+                    label=label,
+                    decimal_places=decimal_places,
+                )
+            elif gauge_type == "StatusBar":
+                return StatusBar(
+                    x=box_xywh[0],
+                    y=box_xywh[1],
+                    w=box_xywh[2],
+                    h=box_xywh[3],
+                )
+            elif gauge_type == "WarningLights":
+                return WarningLights(
+                    cx=cfg.get("cx", box_xywh[0]),
+                    cy=cfg.get("cy", box_xywh[1]),
+                    IMD=cfg.get("IMD"),
+                    AMS=cfg.get("AMS"),
+                    BSPD=cfg.get("BSPD"),
+                    APPS=cfg.get("APPS"),
+                    BRAKE=cfg.get("BRAKE"),
+                    shared_data=self.shared_data,
+                )
             else:
                 print(f"Unknown gauge type: {gauge_type}")
                 return None
@@ -160,7 +274,7 @@ class Dashboard:
         UI thread: Renders at fixed fps.
         """
         # Initialize display
-        init_display()
+        # init_display()
         clock = get_clock()
         
         self._ui_thread_active = True

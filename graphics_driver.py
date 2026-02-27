@@ -14,7 +14,6 @@ if platform.system() == "Linux":
 # Initialize Pygame
 pygame.init()
 
-DISP_RES = (800, 480)
 _screen = None
 _clock = None
 
@@ -26,16 +25,16 @@ def init_display() -> pygame.Surface:
     if platform.system() == "Linux":
         # KMSDRM backend on Linux - direct GPU access via DRM
         try:
-            _screen = pygame.display.set_mode(DISP_RES, pygame.SCALED)
-            print(f"Display initialized with KMSDRM backend: {DISP_RES}")
+            _screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
+            print(f"Display initialized with KMSDRM backend: fullscreen")
         except Exception as e:
             print(f"KMSDRM initialization failed: {e}. Falling back to default driver.")
-            _screen = pygame.display.set_mode(DISP_RES)
+            _screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
     else:
         # Windows simulator
-        _screen = pygame.display.set_mode(DISP_RES)
+        _screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
         pygame.display.set_caption("TREV4 Dashboard")
-        print(f"Windows simulator mode: {DISP_RES}")
+        print(f"Windows simulator mode: fullscreen")
     
     _clock = pygame.time.Clock()
     return _screen

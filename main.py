@@ -2,8 +2,8 @@
 """
 Handles RX, TX, and UI threads
 """
-import pygame
-pygame.init()
+# import pygame
+# pygame.init()
 
 import threading
 import time
@@ -14,7 +14,6 @@ from shared_data import LatestValuesTable
 from can_manager import CANManager
 from dashboard import Dashboard
 
-DISPLAYSURF=pygame.display.set_mode((0,0), pygame.FULLSCREEN)
 
 def search_for_file(filename: str, search_paths: list | None = None) -> Path | None:
     """
@@ -56,7 +55,7 @@ def main():
         return
     
     print("Searching for config.json...")
-    config_path = search_for_file("test gauges.json", SEARCH_PATHS)
+    config_path = search_for_file("config.json", SEARCH_PATHS)
     if not config_path:
         return
     
