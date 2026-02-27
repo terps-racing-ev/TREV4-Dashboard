@@ -493,6 +493,235 @@ class WarningLights:
 
 
 # ─────────────────────────────────────────────
+#  new_dash-style components
+#  Colour palette matching new_dash.py exactly
+# ─────────────────────────────────────────────
+
+_ND_CELL_BG    = (13,  13,  16)
+_ND_BORDER     = (37,  37,  48)
+_ND_BORDER_HI  = (56,  56,  74)
+_ND_ORANGE     = (255, 106,   0)
+_ND_CYAN       = (  0, 212, 232)
+_ND_GREEN      = (  0, 224,  96)
+_ND_AMBER      = (255, 184,   0)
+_ND_RED        = (255,  37,  37)
+_ND_WHITE      = (242, 242, 242)
+_ND_DIM        = ( 82,  82, 106)
+_ND_LABEL      = (114, 114, 138)
+_ND_DARK_HDR   = ( 10,  10,  12)
+_ND_DARK_FAULT = (  6,   6,   8)
+_ND_TIRE_COLD  = ( 30,  60, 160)
+_ND_TIRE_OPT   = (  0, 140,  50)
+_ND_TIRE_HOT   = (200,  40,  10)
+_ND_CENTER_BG  = (  8,   8,  11)
+
+
+def _nd_gauge_color(pct):
+    if pct < 0.6:
+        return lerp_color((0, 210, 70), (255, 180, 0), pct / 0.6)
+    return lerp_color((255, 180, 0), (255, 30, 30), (pct - 0.6) / 0.4)
+
+
+def _nd_draw_arc(surf, cx, cy, r, start_deg, end_deg, width, color, segments=120):
+    """Draw an arc as line segments to avoid pygame aliasing."""
+    delta = (end_deg - start_deg) % 360
+    if delta < 0.01:
+        return
+    pts = []
+    for i in range(segments + 1):
+        a = math.radians(start_deg + (i / segments) * delta)
+        pts.append((cx + r * math.cos(a), cy + r * math.sin(a)))
+    for i in range(len(pts) - 1):
+        pygame.draw.line(surf, color, pts[i], pts[i + 1], width)
+
+
+class DarkStatusBar:
+    """Header bar styled like new_dash: dark bg, orange bottom line, orange TREV4."""
+
+    def __init__(self, x, y, w, h):
+        self.x, self.y, self.w, self.h = x, y, w, h
+
+    def update(self, surf):
+        x, y, w, h = self.x, self.y, self.w, self.h
+        surf.fill(_ND_DARK_HDR, (x, y, w, h))
+        pygame.draw.line(surf, _ND_ORANGE, (x, y + h - 2), (x + w, y + h - 2), 2)
+        cy = y + h // 2
+        render_text(surf, "TREV4", 11, _ND_ORANGE, x + 10, cy, bold=True, anchor="midleft")
+        render_text(surf, "TERPS RACING EV \u00b7 LIVE TELEMETRY", 8, _ND_DIM, x + w // 2, cy)
+        render_text(surf, time.strftime("%H:%M:%S"), 10, _ND_LABEL, x + w - 10, cy, anchor="midright")
+
+
+class ShiftLightsGauge(Gauge):
+    """16-dot RPM shift light bar across the very top."""
+
+    _NUM = 16
+
+    def __init__(self, signal, min_val, max_val, box_xywh, shared_data, label=""):
+        x, y, w, h = box_xywh
+        super().__init__(signal, label, min_val, max_val, shared_data)
+        self.x, self.y, self.w, self.h = x, y, w, h
+
+    def update(self, surf):
+        x, y, w, h = self.x, self.y, self.w, self.h
+        pct = self.clamp_pct(self.get_value())
+        active = int(pct * self._NUM)
+        surf.fill(_ND_DARK_FAULT, (x, y, w, h))
+        dot_w = (w - 8 - (self._NUM - 1) * 3) // self._NUM
+        for i in range(self._NUM):
+            col = (_ND_GREEN if i < 5 else _ND_AMBER if i < 11 else _ND_RED) if i < active else _ND_BORDER
+            pygame.draw.rect(surf, col, (x + 4 + i * (dot_w + 3), y + 2, dot_w, h - 4), border_radius=2)
+
+
+class DarkCell(Gauge):
+    """Cell card styled like new_dash: dark bg, left accent stripe, label top-left, big value, bottom bar."""
+
+    def __init__(self, signal, label, min_val, max_val, box_xywh, shared_data,
+                 unit="", decimal_places=1, accent_color=None, value_color=None, last=False):
+        x, y, w, h = box_xywh
+        super().__init__(signal, label, min_val, max_val, shared_data)
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.unit = unit
+        self.decimal_places = decimal_places
+        self.accent = tuple(accent_color) if accent_color else _ND_BORDER_HI
+        self.value_color = tuple(value_color) if value_color else _ND_WHITE
+        self.last = last
+
+    def update(self, surf):
+        x, y, w, h = self.x, self.y, self.w, self.h
+        val = self.get_value()
+        pct = self.clamp_pct(val)
+        surf.fill(_ND_CELL_BG, (x, y, w, h))
+        if not self.last:
+            pygame.draw.line(surf, _ND_BORDER, (x, y + h - 1), (x + w, y + h - 1), 1)
+        pygame.draw.rect(surf, self.accent, (x, y + 6, 3, h - 12), border_radius=1)
+        render_text(surf, self.label, 7, _ND_LABEL, x + 14, y + 10, anchor="midleft")
+        val_str = f"{val:.{self.decimal_places}f}"
+        render_text(surf, val_str, 28, self.value_color, x + 14, y + h - 14, anchor="midleft")
+        if self.unit:
+            val_px_w = get_font(28).size(val_str)[0]
+            render_text(surf, self.unit, 8, _ND_DIM, x + 14 + val_px_w + 3, y + h - 16, anchor="midleft")
+        surf.fill(self.accent, (x, y + h - 2, int(max(0.0, min(1.0, pct)) * w), 2))
+
+
+class CellVoltageCard:
+    """Min/max cell voltage dual-readout card styled like new_dash."""
+
+    def __init__(self, signal_min, signal_max, box_xywh, shared_data, last=False):
+        x, y, w, h = box_xywh
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.signal_min = signal_min
+        self.signal_max = signal_max
+        self.shared_data = shared_data
+        self.last = last
+
+    def update(self, surf):
+        x, y, w, h = self.x, self.y, self.w, self.h
+        surf.fill(_ND_CELL_BG, (x, y, w, h))
+        if not self.last:
+            pygame.draw.line(surf, _ND_BORDER, (x, y + h - 1), (x + w, y + h - 1), 1)
+        pygame.draw.rect(surf, _ND_BORDER_HI, (x, y + 6, 3, h - 12), border_radius=1)
+        render_text(surf, "CELL VOLTAGE", 7, _ND_LABEL, x + 14, y + 10, anchor="midleft")
+        vmin_v = self.shared_data.get_signal(self.signal_min)
+        vmax_v = self.shared_data.get_signal(self.signal_max)
+        vmin = float(vmin_v) if vmin_v is not None else 0.0
+        vmax = float(vmax_v) if vmax_v is not None else 0.0
+        render_text(surf, f"{vmin:.2f}", 20, _ND_AMBER, x + 14, y + h // 2 + 6, anchor="midleft")
+        render_text(surf, f"{vmax:.2f}", 20, _ND_CYAN, x + w // 2 + 10, y + h // 2 + 6, anchor="midleft")
+
+
+class DarkSpeedArc(Gauge):
+    """Large arc speedometer styled exactly like new_dash."""
+
+    _ARC_R     = 108
+    _ARC_W     = 14
+    _ARC_START = 135.0
+    _ARC_SWEEP = 270.0
+    _BG_ARC    = (30, 30, 42)
+
+    def __init__(self, signal, min_val, max_val, box_xywh, shared_data,
+                 unit="MPH", decimal_places=0, label=""):
+        x, y, w, h = box_xywh
+        super().__init__(signal, label, min_val, max_val, shared_data)
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.cx = x + w // 2
+        # Mirrors new_dash: GCY = MAIN_Y + (MAIN_H - CENTER_BOTTOM_H) // 2 + 10
+        # With box (175, 36, 450, 356): cy = 36 + (356-60)//2 + 10 = 194
+        self.cy = y + (h - 60) // 2 + 10
+        self.unit = unit
+        self.decimal_places = decimal_places
+
+    def update(self, surf):
+        x, y, w, h = self.x, self.y, self.w, self.h
+        val = self.get_value()
+        pct = self.clamp_pct(val)
+        cx, cy = self.cx, self.cy
+
+        surf.fill(_ND_CENTER_BG, (x, y, w, h))
+        # Column border lines
+        pygame.draw.line(surf, _ND_BORDER, (x, y), (x, y + h), 1)
+        pygame.draw.line(surf, _ND_BORDER, (x + w - 1, y), (x + w - 1, y + h), 1)
+
+        # Background arc
+        _nd_draw_arc(surf, cx, cy, self._ARC_R,
+                     self._ARC_START, self._ARC_START + self._ARC_SWEEP,
+                     self._ARC_W, self._BG_ARC)
+        # Fill arc
+        if pct > 0:
+            _nd_draw_arc(surf, cx, cy, self._ARC_R,
+                         self._ARC_START, self._ARC_START + pct * self._ARC_SWEEP,
+                         self._ARC_W, _nd_gauge_color(pct))
+
+        val_str = str(int(val)) if self.decimal_places == 0 else f"{val:.{self.decimal_places}f}"
+        render_text(surf, val_str, 72, _ND_WHITE, cx, cy - 6, bold=True)
+        render_text(surf, self.unit, 10, _ND_ORANGE, cx, cy + 46)
+
+
+class DarkTireQuad:
+    """2×2 tire temperature grid styled like new_dash."""
+
+    def __init__(self, box_xywh, FL, FR, RL, RR, shared_data):
+        x, y, w, h = box_xywh
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.corners = [(FL, "FL"), (FR, "FR"), (RL, "RL"), (RR, "RR")]
+        self.shared_data = shared_data
+
+    def update(self, surf):
+        x, y, w, h = self.x, self.y, self.w, self.h
+        hw, hh = w // 2, h // 2
+        for i, (sig, _lbl) in enumerate(self.corners):
+            tx, ty = x + (i % 2) * hw, y + (i // 2) * hh
+            v = self.shared_data.get_signal(sig)
+            val = float(v) if v is not None else 0.0
+            bg = _ND_TIRE_COLD if val < 60 else _ND_TIRE_OPT if val < 95 else _ND_TIRE_HOT
+            surf.fill(tuple(c // 4 for c in bg), (tx, ty, hw, hh))
+            pygame.draw.rect(surf, _ND_BORDER, (tx, ty, hw, hh), 1)
+            render_text(surf, f"{val:.0f}\u00b0", 18, _ND_WHITE, tx + hw // 2, ty + hh // 2 + 4, bold=True)
+
+
+class DarkFaultRow:
+    """Fault light strip styled like new_dash."""
+
+    def __init__(self, box_xywh, IMD, AMS, BSPD, APPS, BRAKE, shared_data):
+        x, y, w, h = box_xywh
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.lights = [("IMD", IMD), ("AMS", AMS), ("BSPD", BSPD), ("APPS", APPS), ("BRK", BRAKE)]
+        self.shared_data = shared_data
+
+    def update(self, surf):
+        x, y, w, h = self.x, self.y, self.w, self.h
+        surf.fill(_ND_DARK_FAULT, (x, y, w, h))
+        bx = x + 58
+        for label, sig in self.lights:
+            v = self.shared_data.get_signal(sig)
+            active = v is not None and float(v) >= 1.0
+            bg = _ND_RED if active else (10, 32, 20)
+            pygame.draw.rect(surf, bg, (bx, y + 6, 34, h - 12), border_radius=2)
+            text_col = _ND_WHITE if active else (26, 90, 40)
+            render_text(surf, label, 7, text_col, bx + 17, y + h // 2)
+            bx += 40
+
+
+# ─────────────────────────────────────────────
 #  Grid background
 # ─────────────────────────────────────────────
 def draw_background(surf, w, h):

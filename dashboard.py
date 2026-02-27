@@ -12,7 +12,9 @@ import pygame
 from gauges import *
 from new_gauges import (SpeedArcGauge, VerticalBarGauge, NumericCard,
                         TireTempsWidget, SoCRingGauge, RPMBar,
-                        StatusBar, WarningLights)
+                        StatusBar, WarningLights,
+                        DarkStatusBar, ShiftLightsGauge, DarkCell,
+                        CellVoltageCard, DarkSpeedArc, DarkTireQuad, DarkFaultRow)
 from graphics_driver import *
 from colors import *
 from shared_data import LatestValuesTable
@@ -262,6 +264,80 @@ class Dashboard:
                 )
             elif gauge_type == "WarningLights":
                 return WarningLights(
+                    box_xywh=box_xywh,
+                    IMD=cfg.get("IMD"),
+                    AMS=cfg.get("AMS"),
+                    BSPD=cfg.get("BSPD"),
+                    APPS=cfg.get("APPS"),
+                    BRAKE=cfg.get("BRAKE"),
+                    shared_data=self.shared_data,
+                )
+            elif gauge_type == "DarkStatusBar":
+                return DarkStatusBar(
+                    x=box_xywh[0],
+                    y=box_xywh[1],
+                    w=box_xywh[2],
+                    h=box_xywh[3],
+                )
+            elif gauge_type == "ShiftLightsGauge":
+                return ShiftLightsGauge(
+                    signal=signal,
+                    min_val=min_val,
+                    max_val=max_val,
+                    box_xywh=box_xywh,
+                    shared_data=self.shared_data,
+                    label=label or "",
+                )
+            elif gauge_type == "DarkCell":
+                accent_color = cfg.get("accent_color")
+                if accent_color is not None:
+                    accent_color = tuple(accent_color)
+                value_color = cfg.get("value_color")
+                if value_color is not None:
+                    value_color = tuple(value_color)
+                return DarkCell(
+                    signal=signal,
+                    label=label or "",
+                    min_val=min_val,
+                    max_val=max_val,
+                    box_xywh=box_xywh,
+                    shared_data=self.shared_data,
+                    unit=cfg.get("unit", ""),
+                    decimal_places=decimal_places,
+                    accent_color=accent_color,
+                    value_color=value_color,
+                    last=cfg.get("last", False),
+                )
+            elif gauge_type == "CellVoltageCard":
+                return CellVoltageCard(
+                    signal_min=cfg.get("signal_min"),
+                    signal_max=cfg.get("signal_max"),
+                    box_xywh=box_xywh,
+                    shared_data=self.shared_data,
+                    last=cfg.get("last", False),
+                )
+            elif gauge_type == "DarkSpeedArc":
+                return DarkSpeedArc(
+                    signal=signal,
+                    min_val=min_val,
+                    max_val=max_val,
+                    box_xywh=box_xywh,
+                    shared_data=self.shared_data,
+                    unit=cfg.get("unit", "MPH"),
+                    decimal_places=decimal_places,
+                    label=label or "",
+                )
+            elif gauge_type == "DarkTireQuad":
+                return DarkTireQuad(
+                    box_xywh=box_xywh,
+                    FL=cfg.get("FL"),
+                    FR=cfg.get("FR"),
+                    RL=cfg.get("RL"),
+                    RR=cfg.get("RR"),
+                    shared_data=self.shared_data,
+                )
+            elif gauge_type == "DarkFaultRow":
+                return DarkFaultRow(
                     box_xywh=box_xywh,
                     IMD=cfg.get("IMD"),
                     AMS=cfg.get("AMS"),
