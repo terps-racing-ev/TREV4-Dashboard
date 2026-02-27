@@ -137,9 +137,7 @@ class Dashboard:
                     label=label,
                     min_val=min_val,
                     max_val=max_val,
-                    cx=cfg.get("cx", box_xywh[0]),
-                    cy=cfg.get("cy", box_xywh[1]),
-                    radius=cfg.get("radius", box_xywh[2]),
+                    box_xywh=box_xywh,
                     shared_data=self.shared_data,
                     unit=cfg.get("unit", "MPH"),
                     decimal_places=decimal_places,
@@ -190,8 +188,7 @@ class Dashboard:
                 )
             elif gauge_type == "TireTempsWidget":
                 return TireTempsWidget(
-                    cx=cfg.get("cx", box_xywh[0]),
-                    cy=cfg.get("cy", box_xywh[1]),
+                    box_xywh=box_xywh,
                     FL=cfg.get("FL"),
                     FR=cfg.get("FR"),
                     RL=cfg.get("RL"),
@@ -203,9 +200,7 @@ class Dashboard:
             elif gauge_type == "SoCRingGauge":
                 return SoCRingGauge(
                     signal=signal,
-                    cx=cfg.get("cx", box_xywh[0]),
-                    cy=cfg.get("cy", box_xywh[1]),
-                    radius=cfg.get("radius", box_xywh[2]),
+                    box_xywh=box_xywh,
                     shared_data=self.shared_data,
                     min_val=min_val,
                     max_val=max_val,
@@ -233,8 +228,7 @@ class Dashboard:
                 )
             elif gauge_type == "WarningLights":
                 return WarningLights(
-                    cx=cfg.get("cx", box_xywh[0]),
-                    cy=cfg.get("cy", box_xywh[1]),
+                    box_xywh=box_xywh,
                     IMD=cfg.get("IMD"),
                     AMS=cfg.get("AMS"),
                     BSPD=cfg.get("BSPD"),

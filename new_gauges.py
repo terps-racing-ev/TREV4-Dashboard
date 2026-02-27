@@ -155,14 +155,15 @@ class Gauge:
 class SpeedArcGauge(Gauge):
     """
     Large semi-circular arc speedometer.
-    box_xywh: (cx, cy, radius, _) — cx/cy are centre, radius is arc radius.
+    box_xywh: (x, y, w, h) — bounding box; cx/cy derived from centre, radius from w//2.
     """
-    def __init__(self, signal, label, min_val, max_val, cx, cy, radius, shared_data,
+    def __init__(self, signal, label, min_val, max_val, box_xywh, shared_data,
                  unit="MPH", decimal_places=0):
         super().__init__(signal, label, min_val, max_val, shared_data)
-        self.cx = cx
-        self.cy = cy
-        self.radius = radius
+        x, y, w, h = box_xywh
+        self.cx = x + w // 2
+        self.cy = y + h // 2
+        self.radius = w // 2
         self.unit = unit
         self.decimal_places = decimal_places
 
@@ -329,9 +330,10 @@ class TireTempsWidget:
     Draws 4 tire cells (FL, FR, RL, RR) in a car-outline layout.
     Signals: TTempFL, TTempFR, TTempRL, TTempRR
     """
-    def __init__(self, cx, cy, FL: str, FR: str, RL: str, RR: str, shared_data, min_val=20, max_val=120):
-        self.cx = cx
-        self.cy = cy
+    def __init__(self, box_xywh, FL: str, FR: str, RL: str, RR: str, shared_data, min_val=20, max_val=120):
+        x, y, w, h = box_xywh
+        self.cx = x + w // 2
+        self.cy = y + h // 2
         self.shared_data = shared_data
         self.min_val = min_val
         self.max_val = max_val
@@ -370,10 +372,13 @@ class TireTempsWidget:
 #  State-of-charge arc gauge (thin ring)
 # ─────────────────────────────────────────────
 class SoCRingGauge(Gauge):
-    def __init__(self, signal, cx, cy, radius, shared_data,
+    def __init__(self, signal, box_xywh, shared_data,
                  min_val=0, max_val=100, label="SOC"):
         super().__init__(signal, label, min_val, max_val, shared_data)
-        self.cx, self.cy, self.radius = cx, cy, radius
+        x, y, w, h = box_xywh
+        self.cx = x + w // 2
+        self.cy = y + h // 2
+        self.radius = w // 2
 
     def update(self, surf):
         val = self.get_value()
@@ -459,9 +464,10 @@ class StatusBar:
 # ─────────────────────────────────────────────
 class WarningLights:
 
-    def __init__(self, cx, IMD: str, AMS: str, BSPD: str, APPS: str, BRAKE: str, y=None, shared_data=None, cy=None):
-        self.cx = cx
-        self.y = cy if cy is not None else y
+    def __init__(self, box_xywh, IMD: str, AMS: str, BSPD: str, APPS: str, BRAKE: str, shared_data=None):
+        x, y, w, h = box_xywh
+        self.cx = x + w // 2
+        self.y = y
         self.shared_data = shared_data
         self.LIGHTS = [
             ("IMD",   IMD,   RED,   1.0),
