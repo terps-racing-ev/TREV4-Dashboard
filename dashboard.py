@@ -282,6 +282,10 @@ class Dashboard:
                         print("\nWindow closed by user")
                         cleanup()
                         sys.exit(0)
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                        print("\nEscape pressed, exiting...")
+                        cleanup()
+                        sys.exit(0)
                                 
                 frame = self.render_frame()
                 blit_surface(frame)
