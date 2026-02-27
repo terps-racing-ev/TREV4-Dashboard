@@ -51,6 +51,10 @@ def get_surface() -> pygame.Surface:
 def blit_surface(surface: pygame.Surface) -> None:
     """Blit the provided surface to the display and update."""
     screen = get_surface()
+    screen_w, screen_h = screen.get_size()
+    surf_w, surf_h = surface.get_size()
+    if (surf_w, surf_h) != (screen_w, screen_h):
+        surface = pygame.transform.scale(surface, (screen_w, screen_h))
     screen.blit(surface, (0, 0))
     pygame.display.flip()
 
