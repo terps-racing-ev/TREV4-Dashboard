@@ -83,7 +83,7 @@
 
     {
       "type": "DarkCell",
-      "signal": "ThrottlePct",
+      "signal": "APPS",
       "label": "THROTTLE",
       "unit": "%",
       "min_val": 0,
@@ -156,8 +156,8 @@
       "box_xywh": [625, 249, 175, 143],
       "FL": "TTempFL",
       "FR": "TTempFR",
-      "RL": "TTempRL",
-      "RR": "TTempRR"
+      "RL": "TTempBL",
+      "RR": "TTempBR"
     },
 
     {
