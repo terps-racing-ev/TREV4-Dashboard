@@ -56,6 +56,19 @@ class CANManager:
         except Exception as e:
             print(f"Error decoding message {msg.arbitration_id:X}: {e}")
             return {}
+
+    def encode_message(self, msg_name: str, sigs: Dict[str, Any]) -> Optional[can.Message]:
+        try:
+            # Find the message definition by name
+            msg = self.db.get_message_by_name(msg_name)
+            # Encode the signals
+            data = msg.encode(sigs)
+            # Create CAN message
+            return can.Message(arbitration_id=msg.frame_id, data=data)
+        except Exception as e:
+            print(f"Error encoding message {msg_name}: {e}")
+            return None 
+
     
     # TODO support two busses
     def start_can_listener(self, interface: str = 'can0', bitrate: int = BAUD_RATE) -> bool:
@@ -146,7 +159,7 @@ class CANManager:
         import time
         
         print("TX thread started")
-        self._tx_thread_active = True
+        self._tx_thread_active = True 
         tx_interval = 0.1  # 100 ms for 10 Hz
         
         try:
