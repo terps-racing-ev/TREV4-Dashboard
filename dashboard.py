@@ -375,7 +375,7 @@ class Dashboard:
         return frame
     
     def _get(self, sig, default=0.0) -> float:
-        v = self.shared_data.get_signal(sig, default)
+        v = self.shared_data.get_signal(sig)
         return float(v) if v is not None else float(default)
 
     def _draw_alert_overlay(self, surf: pygame.Surface) -> None:
