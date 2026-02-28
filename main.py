@@ -13,6 +13,7 @@ from pathlib import Path
 from shared_data import LatestValuesTable
 from can_manager import CANManager
 from dashboard import Dashboard
+from page_manager import PageManager
 
 
 def search_for_file(filename: str, search_paths: list | None = None) -> Path | None:
@@ -46,7 +47,7 @@ def main():
     # Simulate values if you don't have CAN hardware
     SIM_MODE = False 
     
-    SEARCH_PATHS = ["."]  # TODO: add USB mount paths
+    SEARCH_PATHS = [".", "/pages"]  # TODO: add USB mount paths
     
     # Search for files
     print("Searching for .dbc file...")
@@ -54,16 +55,23 @@ def main():
     if not dbc_path:
         return
     
-    print("Searching for config.json...")
-    config_path = search_for_file("config.json", SEARCH_PATHS)
-    if not config_path:
+    print("Searching for config.json... ALL OF THEM")
+    config0 = search_for_file("config.json", SEARCH_PATHS)
+    config1 = search_for_file("config1.json", SEARCH_PATHS)
+    config2 = search_for_file("config2.json", SEARCH_PATHS)
+    if not config0 or not config1 or not config2:
         return
     
     # Shared state for all threads to access values
     shared_data = LatestValuesTable()
     
     can_mgr = CANManager(shared_data=shared_data, dbc_path=dbc_path, sim_mode=SIM_MODE)
-    dashboard = Dashboard(shared_data=shared_data, config_path=config_path)
+
+    # PAGES ARRAY
+    page1 = Dashboard(shared_data=shared_data, config_path=config0)
+    page2 = Dashboard(shared_data=shared_data, config_path=config1)
+    page3 = Dashboard(shared_data=shared_data, config_path=config2)
+    pages = PageManager([page1, page2, page3])
     
     # Load DBC
     if not can_mgr.load_dbc():
@@ -86,7 +94,7 @@ def main():
     tx_thread.start()
     
     # UI
-    ui_thread = threading.Thread(target=dashboard.run_ui_thread, daemon=True)
+    ui_thread = threading.Thread(target=pages.run_ui_thread, daemon=True)
     ui_thread.name = "UI"
     ui_thread.start()
 
@@ -106,7 +114,7 @@ def main():
         # Signal threads to stop
         can_mgr._rx_thread_active = False
         can_mgr._tx_thread_active = False
-        dashboard._ui_thread_active = False
+        pages._ui_thread_active = False
 
         # Wait for threads to finish (with timeout)
         rx_thread.join(timeout=2.0)
