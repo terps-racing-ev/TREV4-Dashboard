@@ -62,7 +62,7 @@ class Dashboard:
         self.config_path = config_path
         
         # Default values
-        self.font_path = "monofonto_rg.otf"
+        self.font_path = "/assets/monofonto_rg.otf"
         self.bg_color = BLACK
         self.xres, self.yres = 800, 480
         self.gauges = []

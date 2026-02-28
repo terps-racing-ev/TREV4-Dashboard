@@ -51,14 +51,14 @@ def main():
     
     # Search for files
     print("Searching for .dbc file...")
-    dbc_path = search_for_file("*.dbc", SEARCH_PATHS)
+    dbc_path = search_for_file("dbc/*.dbc", SEARCH_PATHS)
     if not dbc_path:
         return
     
     print("Searching for config.json... ALL OF THEM")
-    config0 = search_for_file("config.json", SEARCH_PATHS)
-    config1 = search_for_file("config1.json", SEARCH_PATHS)
-    config2 = search_for_file("config2.json", SEARCH_PATHS)
+    config0 = search_for_file("gauges/config.json", SEARCH_PATHS)
+    config1 = search_for_file("gauges/config1.json", SEARCH_PATHS)
+    config2 = search_for_file("gauges/config2.json", SEARCH_PATHS)
     if not config0 or not config1 or not config2:
         return
     
