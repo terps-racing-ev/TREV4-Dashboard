@@ -10,10 +10,10 @@ import time
 import glob
 from pathlib import Path
 
-from shared_data import LatestValuesTable
-from can_manager import CANManager
-from dashboard import Dashboard
-from page_manager import PageManager
+from python.shared_data import LatestValuesTable
+from python.can_manager import CANManager
+from python.dashboard import Dashboard
+from python.page_manager import PageManager
 
 
 def search_for_file(filename: str, search_paths: list | None = None) -> Path | None:

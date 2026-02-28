@@ -5,7 +5,7 @@ from pathlib import Path
 import pygame
 import math
 
-from colors import *
+from python.constants.colors import *
 from shared_data import LatestValuesTable
 
 #default font causing crontab errors on start

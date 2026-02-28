@@ -16,7 +16,7 @@ from new_gauges import (SpeedArcGauge, VerticalBarGauge, NumericCard,
                         DarkStatusBar, ShiftLightsGauge, DarkCell,
                         CellVoltageCard, DarkSpeedArc, DarkTireQuad, DarkFaultRow)
 from graphics_driver import *
-from colors import *
+from python.constants.colors import *
 from shared_data import LatestValuesTable
 
 FPS_CAP = 60
