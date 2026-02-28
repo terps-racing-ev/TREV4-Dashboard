@@ -9,15 +9,15 @@ from pathlib import Path
 from typing import Tuple, Dict
 import pygame
 
-from gauges import *
-from new_gauges import (SpeedArcGauge, VerticalBarGauge, NumericCard,
+from python.gauges import *
+from python.new_gauges import (SpeedArcGauge, VerticalBarGauge, NumericCard,
                         TireTempsWidget, SoCRingGauge, RPMBar,
                         StatusBar, WarningLights,
                         DarkStatusBar, ShiftLightsGauge, DarkCell,
                         CellVoltageCard, DarkSpeedArc, DarkTireQuad, DarkFaultRow)
-from graphics_driver import *
+from python.graphics_driver import *
 from python.constants.colors import *
-from shared_data import LatestValuesTable
+from python.shared_data import LatestValuesTable
 
 FPS_CAP = 60
 

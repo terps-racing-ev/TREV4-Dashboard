@@ -3,8 +3,8 @@ import sys
 import json
 from pathlib import Path
 from typing import Tuple, Dict
-from dashboard import Dashboard
-from graphics_driver import *
+from python.dashboard import Dashboard
+from python.graphics_driver import *
 import pygame
 
 SIG_PACK_TEMP  = "PackTemp"
