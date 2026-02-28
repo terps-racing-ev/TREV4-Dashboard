@@ -14,7 +14,7 @@ import json
 import threading
 from pathlib import Path
 from typing import Optional, Any, Dict
-from shared_data import LatestValuesTable
+from python.shared_data import LatestValuesTable
 
 import pygame
 
