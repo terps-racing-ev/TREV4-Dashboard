@@ -6,9 +6,10 @@ Handles RX, TX, and UI threads
 # pygame.init()
 
 import threading
-import time
+from time import sleep
 import glob
 from pathlib import Path
+from sys import platform
 
 from python.shared_data import LatestValuesTable
 from python.can_manager import CANManager
@@ -46,7 +47,11 @@ def main():
 
     # Simulate values if you don't have CAN hardware
     SIM_MODE = False 
-    
+
+    if(platform == "win32"):
+        print("Running on Windows - using virtual CAN interface (sim mode)")
+        SIM_MODE = True
+
     SEARCH_PATHS = [".", "/pages"]  # TODO: add USB mount paths
     
     # Search for files
@@ -107,7 +112,7 @@ def main():
             if not ui_thread.is_alive():
                 print("\nUI thread stopped, shutting down...")
                 break
-            time.sleep(0.1)
+            sleep(0.1)
     except KeyboardInterrupt:
         print("\nShutting down...")
     finally:
