@@ -8,7 +8,7 @@ from typing import Optional, Dict, Any
 import can
 import cantools
 
-from shared_data import LatestValuesTable
+from python.shared_data import LatestValuesTable
 
 BAUD_RATE = 500000
 

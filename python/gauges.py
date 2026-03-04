@@ -5,8 +5,8 @@ from pathlib import Path
 import pygame
 import math
 
-from colors import *
-from shared_data import LatestValuesTable
+from python.constants.colors import *
+from python.shared_data import LatestValuesTable
 
 #default font causing crontab errors on start
 #DEFAULT_FONT = "assets/fonts/monofonto rg.otf"

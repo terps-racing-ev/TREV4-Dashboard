@@ -2,19 +2,20 @@
 """
 Handles RX, TX, and UI threads
 """
-import pygame
-pygame.init()
+# import pygame
+# pygame.init()
 
 import threading
-import time
+from time import sleep
 import glob
 from pathlib import Path
+from sys import platform
 
-from shared_data import LatestValuesTable
-from can_manager import CANManager
-from dashboard import Dashboard
+from python.shared_data import LatestValuesTable
+from python.can_manager import CANManager
+from python.dashboard import Dashboard
+from python.page_manager import PageManager
 
-DISPLAYSURF=pygame.display.set_mode((0,0), pygame.FULLSCREEN)
 
 def search_for_file(filename: str, search_paths: list | None = None) -> Path | None:
     """
@@ -46,25 +47,36 @@ def main():
 
     # Simulate values if you don't have CAN hardware
     SIM_MODE = False 
-    
-    SEARCH_PATHS = ["."]  # TODO: add USB mount paths
+
+    if(platform == "win32"):
+        print("Running on Windows - using virtual CAN interface (sim mode)")
+        SIM_MODE = True
+
+    SEARCH_PATHS = [".", "/pages"]  # TODO: add USB mount paths
     
     # Search for files
     print("Searching for .dbc file...")
-    dbc_path = search_for_file("*.dbc", SEARCH_PATHS)
+    dbc_path = search_for_file("dbc/*.dbc", SEARCH_PATHS)
     if not dbc_path:
         return
     
-    print("Searching for config.json...")
-    config_path = search_for_file("test gauges.json", SEARCH_PATHS)
-    if not config_path:
+    print("Searching for config.json... ALL OF THEM")
+    config0 = search_for_file("gauges/config.json", SEARCH_PATHS)
+    config1 = search_for_file("gauges/config1.json", SEARCH_PATHS)
+    config2 = search_for_file("gauges/config2.json", SEARCH_PATHS)
+    if not config0 or not config1 or not config2:
         return
     
     # Shared state for all threads to access values
     shared_data = LatestValuesTable()
     
     can_mgr = CANManager(shared_data=shared_data, dbc_path=dbc_path, sim_mode=SIM_MODE)
-    dashboard = Dashboard(shared_data=shared_data, config_path=config_path)
+
+    # PAGES ARRAY
+    page1 = Dashboard(shared_data=shared_data, config_path=config0)
+    page2 = Dashboard(shared_data=shared_data, config_path=config1)
+    page3 = Dashboard(shared_data=shared_data, config_path=config2)
+    pages = PageManager([page1, page2, page3])
     
     # Load DBC
     if not can_mgr.load_dbc():
@@ -87,7 +99,7 @@ def main():
     tx_thread.start()
     
     # UI
-    ui_thread = threading.Thread(target=dashboard.run_ui_thread, daemon=True)
+    ui_thread = threading.Thread(target=pages.run_ui_thread, daemon=True)
     ui_thread.name = "UI"
     ui_thread.start()
 
@@ -100,14 +112,14 @@ def main():
             if not ui_thread.is_alive():
                 print("\nUI thread stopped, shutting down...")
                 break
-            time.sleep(0.1)
+            sleep(0.1)
     except KeyboardInterrupt:
         print("\nShutting down...")
     finally:
         # Signal threads to stop
         can_mgr._rx_thread_active = False
         can_mgr._tx_thread_active = False
-        dashboard._ui_thread_active = False
+        pages._ui_thread_active = False
 
         # Wait for threads to finish (with timeout)
         rx_thread.join(timeout=2.0)
