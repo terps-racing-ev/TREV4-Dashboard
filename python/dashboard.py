@@ -371,7 +371,7 @@ class Dashboard:
         for gauge in self.gauges:
             gauge.update(frame)
 
-        self._draw_alert_overlay(frame)
+        # self._draw_alert_overlay(frame)
         return frame
     
     def _get(self, sig, default=0.0) -> float:

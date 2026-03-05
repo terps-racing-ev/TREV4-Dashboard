@@ -137,9 +137,11 @@ class Gauge:
 
     def get_value(self) -> float:
         v = self.shared_data.get_signal(self.signal)
-        return float(v) if v is not None else 0.0
+        return float(v) if v is not None else None 
 
     def clamp_pct(self, val) -> float:
+        if not val:
+            return 0.0
         r = self.max_val - self.min_val
         if r == 0:
             return 0.0
@@ -209,10 +211,13 @@ class SpeedArcGauge(Gauge):
                             math.radians(fill_end), math.radians(start_deg), arc_w)
 
         # ── Centre readout ────────────────────────────────────────
-        fmt = f"{val:.{self.decimal_places}f}"
-        render_text(surf, fmt, 72, WHITE, cx, cy - 10, bold=True)
-        render_text(surf, self.unit, 16, DIM_WHITE, cx, cy + 46)
-        render_text(surf, self.label, 13, PANEL_LIGHT, cx, cy + 66)
+        if not val:
+            render_text(surf, '-', 72, WHITE, cx, cy - 10, bold=True)
+        else:
+            fmt = f"{val:.{self.decimal_places}f}"
+            render_text(surf, fmt, 72, WHITE, cx, cy - 10, bold=True)
+            render_text(surf, self.unit, 16, DIM_WHITE, cx, cy + 46)
+            render_text(surf, self.label, 13, PANEL_LIGHT, cx, cy + 66)
 
 
 # ─────────────────────────────────────────────
@@ -274,8 +279,11 @@ class VerticalBarGauge(Gauge):
 
         # Value overlay
         if self.show_value:
-            fmt = f"{val:.{self.decimal_places}f}"
-            render_text(surf, fmt, 14, WHITE, x + w//2, y + 16)
+            if not val:
+                render_text(surf, '-', 14, WHITE, x + w//2, y + 16)
+            else:
+                fmt = f"{val:.{self.decimal_places}f}"
+                render_text(surf, fmt, 14, WHITE, x + w//2, y + 16)
 
 
 # ─────────────────────────────────────────────
@@ -312,10 +320,13 @@ class NumericCard(Gauge):
         # Label
         render_text(surf, self.label, 11, DIM_WHITE, x + 12, y + 13, anchor="midleft")
         # Value
-        fmt = f"{val:.{self.decimal_places}f}"
-        if self.unit:
-            fmt += f" {self.unit}"
-        render_text(surf, fmt, 22, WHITE, x + w - 8, y + h//2, anchor="midright")
+        if not val:
+            render_text(surf, '-', 22, WHITE, x + w - 8, y + h//2, anchor="midright")
+        else:
+            fmt = f"{val:.{self.decimal_places}f}"
+            if self.unit:
+                fmt += f" {self.unit}"
+            render_text(surf, fmt, 22, WHITE, x + w - 8, y + h//2, anchor="midright")
 
         # Thin fill bar at base
         bar_w = int((w - 6) * pct)
@@ -347,7 +358,7 @@ class TireTempsWidget:
 
     def get_val(self, sig):
         v = self.shared_data.get_signal(sig)
-        return float(v) if v is not None else self.min_val
+        return float(v) if v is not None else None
 
     def update(self, surf):
         cx, cy = self.cx, self.cy
@@ -360,12 +371,15 @@ class TireTempsWidget:
 
         for label, sig, dx, dy in self.corners:
             val = self.get_val(sig)
-            col = temp_color(val, self.min_val, self.max_val)
+            col = PANEL if not val else temp_color(val, self.min_val, self.max_val)
             tx = cx + dx - self.tw//2
             ty = cy + dy - self.th//2
             draw_rounded_rect(surf, col, (tx, ty, self.tw, self.th), radius=4)
             render_text(surf, label, 10, BLACK, tx + self.tw//2, ty + 10)
-            render_text(surf, f"{val:.0f}°", 14, BLACK, tx + self.tw//2, ty + 22, bold=True)
+            if not val:
+                render_text(surf, '-', 14, BLACK, tx + self.tw//2, ty + 22, bold=True)
+            else:
+                render_text(surf, f"{val:.0f}°", 14, BLACK, tx + self.tw//2, ty + 22, bold=True)
 
 
 # ─────────────────────────────────────────────
@@ -399,7 +413,10 @@ class SoCRingGauge(Gauge):
                             math.radians(end_a), math.radians(30), 8)
 
         # Centre text
-        render_text(surf, f"{val:.0f}%", 26, WHITE, cx, cy - 4, bold=True)
+        if not val:
+            render_text(surf, '-', 26, WHITE, cx, cy - 4, bold=True)
+        else:
+            render_text(surf, f"{val:.0f}%", 26, WHITE, cx, cy - 4, bold=True)
         render_text(surf, self.label, 11, DIM_WHITE, cx, cy + 18)
 
 
@@ -434,8 +451,11 @@ class RPMBar(Gauge):
 
         # Label + value
         render_text(surf, self.label, 11, DIM_WHITE, x + 8, y + h//2, anchor="midleft")
-        fmt = f"{val:.{self.decimal_places}f}"
-        render_text(surf, fmt, 14, WHITE, x + w - 8, y + h//2, anchor="midright")
+        if not val:
+            render_text(surf, '-', 14, WHITE, x + w - 8, y + h//2, anchor="midright")
+        else:
+            fmt = f"{val:.{self.decimal_places}f}"
+            render_text(surf, fmt, 14, WHITE, x + w - 8, y + h//2, anchor="midright")
 
 
 # ─────────────────────────────────────────────
@@ -595,11 +615,14 @@ class DarkCell(Gauge):
             pygame.draw.line(surf, _ND_BORDER, (x, y + h - 1), (x + w, y + h - 1), 1)
         pygame.draw.rect(surf, self.accent, (x, y + 6, 3, h - 12), border_radius=1)
         render_text(surf, self.label, 7, _ND_LABEL, x + 14, y + 10, anchor="midleft")
-        val_str = f"{val:.{self.decimal_places}f}"
-        render_text(surf, val_str, 28, self.value_color, x + 14, y + h - 14, anchor="midleft")
-        if self.unit:
-            val_px_w = get_font(28).size(val_str)[0]
-            render_text(surf, self.unit, 8, _ND_DIM, x + 14 + val_px_w + 3, y + h - 16, anchor="midleft")
+        if not val:
+            render_text(surf, '-', 28, self.value_color, x + 14, y + h - 14, anchor="midleft")
+        else:
+            val_str = f"{val:.{self.decimal_places}f}"
+            render_text(surf, val_str, 28, self.value_color, x + 14, y + h - 14, anchor="midleft")
+            if self.unit:
+                val_px_w = get_font(28).size(val_str)[0]
+                render_text(surf, self.unit, 8, _ND_DIM, x + 14 + val_px_w + 3, y + h - 16, anchor="midleft")
         surf.fill(self.accent, (x, y + h - 2, int(max(0.0, min(1.0, pct)) * w), 2))
 
 
@@ -623,10 +646,10 @@ class CellVoltageCard:
         render_text(surf, "CELL VOLTAGE", 7, _ND_LABEL, x + 14, y + 10, anchor="midleft")
         vmin_v = self.shared_data.get_signal(self.signal_min)
         vmax_v = self.shared_data.get_signal(self.signal_max)
-        vmin = float(vmin_v) if vmin_v is not None else 0.0
-        vmax = float(vmax_v) if vmax_v is not None else 0.0
-        render_text(surf, f"{vmin:.2f}", 20, _ND_AMBER, x + 14, y + h // 2 + 6, anchor="midleft")
-        render_text(surf, f"{vmax:.2f}", 20, _ND_CYAN, x + w // 2 + 10, y + h // 2 + 6, anchor="midleft")
+        vmin = float(vmin_v) if vmin_v is not None else None
+        vmax = float(vmax_v) if vmax_v is not None else None
+        render_text(surf, '-' if not vmin else f"{vmin:.2f}", 20, _ND_AMBER, x + 14, y + h // 2 + 6, anchor="midleft")
+        render_text(surf, '-' if not vmax else f"{vmax:.2f}", 20, _ND_CYAN, x + w // 2 + 10, y + h // 2 + 6, anchor="midleft")
 
 
 class DarkSpeedArc(Gauge):
@@ -671,8 +694,11 @@ class DarkSpeedArc(Gauge):
                          self._ARC_START, self._ARC_START + pct * self._ARC_SWEEP,
                          self._ARC_W, _nd_gauge_color(pct))
 
-        val_str = str(int(val)) if self.decimal_places == 0 else f"{val:.{self.decimal_places}f}"
-        render_text(surf, val_str, 72, _ND_WHITE, cx, cy - 6, bold=True)
+        if not val:
+            render_text(surf, '-', 72, _ND_WHITE, cx, cy - 6, bold=True)
+        else:
+            val_str = str(int(val)) if self.decimal_places == 0 else f"{val:.{self.decimal_places}f}"
+            render_text(surf, val_str, 72, _ND_WHITE, cx, cy - 6, bold=True)
         render_text(surf, self.unit, 10, _ND_ORANGE, cx, cy + 46)
 
 
@@ -691,11 +717,14 @@ class DarkTireQuad:
         for i, (sig, _lbl) in enumerate(self.corners):
             tx, ty = x + (i % 2) * hw, y + (i // 2) * hh
             v = self.shared_data.get_signal(sig)
-            val = float(v) if v is not None else 0.0
-            bg = _ND_TIRE_COLD if val < 60 else _ND_TIRE_OPT if val < 95 else _ND_TIRE_HOT
+            val = float(v) if v is not None else None
+            bg = _ND_BORDER if not val else (_ND_TIRE_COLD if val < 60 else _ND_TIRE_OPT if val < 95 else _ND_TIRE_HOT)
             surf.fill(tuple(c // 4 for c in bg), (tx, ty, hw, hh))
             pygame.draw.rect(surf, _ND_BORDER, (tx, ty, hw, hh), 1)
-            render_text(surf, f"{val:.0f}\u00b0", 18, _ND_WHITE, tx + hw // 2, ty + hh // 2 + 4, bold=True)
+            if not val:
+                render_text(surf, '-', 18, _ND_WHITE, tx + hw // 2, ty + hh // 2 + 4, bold=True)
+            else:
+                render_text(surf, f"{val:.0f}\u00b0", 18, _ND_WHITE, tx + hw // 2, ty + hh // 2 + 4, bold=True)
 
 
 class DarkFaultRow:
@@ -720,6 +749,106 @@ class DarkFaultRow:
             render_text(surf, label, 7, text_col, bx + 17, y + h // 2)
             bx += 40
 
+class Alert(Gauge):
+    def __init__(self, signal, thresh, box_xywh, shared_data, label=""):
+        x, y, w, h = box_xywh
+        super().__init__(signal, label, 0, 0, shared_data)
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.cx = x + w // 2
+        self.thresh = thresh
+        # Mirrors new_dash: GCY = MAIN_Y + (MAIN_H - CENTER_BOTTOM_H) // 2 + 10
+        # With box (175, 36, 450, 356): cy = 36 + (356-60)//2 + 10 = 194
+        self.cy = y + (h - 60) // 2 + 10
+
+    def update(self, surf):
+        """Flash a warning card over the centre column when thresholds are exceeded."""
+        v = self.shared_data.get_signal(self.signal)
+        if v is not None and float(v) > self.thresh and int(time.time() * 2) % 2 == 0:
+            draw_rounded_rect(surf, _ND_RED, (self.x, self.y, self.w, self.h),
+                              radius=3, border=2, border_color=_ND_WHITE)
+            render_text(surf, self.label, 16, _ND_WHITE,
+                        self.cx, self.cy, bold=True, anchor="center")
+
+class StatusHeader(Gauge):
+    """
+    Header bar with interlocking chevron sections.
+    Left half: hardware signals (right-pointing arrows).
+    Right half: software signals (left-pointing arrows).
+    Centre: diamond divider.
+    Active sections light up amber; inactive stay dark.
+    Configured from JSON with hw_signals / sw_signals lists.
+    """
+
+    # Chevrons are the arrow things
+
+    _ACTIVE   = _ND_AMBER
+    _INACTIVE = (22, 22, 30)
+    _DIVIDER  = _ND_ORANGE
+    _BORDER   = _ND_BORDER
+
+    def __init__(self, box_xywh, hw_signals: list, sw_signals: list, shared_data):
+        x, y, w, h = box_xywh
+        super().__init__("", "", 0, 1, shared_data)
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.hw_signals = hw_signals
+        self.sw_signals = sw_signals
+
+    def _chevron_r(self, x, y, w, h, tip):
+        """Right-pointing chevron polygon. Flat left edge if flush with box."""
+        cy = y + h // 2
+        left = [(x, y), (x + w - tip, y), (x + w, cy), (x + w - tip, y + h), (x, y + h)]
+        if x != self.x:
+            left.append((x + tip, cy))
+        return left
+
+    def _chevron_l(self, x, y, w, h, tip):
+        """Left-pointing chevron polygon. Flat right edge if flush with box."""
+        cy = y + h // 2
+        pts = [(x + tip, y), (x + w, y)]
+        if self.x + self.w - (x + w) >= w:
+            pts.append((x + w - tip, cy))
+        pts += [(x + w, y + h), (x + tip, y + h), (x, cy)]
+        return pts
+
+    def update(self, surf):
+        x, y, w, h = self.x, self.y, self.w, self.h
+        surf.fill(_ND_DARK_HDR, (x, y, w, h))
+
+        tip  = max(4, h // 3)   # chevron point depth
+        gap  = 3                 # px between each chevron
+        div  = tip * 2           # centre divider width
+        pad  = 2                 # vertical inset
+
+        half_w = (w - div) // 2
+
+        def _draw_sections(signals, start_x, fn):
+            n = len(signals)
+            if not n:
+                return
+            sec_w = (half_w - gap * (n - 1)) // n
+            for i, sig in enumerate(signals):
+                v = self.shared_data.get_signal(sig)
+                active = v is not None and float(v) >= 1.0
+                sx = start_x + i * (sec_w + gap)
+                pts = fn(sx, y + pad, sec_w, h - pad * 2, tip)
+                pygame.draw.polygon(surf, self._ACTIVE if active else self._INACTIVE, pts)
+                pygame.draw.polygon(surf, self._BORDER, pts, 1)
+
+        _draw_sections(self.hw_signals, x, self._chevron_r)
+        _draw_sections(self.sw_signals, x + half_w + div, self._chevron_l)
+
+        # Centre diamond divider
+        cx = x + half_w + div // 2
+        cy = y + h // 2
+        pygame.draw.polygon(surf, self._DIVIDER, [
+            (cx,          y + pad),
+            (cx + div//2, cy),
+            (cx,          y + h - pad),
+            (cx - div//2, cy),
+        ])
+ 
+
+
 
 # ─────────────────────────────────────────────
 #  Grid background
@@ -732,194 +861,3 @@ def draw_background(surf, w, h):
         for gy in range(26, h, spacing):
             pygame.draw.circle(surf, GRID_LINE, (gx, gy), 1)
 
-
-# ─────────────────────────────────────────────
-#  Dashboard
-# ─────────────────────────────────────────────
-
-# class PrettyDashboard:
-#     W = 800
-#     H = 480
-#
-#     def __init__(self, shared_data: LatestValuesTable):
-#         self.W = 800
-#         self.H = 400
-#         self.shared_data = shared_data
-#         self.sd = shared_data
-#         self._build_widgets()
-#
-#     def _build_widgets(self):
-#         sd = self.shared_data
-#         W, H = self.W, self.H
-#         HEADER_H = 26
-#
-#         self.static = [
-#             StatusBar(0, 0, W, HEADER_H),
-#         ]
-#
-#         self.widgets = [
-#             # ── Centre: big speed arc ────────────────────────
-#             SpeedArcGauge(SIG_SPEED, "SPEED", *RANGE_SPEED,
-#                           cx=400, cy=260, radius=130, shared_data=sd,
-#                           unit="MPH", decimal_places=0),
-#
-#             # ── RPM bar across the top (below header) ────────
-#             RPMBar(SIG_RPM, x=10, y=32, w=780, h=22,
-#                    shared_data=sd, min_val=RANGE_RPM[0], max_val=RANGE_RPM[1], label="RPM"),
-#
-#             # ── Left column: battery + power bars ────────────
-#             SoCRingGauge(SIG_SOC, cx=80, cy=290, radius=58,
-#                          shared_data=sd, min_val=RANGE_SOC[0], max_val=RANGE_SOC[1], label="SOC"),
-#
-#             VerticalBarGauge(SIG_PACK_VOLTAGE, "VOLTS", *RANGE_PACK_VOLTAGE,
-#                              x=18, y=60, w=32, h=200, shared_data=sd,
-#                              fill_color=CYAN, show_value=True, decimal_places=0),
-#
-#             VerticalBarGauge(SIG_PACK_CURRENT, "AMPS", *RANGE_PACK_CURRENT,
-#                              x=56, y=60, w=32, h=200, shared_data=sd,
-#                              fill_color=AMBER, show_value=True, decimal_places=0),
-#
-#             # ── Right column: torque + temps ─────────────────
-#             VerticalBarGauge(SIG_APPS, "TORQUE", *RANGE_APPS,
-#                              x=750, y=60, w=36, h=200, shared_data=sd,
-#                              signed=True, pos_color=GREEN, neg_color=RED,
-#                              show_value=False, decimal_places=0),
-#
-#             NumericCard(SIG_INVERTER_TEMP, "INV TEMP", *RANGE_INVERTER_TEMP,
-#                         x=660, y=60, w=82, h=38, shared_data=sd,
-#                         unit="°C", decimal_places=0,
-#                         warn_pct=WARN_INVERTER_TEMP, crit_pct=CRIT_INVERTER_TEMP),
-#             NumericCard(SIG_MOTOR_TEMP, "MOT TEMP", *RANGE_MOTOR_TEMP,
-#                         x=660, y=103, w=82, h=38, shared_data=sd,
-#                         unit="°C", decimal_places=0,
-#                         warn_pct=WARN_MOTOR_TEMP, crit_pct=CRIT_MOTOR_TEMP),
-#             NumericCard(SIG_PACK_TEMP, "BAT TEMP", *RANGE_PACK_TEMP,
-#                         x=660, y=146, w=82, h=38, shared_data=sd,
-#                         unit="°C", decimal_places=0,
-#                         warn_pct=WARN_PACK_TEMP, crit_pct=CRIT_PACK_TEMP),
-#
-#             # ── Bottom: tire temps + warning lights ──────────
-#             TireTempsWidget(cx=400, cy=415, shared_data=sd,
-#                             min_val=RANGE_TIRE_TEMP[0], max_val=RANGE_TIRE_TEMP[1]),
-#             WarningLights(cx=400, cy=360, shared_data=sd),
-#
-#             # ── Bottom-left: LV battery + G-force ────────────
-#             NumericCard(SIG_LV_BATT, "LV BATT", *RANGE_LV_BATT,
-#                         x=10, y=390, w=130, h=36, shared_data=sd,
-#                         unit="V", decimal_places=1,
-#                         warn_pct=WARN_LV_BATT, crit_pct=CRIT_LV_BATT),
-#             NumericCard(SIG_G_LONG, "G-LONG", *RANGE_G_LONG,
-#                         x=10, y=432, w=130, h=36, shared_data=sd,
-#                         unit="g", decimal_places=2, warn_pct=0.95, crit_pct=1.0),
-#
-#             # ── Bottom-right: throttle + brake ───────────────
-#             NumericCard(SIG_THROTTLE_PCT, "THROTTLE", *RANGE_THROTTLE,
-#                         x=660, y=390, w=130, h=36, shared_data=sd,
-#                         unit="%", decimal_places=0, warn_pct=0.9, crit_pct=1.0),
-#             NumericCard(SIG_BRAKE_PRESSURE, "BRAKE", *RANGE_BRAKE,
-#                         x=660, y=432, w=130, h=36, shared_data=sd,
-#                         unit="%", decimal_places=0, warn_pct=0.9, crit_pct=1.0),
-#         ]
-#
-#     def render(self, surf: pygame.Surface):
-#         draw_background(surf, self.W, self.H)
-#         for w in self.static:
-#             w.update(surf)
-#         for w in self.widgets:
-#             w.update(surf)
-
-
-# ─────────────────────────────────────────────
-#  Simulator — ramps signal values for testing
-# ─────────────────────────────────────────────
-# class SignalSimulator:
-#     def __init__(self, shared_data: LatestValuesTable):
-#         self.sd = shared_data
-#         self._active = False
-#         self._t = 0.0
-#
-#     def start(self):
-#         self._active = True
-#         t = threading.Thread(target=self._run, daemon=True)
-#         t.start()
-#
-#     def _run(self):
-#         while self._active:
-#             t = self._t
-#             self._t += 0.02
-#
-#             def wave(freq, lo, hi, phase=0):
-#                 return lo + (hi - lo) * (0.5 + 0.5 * math.sin(t * freq + phase))
-#
-#             self.sd.update({
-#                 SIG_SPEED:          wave(*SIM_SPEED),
-#                 SIG_RPM:            wave(*SIM_RPM),
-#                 SIG_SOC:            wave(*SIM_SOC),
-#                 SIG_PACK_VOLTAGE:   wave(*SIM_PACK_VOLTAGE),
-#                 SIG_PACK_CURRENT:   wave(*SIM_PACK_CURRENT),
-#                 SIG_PACK_TEMP:      wave(*SIM_PACK_TEMP),
-#                 SIG_INVERTER_TEMP:  wave(*SIM_INVERTER_TEMP),
-#                 SIG_MOTOR_TEMP:     wave(*SIM_MOTOR_TEMP),
-#                 SIG_APPS:           wave(*SIM_APPS),
-#                 SIG_TIRE_FL:        wave(*SIM_TIRE_FL),
-#                 SIG_TIRE_FR:        wave(*SIM_TIRE_FR),
-#                 SIG_TIRE_RL:        wave(*SIM_TIRE_RL),
-#                 SIG_TIRE_RR:        wave(*SIM_TIRE_RR),
-#                 SIG_LV_BATT:        wave(*SIM_LV_BATT),
-#                 SIG_G_LONG:         wave(*SIM_G_LONG),
-#                 SIG_THROTTLE_PCT:   wave(*SIM_THROTTLE),
-#                 SIG_BRAKE_PRESSURE: wave(*SIM_BRAKE),
-#                 # Faults — occasionally flicker
-#                 SIG_FAULT_IMD:   1.0 if (math.sin(t * 0.10)       > 0.95) else 0.0,
-#                 SIG_FAULT_AMS:   1.0 if (math.sin(t * 0.07 + 1.0) > 0.97) else 0.0,
-#                 SIG_FAULT_BSPD:  0.0,
-#                 SIG_FAULT_APPS:  1.0 if (math.sin(t * 0.15 + 2.0) > 0.92) else 0.0,
-#                 SIG_FAULT_BRAKE: 0.0,
-#             })
-#             time.sleep(0.02)
-#
-#     def stop(self):
-#         self._active = False
-#
-#
-# # ─────────────────────────────────────────────
-# #  Entry point
-# # ─────────────────────────────────────────────
-# def main():
-#     pygame.init()
-#     screen = pygame.display.set_mode((800, 480))
-#     # Uncomment for real deployment:
-#     # screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-#     pygame.display.set_caption("TREV4 Dashboard")
-#
-#     shared_data = LatestValuesTable()
-#
-#     # Start simulated data
-#     sim = SignalSimulator(shared_data)
-#     sim.start()
-#
-#     dashboard = PrettyDashboard(shared_data)
-#     frame = pygame.Surface((800, 480))
-#     clock = pygame.time.Clock()
-#     FPS = 60
-#
-#     try:
-#         while True:
-#             for event in pygame.event.get():
-#                 if event.type == pygame.QUIT:
-#                     return
-#                 if event.type == pygame.KEYDOWN and event.key == pygame.KEYUP:
-#                     return
-#
-#             dashboard.render(frame)
-#             screen.blit(frame, (0, 0))
-#             pygame.display.flip()
-#             clock.tick(FPS)
-#     finally:
-#         sim.stop()
-#         pygame.quit()
-#         sys.exit(0)
-#
-#
-# if __name__ == "__main__":
-#     main()
