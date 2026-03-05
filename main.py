@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Handles RX, TX, and UI threads.
-Config: prod_config.json (local); when USB with prod_config.json is present, local is updated.
+Config: prod_config.json and prod.dbc (local); when USB has these files, local copies are updated.
 """
 # import pygame
 # pygame.init()
@@ -10,8 +10,6 @@ import json
 import threading
 import time
 from time import sleep
-import glob
-from pathlib import Path
 from sys import platform
 
 from python.shared_data import LatestValuesTable
@@ -19,32 +17,6 @@ from python.can_manager import CANManager
 from python.dashboard import Dashboard
 from python.page_manager import PageManager
 from python import config_loader
-
-
-def search_for_file(filename: str, search_paths: list | None = None) -> Path | None:
-    """
-    Search for a file in specified paths. Returns first match or None.
-
-    Args:
-        filename: Target filename (e.g., "test.dbc" or "prod_config.json")
-        search_paths: List of paths to search. Defaults to current directory.
-
-    Returns:
-        Path to file if found, None otherwise
-    """
-    if search_paths is None:
-        search_paths = ["."]
-
-    for search_path in search_paths:
-        pattern = f"{search_path}/**/{filename}"
-        matches = glob.glob(pattern, recursive=True)
-        if matches:
-            found_path = Path(matches[0])
-            print(f"Found {filename} at: {found_path}")
-            return found_path
-
-    print(f"No {filename} found in search paths")
-    return None
 
 
 def main():
@@ -55,11 +27,16 @@ def main():
         print("Running on Windows - using virtual CAN interface (sim mode)")
         SIM_MODE = True
 
-    # Sync prod_config.json from USB if present, then load from local
+    # Sync prod_config.json and prod.dbc from USB if present, then load from local
     config_loader.sync_config_from_usb()
+    config_loader.sync_dbc_from_usb()
     config_path = config_loader.get_local_config_path()
+    dbc_path = config_loader.get_local_dbc_path()
     if not config_path.is_file():
         print("prod_config.json not found locally or on USB. Exiting.")
+        return
+    if not dbc_path.is_file():
+        print("prod.dbc not found locally or on USB. Exiting.")
         return
 
     with open(config_path, encoding="utf-8") as f:
@@ -78,13 +55,6 @@ def main():
 
     if not dashboards:
         print("No dashboard pages loaded from prod_config.json. Exiting.")
-        return
-
-    SEARCH_PATHS = [".", "/pages"]
-
-    print("Searching for .dbc file...")
-    dbc_path = search_for_file("dbc/*.dbc", SEARCH_PATHS)
-    if not dbc_path:
         return
 
     can_mgr = CANManager(shared_data=shared_data, dbc_path=dbc_path, sim_mode=SIM_MODE)
@@ -129,6 +99,7 @@ def main():
             now = time.monotonic()
             if now - last_sync >= SYNC_INTERVAL_SEC:
                 config_loader.sync_config_from_usb()
+                config_loader.sync_dbc_from_usb()
                 last_sync = now
             sleep(0.1)
     except KeyboardInterrupt:
