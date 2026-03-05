@@ -828,7 +828,7 @@ class StatusHeader(Gauge):
             sec_w = (half_w - gap * (n - 1)) // n
             for i, sig in enumerate(signals):
                 v = self.shared_data.get_signal(sig)
-                active = v is not None and float(v) >= 1.0
+                active = v is not None and v == 1 
                 sx = start_x + i * (sec_w + gap)
                 pts = fn(sx, y + pad, sec_w, h - pad * 2, tip)
                 pygame.draw.polygon(surf, self._ACTIVE if active else self._INACTIVE, pts)
