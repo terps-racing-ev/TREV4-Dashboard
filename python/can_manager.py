@@ -140,8 +140,8 @@ class CANManager:
                             sim_signals[signal.name] = 1 if elapsed >= (i + 1) * 5 else 0
                     else:
                         for signal in message.signals:
-                            value = self.shared_data.get_signal(signal.name) or 0
-                            if value >= signal.maximum:
+                            value = self.shared_data.get_signal(signal.name)
+                            if not value or value >= signal.maximum:
                                 continue
                             value += 1
                             sim_signals[signal.name] = value
