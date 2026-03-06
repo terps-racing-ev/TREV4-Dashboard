@@ -755,10 +755,8 @@ class Alert(Gauge):
         super().__init__(signal, label, 0, 0, shared_data)
         self.x, self.y, self.w, self.h = x, y, w, h
         self.cx = x + w // 2
+        self.cy = y + h // 2
         self.thresh = thresh
-        # Mirrors new_dash: GCY = MAIN_Y + (MAIN_H - CENTER_BOTTOM_H) // 2 + 10
-        # With box (175, 36, 450, 356): cy = 36 + (356-60)//2 + 10 = 194
-        self.cy = y + (h - 60) // 2 + 10
 
     def update(self, surf):
         """Flash a warning card over the centre column when thresholds are exceeded."""
