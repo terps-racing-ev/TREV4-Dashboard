@@ -125,11 +125,11 @@ class CANManager:
         print("RX simulation thread started")
         self._rx_thread_active = True
         start_time = time.time()
+        value = 0
 
         try:
             while self._rx_thread_active:
                 elapsed = time.time() - start_time
-                value = 0
 
                 # Generate simulated data for each message in the database
                 for message in self.db.messages:
