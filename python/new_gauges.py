@@ -826,14 +826,16 @@ class StatusHeader(Gauge):
             sec_w = (half_w - gap * (n - 1)) // n
             for i, sig in enumerate(signals):
                 v = self.shared_data.get_signal(sig)
-                active = v is not None and v == 1 
+                active = v is not None and v == 1
                 sx = start_x + i * (sec_w + gap)
                 pts = fn(sx, y + pad, sec_w, h - pad * 2, tip)
                 pygame.draw.polygon(surf, self._ACTIVE if active else self._INACTIVE, pts)
                 pygame.draw.polygon(surf, self._BORDER, pts, 1)
+                render_text(surf, sig, max(6, h // 3), BLACK if active else _ND_DIM,
+                            sx + sec_w // 2, y + h // 2)
 
         _draw_sections(self.hw_signals, x, self._chevron_r)
-        _draw_sections(self.sw_signals, x + half_w + div, self._chevron_l)
+        _draw_sections(list(reversed(self.sw_signals)), x + half_w + div, self._chevron_l)
 
         # Centre diamond divider
         cx = x + half_w + div // 2
