@@ -10,11 +10,7 @@ from typing import Tuple, Dict
 import pygame
 
 from python.gauges import *
-from python.new_gauges import (SpeedArcGauge, VerticalBarGauge, NumericCard,
-                        TireTempsWidget, SoCRingGauge, RPMBar,
-                        StatusBar, WarningLights,
-                        DarkStatusBar, ShiftLightsGauge, DarkCell,
-                        CellVoltageCard, DarkSpeedArc, DarkTireQuad, DarkFaultRow)
+from python.new_gauges import *
 from python.graphics_driver import *
 from python.constants.colors import *
 from python.shared_data import LatestValuesTable
@@ -345,6 +341,14 @@ class Dashboard:
                     APPS=cfg.get("APPS"),
                     BRAKE=cfg.get("BRAKE"),
                     shared_data=self.shared_data,
+                )
+            elif gauge_type == "Alert":
+                return Alert(
+                    signal=signal,
+                    thresh=cfg.get("thresh"),
+                    box_xywh=box_xywh,
+                    shared_data=self.shared_data,
+                    label=label or "",
                 )
             else:
                 print(f"Unknown gauge type: {gauge_type}")
