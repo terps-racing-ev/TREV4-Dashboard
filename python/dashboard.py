@@ -342,6 +342,13 @@ class Dashboard:
                     BRAKE=cfg.get("BRAKE"),
                     shared_data=self.shared_data,
                 )
+            elif gauge_type == "StatusHeader":
+                return StatusHeader(
+                    box_xywh=box_xywh,
+                    hw_signals=cfg.get("hw_signals", []),
+                    sw_signals=cfg.get("sw_signals", []),
+                    shared_data=self.shared_data,
+                )
             elif gauge_type == "Alert":
                 return Alert(
                     signal=signal,

@@ -14,8 +14,10 @@
       "box_xywh": [0, 0, 800, 10]
     },
     {
-      "type": "DarkStatusBar",
-      "box_xywh": [0, 10, 800, 26]
+      "type": "StatusHeader",
+      "box_xywh": [0, 10, 800, 26],
+      "hw_signals": ["IMDFault", "AMSFault", "BSPDFault"],
+      "sw_signals": ["APPSFault", "BrakeFault"]
     },
 
     {
