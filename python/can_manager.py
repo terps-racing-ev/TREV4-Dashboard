@@ -129,6 +129,7 @@ class CANManager:
         try:
             while self._rx_thread_active:
                 elapsed = time.time() - start_time
+                value = 0
 
                 # Generate simulated data for each message in the database
                 for message in self.db.messages:
@@ -140,15 +141,14 @@ class CANManager:
                             sim_signals[signal.name] = 1 if elapsed >= (i + 1) * 5 else 0
                     else:
                         for signal in message.signals:
-                            value = self.shared_data.get_signal(signal.name)
-                            if not value or value >= signal.maximum:
+                            if value >= signal.maximum:
                                 continue
-                            value += 1
                             sim_signals[signal.name] = value
 
                     # Update shared data
                     self.shared_data.update(sim_signals)
 
+                value += 1
                 time.sleep(0.05)
         except Exception as e:
             print(f"RX simulation thread error: {e}")
