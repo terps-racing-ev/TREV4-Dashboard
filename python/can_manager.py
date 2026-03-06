@@ -135,9 +135,9 @@ class CANManager:
                     for signal in message.signals:
                         value = self.shared_data.get_signal(signal.name) or 0
                         
-                        value += 1
                         if value >= signal.maximum:
-                            value = signal.minimum
+                            continue
+                        value += 1
                         
                         sim_signals[signal.name] = value
                     
