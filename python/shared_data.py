@@ -29,7 +29,7 @@ class LatestValuesTable:
                 }
                 
     
-    def get_signal(self, signal_name: str, timeout: float = 1e7) -> Optional[Any]: # big number so that it doesn't timeout by default 
+    def get_signal(self, signal_name: str, timeout: float = 5.0) -> Optional[Any]: 
         """
         Get a signal value by name.
         Returns the value or None if not found.

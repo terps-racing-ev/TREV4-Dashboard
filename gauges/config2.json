@@ -16,8 +16,8 @@
     {
       "type": "StatusHeader",
       "box_xywh": [0, 10, 800, 26],
-      "hw_signals": ["IMDFault", "AMSFault", "BSPDFault"],
-      "sw_signals": ["APPSFault", "BrakeFault"]
+      "hw_signals": ["HW1", "HW2", "HW3"],
+      "sw_signals": ["SW1", "SW2", "SW3"]
     },
 
     {
