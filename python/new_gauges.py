@@ -136,7 +136,7 @@ class Gauge:
         self.shared_data = shared_data
 
     def get_value(self) -> float:
-        v = self.shared_data.get_signal(self.signal)
+        v = self.shared_data.get_signal(self.signal, 5.0)
         return float(v) if v is not None else None 
 
     def clamp_pct(self, val) -> float:

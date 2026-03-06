@@ -124,26 +124,31 @@ class CANManager:
         
         print("RX simulation thread started")
         self._rx_thread_active = True
-        
+        start_time = time.time()
+
         try:
             while self._rx_thread_active:
+                elapsed = time.time() - start_time
+
                 # Generate simulated data for each message in the database
                 for message in self.db.messages:
-                    
-                    # Create random signal values
                     sim_signals = {}
-                    for signal in message.signals:
-                        value = self.shared_data.get_signal(signal.name) or 0
-                        
-                        if value >= signal.maximum:
-                            continue
-                        value += 1
-                        
-                        sim_signals[signal.name] = value
-                    
+
+                    if message.name == "statustest":
+                        # Signals activate one-by-one in 5s increments, ordered by start bit
+                        for i, signal in enumerate(sorted(message.signals, key=lambda s: s.start)):
+                            sim_signals[signal.name] = 1 if elapsed >= (i + 1) * 5 else 0
+                    else:
+                        for signal in message.signals:
+                            value = self.shared_data.get_signal(signal.name) or 0
+                            if value >= signal.maximum:
+                                continue
+                            value += 1
+                            sim_signals[signal.name] = value
+
                     # Update shared data
                     self.shared_data.update(sim_signals)
-                
+
                 time.sleep(0.05)
         except Exception as e:
             print(f"RX simulation thread error: {e}")
