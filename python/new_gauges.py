@@ -212,7 +212,7 @@ class SpeedArcGauge(Gauge):
 
         # ── Centre readout ────────────────────────────────────────
         if val is None:
-            render_text(surf, '-', 72, WHITE, cx, cy - 10, bold=True)
+            render_text(surf, ':(', 72, WHITE, cx, cy - 10, bold=True)
         else:
             fmt = f"{val:.{self.decimal_places}f}"
             render_text(surf, fmt, 72, WHITE, cx, cy - 10, bold=True)
