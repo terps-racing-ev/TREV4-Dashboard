@@ -823,7 +823,7 @@ class StatusHeader(Gauge):
             if not n:
                 return
 
-            gap  = max(2, w // 2 // len(signals))   # px between each chevron
+            gap  = max(2, h // 6)   # px between each chevron
             sec_w = (half_w - gap * (n - 1)) // n
 
             for i, sig in enumerate(signals):
