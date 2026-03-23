@@ -191,7 +191,8 @@ class CANManager:
                     can_msg.is_extended_id = True
 
                     if self.sim_mode:
-                        print(f"[TX SIM] {msg_name}: {sigs}")
+                        pass
+                        #print(f"[TX SIM] {msg_name}: {sigs}")
                     elif self.bus is not None:
                         self.bus.send(can_msg)
 
