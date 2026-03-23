@@ -161,6 +161,14 @@
     },
 
     {
+      "type": "Alert",
+      "signal": "Speed",
+      "label": "HIGH SPEED",
+      "thresh": 90,
+      "box_xywh": [275, 280, 250, 50]
+    },
+
+    {
       "type": "DarkFaultRow",
       "box_xywh": [0, 452, 800, 28],
       "IMD": "IMDFault",
