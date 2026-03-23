@@ -813,17 +813,19 @@ class StatusHeader(Gauge):
         surf.fill(_ND_DARK_HDR, (x, y, w, h))
 
 
+        tip  = max(4, h // 3)    # chevron point depth
+        div  = tip * 2           # centre divider width
+        pad  = max(1, h // 12)  # vertical inset
+        half_w = (w - div) // 2
+
         def _draw_sections(signals, start_x, fn):
             n = len(signals)
             if not n:
                 return
-            tip  = max(4, h // 3)    # chevron point depth
-            gap  = max(2, w // 2 // len(signals))   # px between each chevron
-            div  = tip * 2           # centre divider width
-            pad  = max(1, h // 12)  # vertical inset
 
-            half_w = (w - div) // 2
+            gap  = max(2, w // 2 // len(signals))   # px between each chevron
             sec_w = (half_w - gap * (n - 1)) // n
+
             for i, sig in enumerate(signals):
                 v = self.shared_data.get_signal(sig)
                 active = v is not None and v == 1
