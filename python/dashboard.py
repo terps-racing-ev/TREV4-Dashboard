@@ -6,7 +6,7 @@ import time
 import sys
 import json
 from pathlib import Path
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Optional
 import pygame
 
 from python.gauges import *
@@ -56,11 +56,15 @@ def _overlay_rounded_rect(surf, color, rect, radius=4, border=0, border_col=None
 class Dashboard:
     """Handles rendering to a Pygame surface."""
 
-    def __init__(self, shared_data: LatestValuesTable, config_path: Path) -> None:
-        
+    def __init__(
+        self,
+        shared_data: LatestValuesTable,
+        config_path: Optional[Path] = None,
+        config_dict: Optional[dict] = None,
+    ) -> None:
         self.shared_data = shared_data
         self.config_path = config_path
-        
+
         # Default values
         self.font_path = "/assets/monofonto_rg.otf"
         self.bg_color = BLACK
@@ -69,32 +73,48 @@ class Dashboard:
 
         self._ui_thread_active = False
         self._flash_state = False
-        self._flash_t     = 0.0
+        self._flash_t = 0.0
 
-        # Load config and instantiate gauges
-        if not self.load_config():
+        if config_dict is not None:
+            success = self._apply_config(config_dict)
+        elif config_path is not None:
+            success = self.load_config()
+        else:
+            print("Dashboard: need config_path or config_dict")
+            success = False
+        if not success:
             return
-    
-    def load_config(self) -> bool:
-        """Load gauges from config.json. Returns True if successful."""
-        try:
-            with open(self.config_path) as f:
-                config = json.load(f)
 
-            self.bg_color = config.get("display").get("bg_color")
-            
+    def _apply_config(self, config: dict) -> bool:
+        """Apply display and gauges from a config dict. Returns True if successful."""
+        try:
+            display = config.get("display") or {}
+            self.bg_color = display.get("bg_color", self.bg_color)
+
             gauge_configs = config.get("gauges", [])
             if not gauge_configs:
                 print("No gauges in config")
                 return False
-            
+
             for gauge_cfg in gauge_configs:
                 gauge = self._instantiate_gauge(gauge_cfg)
                 if gauge:
                     self.gauges.append(gauge)
-            
+
             print(f"Loaded {len(self.gauges)} gauge(s) from config")
             return len(self.gauges) > 0
+        except Exception as e:
+            print(f"Error applying config: {e}")
+            return False
+
+    def load_config(self) -> bool:
+        """Load gauges from config file (config_path). Returns True if successful."""
+        if self.config_path is None:
+            return False
+        try:
+            with open(self.config_path, encoding="utf-8") as f:
+                config = json.load(f)
+            return self._apply_config(config)
         except Exception as e:
             print(f"Error loading config: {e}")
             return False

@@ -154,18 +154,44 @@ class CANManager:
     def run_tx_thread(self) -> None:
         """
         TX thread main loop. Runs on 100 ms schedule (10 Hz).
-        For now, this is a stub (no messages to transmit).
+        Broadcasts all configured messages from shared_data.
         """
         import time
-        
+
         print("TX thread started")
-        self._tx_thread_active = True 
-        tx_interval = 0.1  # 100 ms for 10 Hz
-        
+        self._tx_thread_active = True
+        tx_interval = 0.1  # 100 ms / 10 Hz
+
+        # Messages to transmit, mapped to their signals with defaults
+        TX_MESSAGES = {
+            "test": ["Speed", "APPS"],
+            "tiretemp": ["TTempFL", "TTempFR", "TTempBL", "TTempBR"],
+            "testagain": ["PackTemp"],
+        }
+
         try:
             while self._tx_thread_active:
-                # TODO: Build and transmit scheduled messages here
+                for msg_name, signal_names in TX_MESSAGES.items():
+                    # Pull latest values from shared_data, defaulting to 0
+                    sigs = {
+                        name: (self.shared_data.get_signal(name) or 0)
+                        for name in signal_names
+                    }
+
+                    can_msg = self.encode_message(msg_name, sigs)
+                    if can_msg is None:
+                        continue
+
+                    # Mark as extended frame (29-bit ID) to match J1939PG format
+                    can_msg.is_extended_id = True
+
+                    if self.sim_mode:
+                        print(f"[TX SIM] {msg_name}: {sigs}")
+                    elif self.bus is not None:
+                        self.bus.send(can_msg)
+
                 time.sleep(tx_interval)
+
         except Exception as e:
             print(f"TX thread error: {e}")
         finally:
