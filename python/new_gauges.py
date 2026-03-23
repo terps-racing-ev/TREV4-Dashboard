@@ -812,10 +812,10 @@ class StatusHeader(Gauge):
         x, y, w, h = self.x, self.y, self.w, self.h
         surf.fill(_ND_DARK_HDR, (x, y, w, h))
 
-        tip  = max(4, h // 3)   # chevron point depth
-        gap  = 3                 # px between each chevron
+        tip  = max(4, h // 3)    # chevron point depth
+        gap  = max(2, h // 8)   # px between each chevron
         div  = tip * 2           # centre divider width
-        pad  = 2                 # vertical inset
+        pad  = max(1, h // 12)  # vertical inset
 
         half_w = (w - div) // 2
 
