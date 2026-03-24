@@ -376,14 +376,9 @@ class Dashboard:
         """
         frame = self.create_frame()
         
-        #check if a can bus error was raised
-        if self.shared_data.get_signal("CAN_ERROR"):
-            _overlay_text(frame, "CAN BUS ERROR", 32, RED, self.xres // 2, self.yres // 2, bold=True, anchor="center")
-            return frame
-        else:
-            # Update all gauges
-            for gauge in self.gauges:
-                gauge.update(frame)
+        # Update all gauges
+        for gauge in self.gauges:
+            gauge.update(frame)
 
         # self._draw_alert_overlay(frame)
         return frame

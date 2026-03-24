@@ -30,9 +30,6 @@ class CANManager:
         
         # Simulation mode
         self.sim_mode = sim_mode
-        
-        # turn this on to simulate can errors
-        self.test_can_error = False
     
     def load_dbc(self) -> bool:        
         try:
@@ -114,7 +111,6 @@ class CANManager:
                     print(msg)
                     self.decode_message(msg)
         except Exception as e:
-            self.shared_data.update({"CAN_ERROR": str(e)})
             print(f"RX thread error: {e}")
         finally:
             self._rx_thread_active = False
@@ -147,9 +143,7 @@ class CANManager:
                     
                     # Update shared data
                     self.shared_data.update(sim_signals)
-                                # Check for test CAN error
-                if self.test_can_error and self.sim_mode:
-                    self.shared_data.update({"CAN_ERROR": "Test CAN bus failure"})
+                
                 time.sleep(0.05)
         except Exception as e:
             print(f"RX simulation thread error: {e}")
