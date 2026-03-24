@@ -3,6 +3,7 @@ import sys
 import json
 from pathlib import Path
 from typing import Tuple, Dict
+from python.constants.events import SCROLL
 from python.dashboard import Dashboard
 from python.graphics_driver import *
 import pygame
@@ -80,6 +81,8 @@ class PageManager:
                     elif event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT:
                         print(f"\n Switching to page: {(self.current_page + 1) % len(self.pages)}")
                         self.current_page = (self.current_page + 1) % len(self.pages)
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                        pygame.event.post(pygame.event.Event(SCROLL))
                                 
                 frame = self.pages[self.current_page].render_frame()
                 blit_surface(frame)

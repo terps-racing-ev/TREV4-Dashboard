@@ -362,6 +362,13 @@ class Dashboard:
                     BRAKE=cfg.get("BRAKE"),
                     shared_data=self.shared_data,
                 )
+            elif gauge_type == "FullList":
+                signals = cfg.get("signals", [])
+                return FullListCard(
+                    box_xywh=box_xywh,
+                    signals=signals,
+                    shared_data=self.shared_data,
+                    text_size=cfg.get("text_size", 16),
             elif gauge_type == "StatusHeader":
                 return StatusHeader(
                     box_xywh=box_xywh,

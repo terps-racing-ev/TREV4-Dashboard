@@ -1,0 +1,56 @@
+{
+  "display": {
+    "width": 800,
+    "height": 480,
+    "bg_color": [0, 7, 255]
+  },
+  "gauges": [
+    {
+      "type": "FullList",
+      "signals": [
+        "MotorRPM", 
+        "PackVoltage", 
+        "PackCurrent", 
+        "StateOfCharge", 
+        "CellVoltageMin", 
+        "CellVoltageMax",
+        "Speed",
+        "Throttle",
+        "Brake",
+        "TTempFL",
+        "TTempFR",
+        "TTempRL",
+        "TTempRR",
+        "MotorRPM", 
+        "PackVoltage", 
+        "PackCurrent", 
+        "StateOfCharge", 
+        "CellVoltageMin", 
+        "CellVoltageMax",
+        "Speed",
+        "Throttle",
+        "Brake",
+        "TTempFL",
+        "TTempFR",
+        "TTempRL",
+        "TTempRR",
+        "MotorRPM", 
+        "PackVoltage", 
+        "PackCurrent", 
+        "StateOfCharge", 
+        "CellVoltageMin", 
+        "CellVoltageMax",
+        "Speed",
+        "Throttle",
+        "Brake",
+        "TTempFL",
+        "TTempFR",
+        "TTempRL",
+        "TTempRR"
+      ],
+      "box_xywh": [0, 0, 800, 480],
+      "text_size": 32
+    }
+    
+  ]
+}
