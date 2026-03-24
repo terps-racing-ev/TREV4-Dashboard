@@ -15,7 +15,6 @@ import threading
 from pathlib import Path
 from typing import Optional, Any, Dict
 from python.shared_data import LatestValuesTable
-from python.constants.events import *
 
 import pygame
 
@@ -847,41 +846,7 @@ class StatusHeader(Gauge):
             (cx,          y + h - pad),
             (cx - div//2, cy),
         ])
-class FullListCard(Gauge):
-    '''this is just a list of all the signals that are defined for the gauge'''
-    def __init__(self, box_xywh, text_size: int, signals: list, shared_data):
-        x, y, w, h = box_xywh
-        super().__init__("", "", 0, 1, shared_data)
-        self.x, self.y, self.w, self.h = x, y, w, h
-        self.text_size = text_size
-        self.signals = signals
-        self.scroll_offset = 0
-
-    def update(self, surf):
-        x, y, w, h = self.x, self.y, self.w, self.h
-        surf.fill(_ND_CELL_BG, (x, y, w, h))
-        
-        # Handle space bar press
-        for event in pygame.event.get():
-            if event.type == SCROLL:
-                self.scroll_offset += 3 * self.text_size
-                
-                # Calculate total content height
-                total_height = len(self.signals) * self.text_size
-                
-                # If bottom of text is above bottom of viewport, reset to top
-                if y + 10 + total_height - self.scroll_offset < y + h:
-                    self.scroll_offset = 0
-        
-        # Draw signals with scroll offset
-        for i, sig in enumerate(self.signals):
-            v = self.shared_data.get_signal(sig)
-            val_str = '-' if v is None else str(v)
-            text_y = y + 10 + i * self.text_size - self.scroll_offset
-            
-            # Only render if text is within visible bounds
-            if text_y + self.text_size > y and text_y < y + h:
-                render_text(surf, f"{sig}: {val_str}", self.text_size, _ND_LABEL, x + 10, text_y, anchor="midleft")
+ 
 
 
 

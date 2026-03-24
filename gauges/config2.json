@@ -2,7 +2,7 @@
   "display": {
     "width": 800,
     "height": 480,
-    "bg_color": [0, 7, 9]
+    "bg_color": [0, 7, 255]
   },
   "gauges": [
     {
