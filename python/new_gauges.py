@@ -141,7 +141,7 @@ class Gauge:
         return float(v) if v is not None else None 
 
     def clamp_pct(self, val) -> float:
-        if not val:
+        if val is None:
             return 0.0
         r = self.max_val - self.min_val
         if r == 0:
@@ -212,8 +212,8 @@ class SpeedArcGauge(Gauge):
                             math.radians(fill_end), math.radians(start_deg), arc_w)
 
         # ── Centre readout ────────────────────────────────────────
-        if not val:
-            render_text(surf, '-', 72, WHITE, cx, cy - 10, bold=True)
+        if val is None:
+            render_text(surf, ':(', 72, WHITE, cx, cy - 10, bold=True)
         else:
             fmt = f"{val:.{self.decimal_places}f}"
             render_text(surf, fmt, 72, WHITE, cx, cy - 10, bold=True)
@@ -280,7 +280,7 @@ class VerticalBarGauge(Gauge):
 
         # Value overlay
         if self.show_value:
-            if not val:
+            if val is None:
                 render_text(surf, '-', 14, WHITE, x + w//2, y + 16)
             else:
                 fmt = f"{val:.{self.decimal_places}f}"
@@ -321,7 +321,7 @@ class NumericCard(Gauge):
         # Label
         render_text(surf, self.label, 11, DIM_WHITE, x + 12, y + 13, anchor="midleft")
         # Value
-        if not val:
+        if val is None:
             render_text(surf, '-', 22, WHITE, x + w - 8, y + h//2, anchor="midright")
         else:
             fmt = f"{val:.{self.decimal_places}f}"
@@ -372,12 +372,12 @@ class TireTempsWidget:
 
         for label, sig, dx, dy in self.corners:
             val = self.get_val(sig)
-            col = PANEL if not val else temp_color(val, self.min_val, self.max_val)
+            col = PANEL if val is None else temp_color(val, self.min_val, self.max_val)
             tx = cx + dx - self.tw//2
             ty = cy + dy - self.th//2
             draw_rounded_rect(surf, col, (tx, ty, self.tw, self.th), radius=4)
             render_text(surf, label, 10, BLACK, tx + self.tw//2, ty + 10)
-            if not val:
+            if val is None:
                 render_text(surf, '-', 14, BLACK, tx + self.tw//2, ty + 22, bold=True)
             else:
                 render_text(surf, f"{val:.0f}°", 14, BLACK, tx + self.tw//2, ty + 22, bold=True)
@@ -414,7 +414,7 @@ class SoCRingGauge(Gauge):
                             math.radians(end_a), math.radians(30), 8)
 
         # Centre text
-        if not val:
+        if val is None:
             render_text(surf, '-', 26, WHITE, cx, cy - 4, bold=True)
         else:
             render_text(surf, f"{val:.0f}%", 26, WHITE, cx, cy - 4, bold=True)
@@ -452,7 +452,7 @@ class RPMBar(Gauge):
 
         # Label + value
         render_text(surf, self.label, 11, DIM_WHITE, x + 8, y + h//2, anchor="midleft")
-        if not val:
+        if val is None:
             render_text(surf, '-', 14, WHITE, x + w - 8, y + h//2, anchor="midright")
         else:
             fmt = f"{val:.{self.decimal_places}f}"
@@ -616,7 +616,7 @@ class DarkCell(Gauge):
             pygame.draw.line(surf, _ND_BORDER, (x, y + h - 1), (x + w, y + h - 1), 1)
         pygame.draw.rect(surf, self.accent, (x, y + 6, 3, h - 12), border_radius=1)
         render_text(surf, self.label, 7, _ND_LABEL, x + 14, y + 10, anchor="midleft")
-        if not val:
+        if val is None:
             render_text(surf, '-', 28, self.value_color, x + 14, y + h - 14, anchor="midleft")
         else:
             val_str = f"{val:.{self.decimal_places}f}"
@@ -649,8 +649,8 @@ class CellVoltageCard:
         vmax_v = self.shared_data.get_signal(self.signal_max)
         vmin = float(vmin_v) if vmin_v is not None else None
         vmax = float(vmax_v) if vmax_v is not None else None
-        render_text(surf, '-' if not vmin else f"{vmin:.2f}", 20, _ND_AMBER, x + 14, y + h // 2 + 6, anchor="midleft")
-        render_text(surf, '-' if not vmax else f"{vmax:.2f}", 20, _ND_CYAN, x + w // 2 + 10, y + h // 2 + 6, anchor="midleft")
+        render_text(surf, '-' if vmin is None else f"{vmin:.2f}", 20, _ND_AMBER, x + 14, y + h // 2 + 6, anchor="midleft")
+        render_text(surf, '-' if vmax is None else f"{vmax:.2f}", 20, _ND_CYAN, x + w // 2 + 10, y + h // 2 + 6, anchor="midleft")
 
 
 class DarkSpeedArc(Gauge):
@@ -695,7 +695,7 @@ class DarkSpeedArc(Gauge):
                          self._ARC_START, self._ARC_START + pct * self._ARC_SWEEP,
                          self._ARC_W, _nd_gauge_color(pct))
 
-        if not val:
+        if val is None:
             render_text(surf, '-', 72, _ND_WHITE, cx, cy - 6, bold=True)
         else:
             val_str = str(int(val)) if self.decimal_places == 0 else f"{val:.{self.decimal_places}f}"
@@ -719,10 +719,10 @@ class DarkTireQuad:
             tx, ty = x + (i % 2) * hw, y + (i // 2) * hh
             v = self.shared_data.get_signal(sig)
             val = float(v) if v is not None else None
-            bg = _ND_BORDER if not val else (_ND_TIRE_COLD if val < 60 else _ND_TIRE_OPT if val < 95 else _ND_TIRE_HOT)
+            bg = _ND_BORDER if val is None else (_ND_TIRE_COLD if val < 60 else _ND_TIRE_OPT if val < 95 else _ND_TIRE_HOT)
             surf.fill(tuple(c // 4 for c in bg), (tx, ty, hw, hh))
             pygame.draw.rect(surf, _ND_BORDER, (tx, ty, hw, hh), 1)
-            if not val:
+            if val is None:
                 render_text(surf, '-', 18, _ND_WHITE, tx + hw // 2, ty + hh // 2 + 4, bold=True)
             else:
                 render_text(surf, f"{val:.0f}\u00b0", 18, _ND_WHITE, tx + hw // 2, ty + hh // 2 + 4, bold=True)
@@ -756,10 +756,8 @@ class Alert(Gauge):
         super().__init__(signal, label, 0, 0, shared_data)
         self.x, self.y, self.w, self.h = x, y, w, h
         self.cx = x + w // 2
+        self.cy = y + h // 2
         self.thresh = thresh
-        # Mirrors new_dash: GCY = MAIN_Y + (MAIN_H - CENTER_BOTTOM_H) // 2 + 10
-        # With box (175, 36, 450, 356): cy = 36 + (356-60)//2 + 10 = 194
-        self.cy = y + (h - 60) // 2 + 10
 
     def update(self, surf):
         """Flash a warning card over the centre column when thresholds are exceeded."""
@@ -815,28 +813,32 @@ class StatusHeader(Gauge):
         x, y, w, h = self.x, self.y, self.w, self.h
         surf.fill(_ND_DARK_HDR, (x, y, w, h))
 
-        tip  = max(4, h // 3)   # chevron point depth
-        gap  = 3                 # px between each chevron
-        div  = tip * 2           # centre divider width
-        pad  = 2                 # vertical inset
 
+        tip  = max(4, h // 3)    # chevron point depth
+        div  = tip * 2           # centre divider width
+        pad  = max(1, h // 12)  # vertical inset
         half_w = (w - div) // 2
 
         def _draw_sections(signals, start_x, fn):
             n = len(signals)
             if not n:
                 return
+
+            gap  = max(2, h // 6)   # px between each chevron
             sec_w = (half_w - gap * (n - 1)) // n
+
             for i, sig in enumerate(signals):
                 v = self.shared_data.get_signal(sig)
-                active = v is not None and v == 1 
+                active = v is not None and v == 1
                 sx = start_x + i * (sec_w + gap)
                 pts = fn(sx, y + pad, sec_w, h - pad * 2, tip)
                 pygame.draw.polygon(surf, self._ACTIVE if active else self._INACTIVE, pts)
                 pygame.draw.polygon(surf, self._BORDER, pts, 1)
+                render_text(surf, sig, max(6, h // 3), BLACK if active else _ND_DIM,
+                            sx + sec_w // 2, y + h // 2)
 
         _draw_sections(self.hw_signals, x, self._chevron_r)
-        _draw_sections(self.sw_signals, x + half_w + div, self._chevron_l)
+        _draw_sections(list(reversed(self.sw_signals)), x + half_w + div, self._chevron_l)
 
         # Centre diamond divider
         cx = x + half_w + div // 2

@@ -124,26 +124,31 @@ class CANManager:
         
         print("RX simulation thread started")
         self._rx_thread_active = True
-        
+        start_time = time.time()
+        value = 0
+
         try:
             while self._rx_thread_active:
+                elapsed = time.time() - start_time
+
                 # Generate simulated data for each message in the database
                 for message in self.db.messages:
-                    
-                    # Create random signal values
                     sim_signals = {}
-                    for signal in message.signals:
-                        value = self.shared_data.get_signal(signal.name) or 0
-                        
-                        value += 1
-                        if value >= signal.maximum:
-                            value = signal.minimum
-                        
-                        sim_signals[signal.name] = value
-                    
+
+                    if message.name == "statustest":
+                        # Signals activate one-by-one in 5s increments, ordered by start bit
+                        for i, signal in enumerate(sorted(message.signals, key=lambda s: s.start)):
+                            sim_signals[signal.name] = 1 if elapsed >= (i + 1) * 5 else 0
+                    else:
+                        for signal in message.signals:
+                            if value >= signal.maximum:
+                                continue
+                            sim_signals[signal.name] = value
+
                     # Update shared data
                     self.shared_data.update(sim_signals)
-                
+
+                value += 1
                 time.sleep(0.05)
         except Exception as e:
             print(f"RX simulation thread error: {e}")
@@ -154,18 +159,45 @@ class CANManager:
     def run_tx_thread(self) -> None:
         """
         TX thread main loop. Runs on 100 ms schedule (10 Hz).
-        For now, this is a stub (no messages to transmit).
+        Broadcasts all configured messages from shared_data.
         """
         import time
-        
+
         print("TX thread started")
-        self._tx_thread_active = True 
-        tx_interval = 0.1  # 100 ms for 10 Hz
-        
+        self._tx_thread_active = True
+        tx_interval = 0.1  # 100 ms / 10 Hz
+
+        # Messages to transmit, mapped to their signals with defaults
+        TX_MESSAGES = {
+            "test": ["Speed", "APPS"],
+            "tiretemp": ["TTempFL", "TTempFR", "TTempBL", "TTempBR"],
+            "testagain": ["PackTemp"],
+        }
+
         try:
             while self._tx_thread_active:
-                # TODO: Build and transmit scheduled messages here
+                for msg_name, signal_names in TX_MESSAGES.items():
+                    # Pull latest values from shared_data, defaulting to 0
+                    sigs = {
+                        name: (self.shared_data.get_signal(name) or 0)
+                        for name in signal_names
+                    }
+
+                    can_msg = self.encode_message(msg_name, sigs)
+                    if can_msg is None:
+                        continue
+
+                    # Mark as extended frame (29-bit ID) to match J1939PG format
+                    can_msg.is_extended_id = True
+
+                    if self.sim_mode:
+                        pass
+                        #print(f"[TX SIM] {msg_name}: {sigs}")
+                    elif self.bus is not None:
+                        self.bus.send(can_msg)
+
                 time.sleep(tx_interval)
+
         except Exception as e:
             print(f"TX thread error: {e}")
         finally:

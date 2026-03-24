@@ -47,14 +47,6 @@ BO_ 2147540653 tiretemp: 8 Vector__XXX
 	SG_ TTempBL : 32|16@1- (0.1,0) [0|99] "C" Vector__XXX
 	SG_ TTempBR : 48|16@1- (0.1,0) [0|99] "C" Vector__XXX
 
-BO_ 2147540691 statustest: 8 Vector__XXX
-	SG_ HW1 : 0|1@1+ (1,0) [0|1] "" Vector__XXX
-	SG_ HW2 : 1|1@1+ (1,0) [0|1] "" Vector__XXX
-	SG_ HW3 : 2|1@1+ (1,0) [0|1] "" Vector__XXX
-	SG_ SW1 : 3|1@1+ (1,0) [0|1] "" Vector__XXX
-	SG_ SW2 : 4|1@1+ (1,0) [0|1] "" Vector__XXX
-	SG_ SW3 : 5|1@1+ (1,0) [0|1] "" Vector__XXX
-
 BO_ 2147540690 testagain: 8 Vector__XXX
 	SG_ PackTemp : 0|16@1- (0.1, 0) [0|99] "C" Vector__XXX
 
