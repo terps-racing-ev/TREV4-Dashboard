@@ -368,7 +368,8 @@ class Dashboard:
                     box_xywh=box_xywh,
                     signals=signals,
                     shared_data=self.shared_data,
-                    text_size=cfg.get("text_size", 16),
+                    text_size=cfg.get("text_size", 16)
+                )
             elif gauge_type == "StatusHeader":
                 return StatusHeader(
                     box_xywh=box_xywh,
