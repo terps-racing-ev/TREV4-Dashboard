@@ -64,7 +64,8 @@ def main():
     config0 = search_for_file("gauges/config.json", SEARCH_PATHS)
     config1 = search_for_file("gauges/config1.json", SEARCH_PATHS)
     config2 = search_for_file("gauges/config2.json", SEARCH_PATHS)
-    if not config0 or not config1 or not config2:
+    config3 = search_for_file("gauges/fullscreen.json", SEARCH_PATHS)
+    if not config0 or not config1 or not config2 or not config3:
         return
     
     # Shared state for all threads to access values
@@ -76,7 +77,8 @@ def main():
     page1 = Dashboard(shared_data=shared_data, config_path=config0)
     page2 = Dashboard(shared_data=shared_data, config_path=config1)
     page3 = Dashboard(shared_data=shared_data, config_path=config2)
-    pages = PageManager([page1, page2, page3])
+    page4 = Dashboard(shared_data=shared_data, config_path=config3)
+    pages = PageManager([page1, page2, page3, page4])
     
     # Load DBC
     if not can_mgr.load_dbc():

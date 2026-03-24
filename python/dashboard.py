@@ -14,7 +14,8 @@ from python.new_gauges import (SpeedArcGauge, VerticalBarGauge, NumericCard,
                         TireTempsWidget, SoCRingGauge, RPMBar,
                         StatusBar, WarningLights,
                         DarkStatusBar, ShiftLightsGauge, DarkCell,
-                        CellVoltageCard, DarkSpeedArc, DarkTireQuad, DarkFaultRow)
+                        CellVoltageCard, DarkSpeedArc, DarkTireQuad, DarkFaultRow,
+                        FullListCard)
 from python.graphics_driver import *
 from python.constants.colors import *
 from python.shared_data import LatestValuesTable
@@ -345,6 +346,14 @@ class Dashboard:
                     APPS=cfg.get("APPS"),
                     BRAKE=cfg.get("BRAKE"),
                     shared_data=self.shared_data,
+                )
+            elif gauge_type == "FullList":
+                signals = cfg.get("signals", [])
+                return FullListCard(
+                    box_xywh=box_xywh,
+                    signals=signals,
+                    shared_data=self.shared_data,
+                    text_size=cfg.get("text_size", 16),
                 )
             else:
                 print(f"Unknown gauge type: {gauge_type}")
