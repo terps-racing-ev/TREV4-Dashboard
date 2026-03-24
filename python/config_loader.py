@@ -71,8 +71,11 @@ def _find_file_on_usb(filename: str) -> Path | None:
         for sub in root.iterdir():
             if sub.is_dir():
                 candidate = sub / filename
-                if candidate.is_file():
-                    return candidate
+                try:
+                    if candidate.is_file():
+                        return candidate
+                except PermissionError:
+                        pass
     return None
 
 
