@@ -83,7 +83,9 @@ class PageManager:
                         self.current_page = (self.current_page + 1) % len(self.pages)
                     elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                         pygame.event.post(pygame.event.Event(SCROLL))
-                                
+                    elif event.type == SCROLL:
+                        self.pages[self.current_page].scroll_down()
+
                 frame = self.pages[self.current_page].render_frame()
                 blit_surface(frame)
 

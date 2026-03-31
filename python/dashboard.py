@@ -8,6 +8,11 @@ import json
 from pathlib import Path
 from typing import Tuple, Dict, Optional
 import pygame
+from python.constants.events import SCROLL
+from gpiozero import Button
+
+SCROLL_LIST_BUTTON = Button(2, bounce_time=0.1)
+SCROLL_LIST_BUTTON.when_pressed = lambda: pygame.event.post(pygame.event.Event(SCROLL))
 
 from python.gauges import *
 from python.new_gauges import *
@@ -66,6 +71,7 @@ class Dashboard:
         self.bg_color = BLACK
         self.xres, self.yres = 800, 480
         self.gauges = []
+        self.scroll_offset = 0
 
         self._ui_thread_active = False
         self._flash_state = False
@@ -406,12 +412,25 @@ class Dashboard:
         """
         frame = self.create_frame()
         
-        # Update all gauges
+        # Update all gauges with offset
         for gauge in self.gauges:
-            gauge.update(frame)
+            if hasattr(gauge, 'y'):
+                gauge.y -= self.scroll_offset
+                gauge.update(frame)
+                gauge.y += self.scroll_offset
+            else:
+                gauge.update(frame)
 
         # self._draw_alert_overlay(frame)
         return frame
+    
+    def scroll_down(self):
+        self.scroll_offset += 50
+        # Calculate max scroll
+        max_y = max((getattr(gauge, 'y', 0) + getattr(gauge, 'h', 0) for gauge in self.gauges), default=0)
+        max_scroll = max(0, max_y - self.yres)
+        if self.scroll_offset > max_scroll:
+            self.scroll_offset = 0
     
     def _get(self, sig, default=0.0) -> float:
         v = self.shared_data.get_signal(sig)
