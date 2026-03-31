@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Tuple, Dict
 from python.constants.events import SCROLL
 from python.dashboard import Dashboard
+from python.debug_simulator import DebugSimulator
 from python.graphics_driver import *
 import pygame
 
@@ -44,6 +45,30 @@ class PageManager:
         self._flash_state = False
         self._flash_t     = 0.0
         self.FPS_CAP = 60
+        self.shared_data = pages[0].shared_data if pages else None
+        self.debug_simulator = DebugSimulator(self.shared_data) if self.shared_data is not None else None
+
+    def _draw_debug_overlay(self, surf: pygame.Surface) -> None:
+        if not self._flash_state or self.debug_simulator is None or not self.debug_simulator.enabled:
+            return
+        _overlay_rounded_rect(
+            surf,
+            (255, 37, 37),
+            (_ALERT_X, _ALERT_BOTTOM - _ALERT_H, _ALERT_W, _ALERT_H),
+            radius=3,
+            border=2,
+            border_col=(242, 242, 242),
+        )
+        _overlay_text(
+            surf,
+            "DEBUG MODE",
+            16,
+            (242, 242, 242),
+            _ALERT_X + _ALERT_W // 2,
+            _ALERT_BOTTOM - _ALERT_H // 2,
+            bold=True,
+            anchor="center",
+        )
 
     def _draw_alert_overlay(self, surf: pygame.Surface) -> None:
         """Flash a warning card over the centre column when thresholds are exceeded."""
@@ -83,11 +108,25 @@ class PageManager:
                         self.current_page = (self.current_page + 1) % len(self.pages)
                     elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                         pygame.event.post(pygame.event.Event(SCROLL))
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_t and self.debug_simulator is not None:
+                        next_state = not self.debug_simulator.enabled
+                        self.debug_simulator.set_enabled(next_state)
+                        print(f"\nDebug simulator {'enabled' if next_state else 'disabled'}")
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_w and self.debug_simulator is not None:
+                        self.debug_simulator.set_throttle(True)
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_s and self.debug_simulator is not None:
+                        self.debug_simulator.set_brake(True)
+                    elif event.type == pygame.KEYUP and event.key == pygame.K_w and self.debug_simulator is not None:
+                        self.debug_simulator.set_throttle(False)
+                    elif event.type == pygame.KEYUP and event.key == pygame.K_s and self.debug_simulator is not None:
+                        self.debug_simulator.set_brake(False)
                                 
-                frame = self.pages[self.current_page].render_frame()
-                blit_surface(frame)
-
                 dt = clock.tick_busy_loop(self.FPS_CAP)
+                if self.debug_simulator is not None:
+                    self.debug_simulator.update(dt / 1000.0)
+                frame = self.pages[self.current_page].render_frame()
+                self._draw_debug_overlay(frame)
+                blit_surface(frame)
                 self._flash_t += dt / 1000.0
                 if self._flash_t >= 0.5:
                     self._flash_t, self._flash_state = 0.0, not self._flash_state

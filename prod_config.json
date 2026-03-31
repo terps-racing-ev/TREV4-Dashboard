@@ -74,6 +74,16 @@
         {"type": "DarkTireQuad", "box_xywh": [625, 249, 175, 143], "FL": "TTempFL", "FR": "TTempFR", "RL": "TTempBL", "RR": "TTempBR"},
         {"type": "DarkFaultRow", "box_xywh": [0, 452, 800, 28], "IMD": "IMDFault", "AMS": "AMSFault", "BSPD": "BSPDFault", "APPS": "APPSFault", "BRAKE": "BrakeFault"}
       ]
+    },
+    {
+      "display": {
+        "width": 800,
+        "height": 480,
+        "bg_color": [5, 5, 5]
+      },
+      "gauges": [
+        {"type": "RetroHeroDash", "box_xywh": [0, 0, 800, 480]}
+      ]
     }
   ]
 }
