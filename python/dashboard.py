@@ -9,10 +9,16 @@ from pathlib import Path
 from typing import Tuple, Dict, Optional
 import pygame
 from python.constants.events import SCROLL
-from gpiozero import Button
+from gpiozero import Device
 
-SCROLL_LIST_BUTTON = Button(2, bounce_time=0.1)
-SCROLL_LIST_BUTTON.when_pressed = lambda: pygame.event.post(pygame.event.Event(SCROLL))
+try:
+    from gpiozero.pins.pigpio import PiGPIOFactory
+    Device.pin_factory = PiGPIOFactory()
+    SCROLL_LIST_BUTTON = Button(2, bounce_time=0.1)
+    SCROLL_LIST_BUTTON.when_pressed = lambda: pygame.event.post(pygame.event.Event(SCROLL))
+except (RuntimeError, ImportError) as e:
+    print(f"GPIO not available: {e}. Scrolling via GPIO disabled.")
+    SCROLL_LIST_BUTTON = None
 
 from python.gauges import *
 from python.new_gauges import *
