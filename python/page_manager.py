@@ -7,9 +7,12 @@ from python.constants.events import SCROLL
 from python.dashboard import Dashboard
 from python.graphics_driver import *
 import pygame
+from gpiozero import Button 
 
 SIG_PACK_TEMP  = "PackTemp"
 WARN_BAT_TEMP  = 48.0
+LEFT_PAGE_BUTTON = Button(3, bounce_time=0.1)    # GPIO PIN 3
+RIGHT_PAGE_BUTTON = Button(4, bounce_time=0.1)    # GPIO PIN 4
 
 _ALERT_X, _ALERT_W        = 185, 430
 _ALERT_BOTTOM, _ALERT_H   = 446,  36
@@ -65,6 +68,17 @@ class PageManager:
         
         self._ui_thread_active = True
         print(f"UI thread started ({self.FPS_CAP} fps)")
+
+        def _move_page_right():
+            print(f"\n Switching to page: {(self.current_page + 1) % len(self.pages)}")
+            self.current_page = (self.current_page + 1) % len(self.pages)
+
+        def _move_page_left():
+            print(f"\n Switching to page: {(self.current_page - 1) % len(self.pages)}")
+            self.current_page = (self.current_page - 1) % len(self.pages)
+
+        LEFT_PAGE_BUTTON.when_pressed = _move_page_left
+        RIGHT_PAGE_BUTTON.when_pressed = _move_page_right
         
         try:
             while self._ui_thread_active:
@@ -78,12 +92,8 @@ class PageManager:
                         print("\nEscape pressed, exiting...")
                         cleanup()
                         sys.exit(0)
-                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT:
-                        print(f"\n Switching to page: {(self.current_page + 1) % len(self.pages)}")
-                        self.current_page = (self.current_page + 1) % len(self.pages)
-                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                        pygame.event.post(pygame.event.Event(SCROLL))
-                                
+
+                
                 frame = self.pages[self.current_page].render_frame()
                 blit_surface(frame)
 

@@ -18,6 +18,7 @@ from python.shared_data import LatestValuesTable
 from python.constants.events import *
 
 import pygame
+from gpiozero import Button
 
 BLACK       = (0,   0,   0)
 NEAR_BLACK  = (10,  10,  12)
@@ -851,29 +852,29 @@ class StatusHeader(Gauge):
         ])
 class FullListCard(Gauge):
     '''this is just a list of all the signals that are defined for the gauge'''
-    def __init__(self, box_xywh, text_size: int, signals: list, shared_data):
+    def __init__(self, box_xywh, text_size: int, signals: list, shared_data, scroll_button: Button):
         x, y, w, h = box_xywh
         super().__init__("", "", 0, 1, shared_data)
         self.x, self.y, self.w, self.h = x, y, w, h
         self.text_size = text_size
         self.signals = signals
         self.scroll_offset = 0
+        self.scroll_button = scroll_button
 
     def update(self, surf):
         x, y, w, h = self.x, self.y, self.w, self.h
         surf.fill(_ND_CELL_BG, (x, y, w, h))
         
         # Handle space bar press
-        for event in pygame.event.get():
-            if event.type == SCROLL:
-                self.scroll_offset += 3 * self.text_size
-                
-                # Calculate total content height
-                total_height = len(self.signals) * self.text_size
-                
-                # If bottom of text is above bottom of viewport, reset to top
-                if y + 10 + total_height - self.scroll_offset < y + h:
-                    self.scroll_offset = 0
+        if self.scroll_button.is_pressed:
+            self.scroll_offset += 3 * self.text_size
+            
+            # Calculate total content height
+            total_height = len(self.signals) * self.text_size
+            
+            # If bottom of text is above bottom of viewport, reset to top
+            if y + 10 + total_height - self.scroll_offset < y + h:
+                self.scroll_offset = 0
         
         # Draw signals with scroll offset
         for i, sig in enumerate(self.signals):
