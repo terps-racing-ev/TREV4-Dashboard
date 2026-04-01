@@ -11,8 +11,8 @@ from gpiozero import Button
 
 SIG_PACK_TEMP  = "PackTemp"
 WARN_BAT_TEMP  = 48.0
-LEFT_PAGE_BUTTON = Button(3, bounce_time=0.1)    # GPIO PIN 3
-RIGHT_PAGE_BUTTON = Button(4, bounce_time=0.1)    # GPIO PIN 4
+LEFT_PAGE_BUTTON = Button(5, bounce_time=0.1)    # GPIO PIN 5
+RIGHT_PAGE_BUTTON = Button(6, bounce_time=0.1)    # GPIO PIN 6
 
 _ALERT_X, _ALERT_W        = 185, 430
 _ALERT_BOTTOM, _ALERT_H   = 446,  36

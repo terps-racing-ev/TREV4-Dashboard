@@ -18,7 +18,7 @@ from python.shared_data import LatestValuesTable
 
 FPS_CAP = 60
 # GPIO BUTTONS!!!
-SCROLL_LIST_BUTTON= Button(2, bounce_time=0.1)  # GPIO PIN 2
+SCROLL_LIST_BUTTON= Button(4, bounce_time=0.1)  # GPIO PIN 4
 
 
 
