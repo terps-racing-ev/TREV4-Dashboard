@@ -47,6 +47,21 @@ class PageManager:
         self.FPS_CAP = 60
         self.shared_data = pages[0].shared_data if pages else None
         self.debug_simulator = DebugSimulator(self.shared_data) if self.shared_data is not None else None
+        self.page_names = [self._describe_page(page) for page in pages]
+
+    def _describe_page(self, page: Dashboard) -> str:
+        gauge_names = [type(gauge).__name__ for gauge in page.gauges]
+        if "RetroHeroDash" in gauge_names:
+            return "Retro"
+        if "DarkSpeedArc" in gauge_names:
+            return "Main"
+        return gauge_names[0] if gauge_names else "Empty"
+
+    def _switch_to_page(self, index: int) -> None:
+        if not self.pages:
+            return
+        self.current_page = index % len(self.pages)
+        print(f"\nSwitched to page {self.current_page + 1}/{len(self.pages)}: {self.page_names[self.current_page]}")
 
     def _draw_debug_overlay(self, surf: pygame.Surface) -> None:
         if not self._flash_state or self.debug_simulator is None or not self.debug_simulator.enabled:
@@ -90,6 +105,9 @@ class PageManager:
         
         self._ui_thread_active = True
         print(f"UI thread started ({self.FPS_CAP} fps)")
+        if self.pages:
+            print(f"Loaded {len(self.pages)} pages: {', '.join(self.page_names)}")
+            self._switch_to_page(self.current_page)
         
         try:
             while self._ui_thread_active:
@@ -104,10 +122,15 @@ class PageManager:
                         cleanup()
                         sys.exit(0)
                     elif event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT:
-                        print(f"\n Switching to page: {(self.current_page + 1) % len(self.pages)}")
-                        self.current_page = (self.current_page + 1) % len(self.pages)
+                        self._switch_to_page(self.current_page + 1)
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT:
+                        self._switch_to_page(self.current_page - 1)
                     elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                         pygame.event.post(pygame.event.Event(SCROLL))
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                        retro_idx = next((i for i, name in enumerate(self.page_names) if name == "Retro"), None)
+                        if retro_idx is not None:
+                            self._switch_to_page(retro_idx)
                     elif event.type == pygame.KEYDOWN and event.key == pygame.K_t and self.debug_simulator is not None:
                         next_state = not self.debug_simulator.enabled
                         self.debug_simulator.set_enabled(next_state)
