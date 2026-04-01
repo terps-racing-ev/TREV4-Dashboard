@@ -7,7 +7,12 @@ from python.constants.events import SCROLL
 from python.dashboard import Dashboard
 from python.graphics_driver import *
 import pygame
+
 from gpiozero import Button 
+import gpiozero
+from gpiozero.pins.lgpio import LGPIOFactory
+gpiozero.Device.pin_Factory = LGPIOFactory
+
 
 SIG_PACK_TEMP  = "PackTemp"
 WARN_BAT_TEMP  = 48.0

@@ -8,6 +8,9 @@ import json
 from pathlib import Path
 from typing import Tuple, Dict, Optional
 import pygame
+import gpiozero
+from gpiozero.pins.lgpio import LGPIOFactory
+gpiozero.Device.pin_Factory = LGPIOFactory
 from gpiozero import Button
 
 from python.gauges import *

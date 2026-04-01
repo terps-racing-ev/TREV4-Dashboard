@@ -18,6 +18,9 @@ from python.shared_data import LatestValuesTable
 from python.constants.events import *
 
 import pygame
+import gpiozero
+from gpiozero.pins.lgpio import LGPIOFactory
+gpiozero.Device.pin_Factory = LGPIOFactory
 from gpiozero import Button
 
 BLACK       = (0,   0,   0)
