@@ -337,8 +337,10 @@ class Dashboard:
             elif gauge_type == "DarkSpeedArc":
                 return DarkSpeedArc(
                     signal=signal,
+                    rpm_signal=cfg.get("rpm_signal"),
                     min_val=min_val,
                     max_val=max_val,
+                    max_rpm=cfg.get("max_rpm", 6000),
                     box_xywh=box_xywh,
                     shared_data=self.shared_data,
                     unit=cfg.get("unit", "MPH"),

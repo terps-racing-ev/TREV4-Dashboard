@@ -666,10 +666,12 @@ class DarkSpeedArc(Gauge):
     _ARC_SWEEP = 270.0
     _BG_ARC    = (30, 30, 42)
 
-    def __init__(self, signal, min_val, max_val, box_xywh, shared_data,
+    def __init__(self, signal, rpm_signal, min_val, max_val, max_rpm, box_xywh, shared_data,
                  unit="MPH", decimal_places=0, label=""):
         x, y, w, h = box_xywh
         super().__init__(signal, label, min_val, max_val, shared_data)
+        self.rpm_signal = rpm_signal
+        self.max_rpm = max_rpm
         self.x, self.y, self.w, self.h = x, y, w, h
         self.cx = x + w // 2
         # Mirrors new_dash: GCY = MAIN_Y + (MAIN_H - CENTER_BOTTOM_H) // 2 + 10
@@ -678,10 +680,21 @@ class DarkSpeedArc(Gauge):
         self.unit = unit
         self.decimal_places = decimal_places
 
+    def get_rpm_value(self):
+        v = self.shared_data.get_signal(self.rpm_signal)
+        return float(v) if v is not None else None
+
+    def get_rpm_pct(self, rpm_val):
+        if rpm_val is None:
+            return 0.0
+        return max(0.0, min(1.0, rpm_val / self.max_rpm))
+
     def update(self, surf):
         x, y, w, h = self.x, self.y, self.w, self.h
         val = self.get_value()
         pct = self.clamp_pct(val)
+        rpm_val = self.get_rpm_value()
+        rpm_pct = self.get_rpm_pct(rpm_val)
         cx, cy = self.cx, self.cy
 
         surf.fill(_ND_CENTER_BG, (x, y, w, h))
@@ -712,6 +725,35 @@ class DarkSpeedArc(Gauge):
             if fill_h > 0:
                 bar_y = max(fill_y, y)
                 pygame.draw.rect(surf, _nd_gauge_color(pct), (x, bar_y, w, 10))
+        
+        #border
+        rect = pygame.Rect(cx-80, cy-80, 160, 160)
+        radius = 16
+        border_width = 4
+
+        # solid black background behind outline
+        pygame.draw.rect(surf, BLACK, rect, width=0, border_radius=radius)
+        pygame.draw.rect(surf, _nd_gauge_color(pct), rect, width=border_width, border_radius=radius)
+
+        # throttle/brake dashes: 13 bars evenly spaced inside border
+        dashes = 13
+        bar_w = 8
+        total_w = 240
+        padding = 14  # inside the outer border
+        available_w = total_w - padding * 2
+        gap = max(2, (available_w - dashes * bar_w) / (dashes - 1))
+
+        bar_rect_x = cx - 120
+        pygame.draw.rect(surf, BLACK, pygame.Rect(bar_rect_x, cy + 120, total_w, 35), width=0, border_radius=4)
+        pygame.draw.rect(surf, _nd_gauge_color(pct), pygame.Rect(bar_rect_x, cy + 120, total_w, 35), width=border_width, border_radius=4)
+
+        num_dashes = int(rpm_pct * dashes) + (1 if rpm_pct > 0 else 0)
+        for i in range(dashes):
+            dash_x = int(bar_rect_x + padding + i * (bar_w + gap))
+            if i < num_dashes:
+                pygame.draw.rect(surf, _ND_ORANGE, (dash_x, cy + 125, bar_w, 35-10), border_radius=2)
+            else:
+                pygame.draw.rect(surf, _ND_BORDER, (dash_x, cy + 125, bar_w, 35-10), border_radius=2)
 
         if val is None:
             render_text(surf, '-', 86, _ND_WHITE, cx, cy - 6, bold=True)
