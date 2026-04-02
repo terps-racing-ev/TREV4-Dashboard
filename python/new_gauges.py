@@ -735,7 +735,7 @@ class DarkSpeedArc(Gauge):
         pygame.draw.rect(surf, BLACK, rect, width=0, border_radius=radius)
         pygame.draw.rect(surf, _nd_gauge_color(pct), rect, width=border_width, border_radius=radius)
 
-        # throttle/brake dashes: 13 bars evenly spaced inside border
+        # rpm dashes
         dashes = 13
         bar_w = 8
         total_w = 240
@@ -758,9 +758,10 @@ class DarkSpeedArc(Gauge):
         if val is None:
             render_text(surf, '-', 86, _ND_WHITE, cx, cy - 6, bold=True)
         else:
-            val_str = str(int(val)) if self.decimal_places == 0 else f"{val:.{self.decimal_places}f}"
+            val_str = (("00" if val < 10 else ("0" if val < 100 else "")) + str(int(val))) if self.decimal_places == 0 else f"{val:.{self.decimal_places}f}"
             render_text(surf, val_str, 86, _ND_WHITE, cx, cy - 6, bold=True)
         render_text(surf, self.unit, 24, _ND_ORANGE, cx, cy + 46)
+        render_text(surf, "MOTOR RPM", 12, _ND_ORANGE, cx, cy + 160)
 
 
 class DarkTireQuad:
@@ -807,7 +808,7 @@ class DarkFaultRow:
             bg = _ND_RED if active else (10, 32, 20)
             pygame.draw.rect(surf, bg, (bx, y + 6, 34, h - 12), border_radius=2)
             text_col = _ND_WHITE if active else (26, 90, 40)
-            render_text(surf, label, 7, text_col, bx + 17, y + h // 2)
+            render_text(surf, label, 14, text_col, bx + 17, y + h // 2)
             bx += 40
 
 class Alert(Gauge):
