@@ -9,12 +9,12 @@
       "gauges": [
         {"type": "ShiftLightsGauge", "signal": "MotorRPM", "label": "", "min_val": 0, "max_val": 6000, "box_xywh": [0, 0, 800, 10]},
         {"type": "DarkStatusBar", "box_xywh": [0, 10, 800, 26]},
-        {"type": "DarkCell", "signal": "PackVoltage", "label": "PACK VOLTAGE", "unit": "V", "min_val": 280, "max_val": 420, "box_xywh": [0, 36, 175, 71], "accent_color": [0, 212, 232], "decimal_places": 1},
+        {"type": "DarkCell", "signal": "PackVoltage", "label": "PACK VOLTAGE", "unit": "V", "min_val": 0, "max_val": 420, "box_xywh": [0, 36, 175, 71], "accent_color": [0, 212, 232], "decimal_places": 1},
         {"type": "DarkCell", "signal": "PackCurrent", "label": "PACK CURRENT", "unit": "A", "min_val": 0, "max_val": 300, "box_xywh": [0, 107, 175, 71], "accent_color": [255, 184, 0], "decimal_places": 1},
-        {"type": "DarkCell", "signal": "StateOfCharge", "label": "STATE OF CHARGE", "unit": "%", "min_val": 0, "max_val": 100, "box_xywh": [0, 178, 175, 71], "accent_color": [0, 224, 96], "decimal_places": 1},
+        {"type": "DarkCell", "signal": "StateOfCharge", "label": "CHARGE STATE", "unit": "%", "min_val": 0, "max_val": 100, "box_xywh": [0, 178, 175, 71], "accent_color": [0, 224, 96], "decimal_places": 1},
         {"type": "CellVoltageCard", "signal_min": "CellVoltageMin", "signal_max": "CellVoltageMax", "box_xywh": [0, 249, 175, 71]},
         {"type": "DarkCell", "signal": "LVBatteryVoltage", "label": "LV BATTERY", "unit": "V", "min_val": 10, "max_val": 16, "box_xywh": [0, 320, 175, 72], "accent_color": [255, 106, 0], "decimal_places": 1, "last": true},
-        {"type": "DarkSpeedArc", "signal": "Speed", "label": "", "min_val": 0, "max_val": 99, "box_xywh": [175, 36, 450, 356], "unit": "MPH", "decimal_places": 0},
+        {"type": "DarkSpeedArc", "signal": "Speed", "label": "", "min_val": 0, "max_val": 140, "box_xywh": [175, 36, 450, 356], "unit": "MPH", "decimal_places": 0},
         {"type": "DarkCell", "signal": "APPS", "label": "THROTTLE", "unit": "%", "min_val": 0, "max_val": 100, "box_xywh": [175, 392, 225, 60], "accent_color": [0, 224, 96], "decimal_places": 0, "last": true},
         {"type": "DarkCell", "signal": "BrakePressure", "label": "BRAKE PRESS", "unit": "%", "min_val": 0, "max_val": 100, "box_xywh": [400, 392, 225, 60], "accent_color": [255, 37, 37], "decimal_places": 0, "last": true},
         {"type": "DarkCell", "signal": "MotorRPM", "label": "MOTOR RPM", "unit": "", "min_val": 0, "max_val": 6000, "box_xywh": [625, 36, 175, 53], "accent_color": [255, 106, 0], "decimal_places": 0},
@@ -23,6 +23,7 @@
         {"type": "DarkCell", "signal": "PackTemp", "label": "BATTERY TEMP", "unit": "\u00b0C", "min_val": 0, "max_val": 60, "box_xywh": [625, 195, 175, 53], "accent_color": [255, 37, 37], "decimal_places": 0},
         {"type": "DarkTireQuad", "box_xywh": [625, 249, 175, 143], "FL": "TTempFL", "FR": "TTempFR", "RL": "TTempBL", "RR": "TTempBR"},
         {"type": "DarkFaultRow", "box_xywh": [0, 452, 800, 28], "IMD": "IMDFault", "AMS": "AMSFault", "BSPD": "BSPDFault", "APPS": "APPSFault", "BRAKE": "BrakeFault"}
+        
       ]
     },
     {
@@ -34,12 +35,12 @@
       "gauges": [
         {"type": "ShiftLightsGauge", "signal": "MotorRPM", "label": "", "min_val": 0, "max_val": 6000, "box_xywh": [0, 0, 800, 10]},
         {"type": "DarkStatusBar", "box_xywh": [0, 10, 800, 26]},
-        {"type": "DarkCell", "signal": "PackVoltage", "label": "PACK VOLTAGE", "unit": "V", "min_val": 280, "max_val": 420, "box_xywh": [0, 36, 175, 71], "accent_color": [0, 212, 232], "decimal_places": 1},
+        {"type": "DarkCell", "signal": "PackVoltage", "label": "PACK VOLTAGE", "unit": "V", "min_val": 0, "max_val": 420, "box_xywh": [0, 36, 175, 71], "accent_color": [0, 212, 232], "decimal_places": 1},
         {"type": "DarkCell", "signal": "PackCurrent", "label": "PACK CURRENT", "unit": "A", "min_val": 0, "max_val": 300, "box_xywh": [0, 107, 175, 71], "accent_color": [255, 184, 0], "decimal_places": 1},
-        {"type": "DarkCell", "signal": "StateOfCharge", "label": "STATE OF CHARGE", "unit": "%", "min_val": 0, "max_val": 100, "box_xywh": [0, 178, 175, 71], "accent_color": [0, 224, 96], "decimal_places": 1},
+        {"type": "DarkCell", "signal": "StateOfCharge", "label": "CHARGE STATE", "unit": "%", "min_val": 0, "max_val": 100, "box_xywh": [0, 178, 175, 71], "accent_color": [0, 224, 96], "decimal_places": 1},
         {"type": "CellVoltageCard", "signal_min": "CellVoltageMin", "signal_max": "CellVoltageMax", "box_xywh": [0, 249, 175, 71]},
         {"type": "DarkCell", "signal": "LVBatteryVoltage", "label": "LV BATTERY", "unit": "V", "min_val": 10, "max_val": 16, "box_xywh": [0, 320, 175, 72], "accent_color": [255, 106, 0], "decimal_places": 1, "last": true},
-        {"type": "DarkSpeedArc", "signal": "Speed", "label": "", "min_val": 0, "max_val": 99, "box_xywh": [175, 36, 450, 356], "unit": "MPH", "decimal_places": 0},
+        {"type": "DarkSpeedArc", "signal": "Speed", "label": "", "min_val": 0, "max_val": 140, "box_xywh": [175, 36, 450, 356], "unit": "MPH", "decimal_places": 0},
         {"type": "DarkCell", "signal": "APPS", "label": "THROTTLE", "unit": "%", "min_val": 0, "max_val": 100, "box_xywh": [175, 392, 225, 60], "accent_color": [0, 224, 96], "decimal_places": 0, "last": true},
         {"type": "DarkCell", "signal": "BrakePressure", "label": "BRAKE PRESS", "unit": "%", "min_val": 0, "max_val": 100, "box_xywh": [400, 392, 225, 60], "accent_color": [255, 37, 37], "decimal_places": 0, "last": true},
         {"type": "DarkCell", "signal": "MotorRPM", "label": "MOTOR RPM", "unit": "", "min_val": 0, "max_val": 6000, "box_xywh": [625, 36, 175, 53], "accent_color": [255, 106, 0], "decimal_places": 0},
@@ -59,12 +60,12 @@
       "gauges": [
         {"type": "ShiftLightsGauge", "signal": "MotorRPM", "label": "", "min_val": 0, "max_val": 6000, "box_xywh": [0, 0, 800, 10]},
         {"type": "DarkStatusBar", "box_xywh": [0, 10, 800, 26]},
-        {"type": "DarkCell", "signal": "PackVoltage", "label": "PACK VOLTAGE", "unit": "V", "min_val": 280, "max_val": 420, "box_xywh": [0, 36, 175, 71], "accent_color": [0, 212, 232], "decimal_places": 1},
+        {"type": "DarkCell", "signal": "PackVoltage", "label": "PACK VOLTAGE", "unit": "V", "min_val": 0, "max_val": 420, "box_xywh": [0, 36, 175, 71], "accent_color": [0, 212, 232], "decimal_places": 1},
         {"type": "DarkCell", "signal": "PackCurrent", "label": "PACK CURRENT", "unit": "A", "min_val": 0, "max_val": 300, "box_xywh": [0, 107, 175, 71], "accent_color": [255, 184, 0], "decimal_places": 1},
-        {"type": "DarkCell", "signal": "StateOfCharge", "label": "STATE OF CHARGE", "unit": "%", "min_val": 0, "max_val": 100, "box_xywh": [0, 178, 175, 71], "accent_color": [0, 224, 96], "decimal_places": 1},
+        {"type": "DarkCell", "signal": "StateOfCharge", "label": "CHARGE STATE", "unit": "%", "min_val": 0, "max_val": 100, "box_xywh": [0, 178, 175, 71], "accent_color": [0, 224, 96], "decimal_places": 1},
         {"type": "CellVoltageCard", "signal_min": "CellVoltageMin", "signal_max": "CellVoltageMax", "box_xywh": [0, 249, 175, 71]},
         {"type": "DarkCell", "signal": "LVBatteryVoltage", "label": "LV BATTERY", "unit": "V", "min_val": 10, "max_val": 16, "box_xywh": [0, 320, 175, 72], "accent_color": [255, 106, 0], "decimal_places": 1, "last": true},
-        {"type": "DarkSpeedArc", "signal": "Speed", "label": "", "min_val": 0, "max_val": 99, "box_xywh": [175, 36, 450, 356], "unit": "MPH", "decimal_places": 0},
+        {"type": "DarkSpeedArc", "signal": "Speed", "label": "", "min_val": 0, "max_val": 140, "box_xywh": [175, 36, 450, 356], "unit": "MPH", "decimal_places": 0},
         {"type": "DarkCell", "signal": "APPS", "label": "THROTTLE", "unit": "%", "min_val": 0, "max_val": 100, "box_xywh": [175, 392, 225, 60], "accent_color": [0, 224, 96], "decimal_places": 0, "last": true},
         {"type": "DarkCell", "signal": "BrakePressure", "label": "BRAKE PRESS", "unit": "%", "min_val": 0, "max_val": 100, "box_xywh": [400, 392, 225, 60], "accent_color": [255, 37, 37], "decimal_places": 0, "last": true},
         {"type": "DarkCell", "signal": "MotorRPM", "label": "MOTOR RPM", "unit": "", "min_val": 0, "max_val": 6000, "box_xywh": [625, 36, 175, 53], "accent_color": [255, 106, 0], "decimal_places": 0},
@@ -73,6 +74,61 @@
         {"type": "DarkCell", "signal": "PackTemp", "label": "BATTERY TEMP", "unit": "\u00b0C", "min_val": 0, "max_val": 60, "box_xywh": [625, 195, 175, 53], "accent_color": [255, 37, 37], "decimal_places": 0},
         {"type": "DarkTireQuad", "box_xywh": [625, 249, 175, 143], "FL": "TTempFL", "FR": "TTempFR", "RL": "TTempBL", "RR": "TTempBR"},
         {"type": "DarkFaultRow", "box_xywh": [0, 452, 800, 28], "IMD": "IMDFault", "AMS": "AMSFault", "BSPD": "BSPDFault", "APPS": "APPSFault", "BRAKE": "BrakeFault"}
+      ]
+    },
+    {
+      "display": {
+        "width": 800,
+        "height": 480,
+        "bg_color": [0, 7, 255]
+      },
+      "gauges": [
+        {
+          "type": "FullList",
+          "signals": [
+            "MotorRPM", 
+            "PackVoltage", 
+            "PackCurrent", 
+            "StateOfCharge", 
+            "CellVoltageMin", 
+            "CellVoltageMax",
+            "Speed",
+            "Throttle",
+            "Brake",
+            "TTempFL",
+            "TTempFR",
+            "TTempRL",
+            "TTempRR",
+            "MotorRPM", 
+            "PackVoltage", 
+            "PackCurrent", 
+            "StateOfCharge", 
+            "CellVoltageMin", 
+            "CellVoltageMax",
+            "Speed",
+            "Throttle",
+            "Brake",
+            "TTempFL",
+            "TTempFR",
+            "TTempRL",
+            "TTempRR",
+            "MotorRPM", 
+            "PackVoltage", 
+            "PackCurrent", 
+            "StateOfCharge", 
+            "CellVoltageMin", 
+            "CellVoltageMax",
+            "Speed",
+            "Throttle",
+            "Brake",
+            "TTempFL",
+            "TTempFR",
+            "TTempRL",
+            "TTempRR"
+          ],
+          "box_xywh": [0, 0, 800, 480],
+          "text_size": 32
+        }
       ]
     }
   ]

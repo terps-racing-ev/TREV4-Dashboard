@@ -117,7 +117,7 @@ class CANManager:
             print("RX thread stopped")
     
     def _run_sim_rx_thread(self) -> None:
-        """Simulated RX thread - generates random CAN values."""
+        """Simulated RX thread - generates CAN values that cycle through their ranges."""
         if self.db is None:
             print("No .dbc loaded for simulation")
             return
@@ -141,9 +141,10 @@ class CANManager:
                             sim_signals[signal.name] = 1 if elapsed >= (i + 1) * 5 else 0
                     else:
                         for signal in message.signals:
-                            if value >= signal.maximum:
-                                continue
-                            sim_signals[signal.name] = value
+                            # Cycle the value through the signal's range using modulo
+                            max_val = signal.maximum
+                            cycled_value = value % (max_val + 1)
+                            sim_signals[signal.name] = cycled_value
 
                     # Update shared data
                     self.shared_data.update(sim_signals)

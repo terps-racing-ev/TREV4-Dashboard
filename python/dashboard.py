@@ -15,6 +15,8 @@ from python.graphics_driver import *
 from python.constants.colors import *
 from python.shared_data import LatestValuesTable
 
+from python.constants.fonts import * 
+
 FPS_CAP = 60
 
 # ── Alert overlay (from new_dash) ────────────────────────────────────────────
@@ -62,7 +64,7 @@ class Dashboard:
         self.config_path = config_path
 
         # Default values
-        self.font_path = "/assets/monofonto_rg.otf"
+        self.font_path = jetbrains
         self.bg_color = BLACK
         self.xres, self.yres = 800, 480
         self.gauges = []
