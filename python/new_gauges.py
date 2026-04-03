@@ -666,12 +666,12 @@ class DarkSpeedArc(Gauge):
     _ARC_SWEEP = 270.0
     _BG_ARC    = (30, 30, 42)
 
-    def __init__(self, signal, rpm_signal, min_val, max_val, max_rpm, box_xywh, shared_data,
+    def __init__(self, signal, brake_signal, throttle_signal, min_val, max_val, box_xywh, shared_data,
                  unit="MPH", decimal_places=0, label=""):
         x, y, w, h = box_xywh
         super().__init__(signal, label, min_val, max_val, shared_data)
-        self.rpm_signal = rpm_signal
-        self.max_rpm = max_rpm
+        self.brake_signal = brake_signal
+        self.throttle_signal = throttle_signal
         self.x, self.y, self.w, self.h = x, y, w, h
         self.cx = x + w // 2
         # Mirrors new_dash: GCY = MAIN_Y + (MAIN_H - CENTER_BOTTOM_H) // 2 + 10
@@ -680,21 +680,32 @@ class DarkSpeedArc(Gauge):
         self.unit = unit
         self.decimal_places = decimal_places
 
-    def get_rpm_value(self):
-        v = self.shared_data.get_signal(self.rpm_signal)
+    def get_brake_value(self):
+        v = self.shared_data.get_signal(self.brake_signal)
         return float(v) if v is not None else None
 
-    def get_rpm_pct(self, rpm_val):
-        if rpm_val is None:
+    def get_throttle_value(self):
+        v = self.shared_data.get_signal(self.throttle_signal)
+        return float(v) if v is not None else None
+
+    def get_brake_pct(self, brake_val):
+        if brake_val is None:
             return 0.0
-        return max(0.0, min(1.0, rpm_val / self.max_rpm))
+        return max(0.0, min(1.0, brake_val / 100.0))
+
+    def get_throttle_pct(self, throttle_val):
+        if throttle_val is None:
+            return 0.0
+        return max(0.0, min(1.0, throttle_val / 100.0))
 
     def update(self, surf):
         x, y, w, h = self.x, self.y, self.w, self.h
         val = self.get_value()
         pct = self.clamp_pct(val)
-        rpm_val = self.get_rpm_value()
-        rpm_pct = self.get_rpm_pct(rpm_val)
+        brake_val = self.get_brake_value()
+        throttle_val = self.get_throttle_value()
+        brake_pct = self.get_brake_pct(brake_val)
+        throttle_pct = self.get_throttle_pct(throttle_val)
         cx, cy = self.cx, self.cy
 
         surf.fill(_ND_CENTER_BG, (x, y, w, h))
@@ -735,11 +746,11 @@ class DarkSpeedArc(Gauge):
         pygame.draw.rect(surf, BLACK, rect, width=0, border_radius=radius)
         pygame.draw.rect(surf, _nd_gauge_color(pct), rect, width=border_width, border_radius=radius)
 
-        # rpm dashes
+        # brake/throttle dashes
         dashes = 13
         bar_w = 8
         total_w = 240
-        padding = 14  # inside the outer border
+        padding = 14
         available_w = total_w - padding * 2
         gap = max(2, (available_w - dashes * bar_w) / (dashes - 1))
 
@@ -747,13 +758,23 @@ class DarkSpeedArc(Gauge):
         pygame.draw.rect(surf, BLACK, pygame.Rect(bar_rect_x, cy + 120, total_w, 35), width=0, border_radius=4)
         pygame.draw.rect(surf, _nd_gauge_color(pct), pygame.Rect(bar_rect_x, cy + 120, total_w, 35), width=border_width, border_radius=4)
 
-        num_dashes = int(rpm_pct * dashes) + (1 if rpm_pct > 0 else 0)
+        num_brake_dashes = int((brake_pct + .05) * 6)
+        num_throttle_dashes = int((throttle_pct + .05) * 6)
         for i in range(dashes):
             dash_x = int(bar_rect_x + padding + i * (bar_w + gap))
-            if i < num_dashes:
-                pygame.draw.rect(surf, _ND_ORANGE, (dash_x, cy + 125, bar_w, 35-10), border_radius=2)
+            if i == 6:
+                color = WHITE
+            elif i < 6:
+                if 5-i < num_brake_dashes:
+                    color = RED
+                else:
+                    color = _ND_BORDER
             else:
-                pygame.draw.rect(surf, _ND_BORDER, (dash_x, cy + 125, bar_w, 35-10), border_radius=2)
+                if i - 7 < num_throttle_dashes:
+                    color = GREEN
+                else:
+                    color = _ND_BORDER
+            pygame.draw.rect(surf, color, (dash_x, cy + 125, bar_w, 35-10), border_radius=2)
 
         if val is None:
             render_text(surf, '-', 86, _ND_WHITE, cx, cy - 6, bold=True)
@@ -761,7 +782,56 @@ class DarkSpeedArc(Gauge):
             val_str = (("00" if val < 10 else ("0" if val < 100 else "")) + str(int(val))) if self.decimal_places == 0 else f"{val:.{self.decimal_places}f}"
             render_text(surf, val_str, 86, _ND_WHITE, cx, cy - 6, bold=True)
         render_text(surf, self.unit, 24, _ND_ORANGE, cx, cy + 46)
-        render_text(surf, "MOTOR RPM", 12, _ND_ORANGE, cx, cy + 160)
+        render_text(surf, "BRAKE PRES    THROTTLE", 12, _ND_ORANGE, cx-7, cy + 160)
+
+class GMeter(Gauge):
+    #its a fucking g meter bro isnt ts tuff
+    #radius is in G, as in the max G force that is at the edge
+    def __init__(self, x_signal, y_signal, radius, box_xywh, shared_data, label="G-Meter"):
+        
+        x, y, w, h = box_xywh
+        if w != h:
+            raise ValueError("GMeter box must be square (w == h)")
+        
+        self.x_signal = x_signal
+        self.y_signal = y_signal
+        self.shared_data = shared_data
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.cx = x + w // 2
+        self.cy = y + h // 2
+        self.radius = radius
+        self.label = label
+
+    def update(self, surf):
+        x, y, w, h = self.x, self.y, self.w, self.h
+        g_x = self.shared_data.get_signal(self.x_signal)
+        g_y = self.shared_data.get_signal(self.y_signal)
+        g_x_val = float(g_x) if g_x is not None else 0.
+        g_y_val = float(g_y) if g_y is not None else 0.
+        surf.fill(_ND_CENTER_BG, (x, y, w, h))
+        
+        #pygame.draw.line(surf, _ND_BORDER, (self.cx - self.radius, self.cy), (self.cx + self.radius, self.cy), 1)
+        #pygame.draw.line(surf, _ND_BORDER, (self.cx, self.cy - self.radius), (self.cx, self.cy + self.radius), 1)
+         
+        #drawing circle to show values
+        pygame.draw.arc(surf, _ND_BORDER, pygame.Rect(self.cx - 0.4 * w, self.cy - 0.4 * h, 0.8 * w, 0.8 * h), 0, 2*3.14159, 1)
+        pygame.draw.arc(surf, _ND_BORDER, pygame.Rect(self.cx - 0.2 * w, self.cy - 0.2 * h, 0.4 * w, 0.4 * h), 0, 2*3.14159, 1)
+        pygame.draw.arc(surf, _ND_BORDER, pygame.Rect(self.cx - 0.1 * w, self.cy - 0.1 * h, 0.2 * w, 0.2 * h), 0, 2*3.14159, 1)
+        pygame.draw.arc(surf, _ND_BORDER, pygame.Rect(self.cx - 0.3 * w, self.cy - 0.3 * h, 0.6 * w, 0.6 * h), 0, 2*3.14159, 1)
+        pygame.draw.line(surf, _ND_BORDER, (self.cx - 0.4 * w, self.cy), (self.cx + 0.4 * w, self.cy), 1)
+        pygame.draw.line(surf, _ND_BORDER, (self.cx, self.cy - 0.4 * h), (self.cx, self.cy + 0.4 * h), 1)
+
+        xdot = self.cx + int((g_x_val / self.radius) * 0.4 * w)
+        ydot = self.cy - int((g_y_val / self.radius) * 0.4 * h)
+
+        pygame.draw.line(surf, _ND_RED, (self.cx, self.cy), (xdot, ydot), 2)
+
+        pygame.draw.circle(surf, _ND_ORANGE, (xdot, ydot), 4)
+        render_text(surf, self.label, 12, _ND_WHITE, self.cx, self.cy + self.radius + 14)
+        render_text(surf, str(self.radius), 12, _ND_WHITE, self.cx + 0.4 * w, self.cy)
+        render_text(surf, str(self.radius), 12, _ND_WHITE, self.cx, self.cy - 0.4 * h)
+
+        
 
 
 class DarkTireQuad:

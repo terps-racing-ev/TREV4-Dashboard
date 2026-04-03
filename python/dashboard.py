@@ -337,10 +337,10 @@ class Dashboard:
             elif gauge_type == "DarkSpeedArc":
                 return DarkSpeedArc(
                     signal=signal,
-                    rpm_signal=cfg.get("rpm_signal"),
+                    brake_signal=cfg.get("brake_signal", "BrakePressure"),
+                    throttle_signal=cfg.get("throttle_signal", "ThrottlePct"),
                     min_val=min_val,
                     max_val=max_val,
-                    max_rpm=cfg.get("max_rpm", 6000),
                     box_xywh=box_xywh,
                     shared_data=self.shared_data,
                     unit=cfg.get("unit", "MPH"),
@@ -385,6 +385,15 @@ class Dashboard:
                 return Alert(
                     signal=signal,
                     thresh=cfg.get("thresh"),
+                    box_xywh=box_xywh,
+                    shared_data=self.shared_data,
+                    label=label or "",
+                )
+            elif gauge_type == "GMeter":
+                return GMeter(
+                    x_signal=cfg.get("signal_x"),
+                    y_signal=cfg.get("signal_y"),
+                    radius=cfg.get("radius", 2.0),
                     box_xywh=box_xywh,
                     shared_data=self.shared_data,
                     label=label or "",
