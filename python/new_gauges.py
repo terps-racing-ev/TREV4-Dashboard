@@ -534,6 +534,7 @@ _ND_TIRE_COLD  = ( 30,  60, 160)
 _ND_TIRE_OPT   = (  0, 140,  50)
 _ND_TIRE_HOT   = (200,  40,  10)
 _ND_CENTER_BG  = (  8,   8,  11)
+_ND_AQUA        = (  0, 210, 220)
 
 
 def _nd_gauge_color(pct):
@@ -813,7 +814,7 @@ class GMeter(Gauge):
         #pygame.draw.line(surf, _ND_BORDER, (self.cx - self.radius, self.cy), (self.cx + self.radius, self.cy), 1)
         #pygame.draw.line(surf, _ND_BORDER, (self.cx, self.cy - self.radius), (self.cx, self.cy + self.radius), 1)
          
-        #drawing circle to show values
+        #graph background
         pygame.draw.arc(surf, _ND_BORDER, pygame.Rect(self.cx - 0.4 * w, self.cy - 0.4 * h, 0.8 * w, 0.8 * h), 0, 2*3.14159, 1)
         pygame.draw.arc(surf, _ND_BORDER, pygame.Rect(self.cx - 0.2 * w, self.cy - 0.2 * h, 0.4 * w, 0.4 * h), 0, 2*3.14159, 1)
         pygame.draw.arc(surf, _ND_BORDER, pygame.Rect(self.cx - 0.1 * w, self.cy - 0.1 * h, 0.2 * w, 0.2 * h), 0, 2*3.14159, 1)
@@ -824,12 +825,15 @@ class GMeter(Gauge):
         xdot = self.cx + int((g_x_val / self.radius) * 0.4 * w)
         ydot = self.cy - int((g_y_val / self.radius) * 0.4 * h)
 
-        pygame.draw.line(surf, _ND_RED, (self.cx, self.cy), (xdot, ydot), 2)
+        mag = math.sqrt(g_x_val**2 + g_y_val**2)
 
-        pygame.draw.circle(surf, _ND_ORANGE, (xdot, ydot), 4)
+        pygame.draw.line(surf, _ND_RED, (self.cx, self.cy), (xdot, ydot), 1)
+
+        pygame.draw.circle(surf, _ND_AQUA, (xdot, ydot), 4)
         render_text(surf, self.label, 12, _ND_WHITE, self.cx, self.cy + self.radius + 14)
         render_text(surf, str(self.radius), 12, _ND_WHITE, self.cx + 0.4 * w, self.cy)
         render_text(surf, str(self.radius), 12, _ND_WHITE, self.cx, self.cy - 0.4 * h)
+        render_text(surf, "MAG: " + str(format(round(mag, 2), ".2f")), 12, _ND_WHITE, self.cx, self.cy+0.4*h)
 
         
 
