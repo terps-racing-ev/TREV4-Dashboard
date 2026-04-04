@@ -13,6 +13,7 @@ from pathlib import Path
 
 CONFIG_FILENAME = "prod_config.json"
 DBC_FILENAME = "prod.dbc"
+DBC_FILENAMES = [DBC_FILENAME, "prod2.dbc"]
 
 # Project root: parent of python/ (this file lives in python/config_loader.py)
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -27,7 +28,17 @@ def get_local_dbc_path() -> Path:
     """Return the fixed local prod.dbc path (project root)."""
     if sys.platform == "win32":
         return _PROJECT_ROOT / "dbc" / DBC_FILENAME
-    return _PROJECT_ROOT / DBC_FILENAME
+    else:
+        return _PROJECT_ROOT / DBC_FILENAME
+
+def get_local_dbc_folder() -> Path:
+    """
+    Return the path where dbc files are stored locally
+    """
+    if sys.platform != "win32":
+        return _PROJECT_ROOT / "dbc"
+    else:
+        return _PROJECT_ROOT
 
 
 def get_usb_mount_paths() -> list[Path]:
@@ -128,3 +139,13 @@ def sync_dbc_from_usb() -> bool:
     except OSError as e:
         print(f"Failed to sync DBC from USB ({src}): {e}")
         return False
+
+def find_other_dbcs():
+    """
+    If there are multiple DBC files that start with prod, combine them into one.
+    Destructive way of handling multiple DBCs, but it means i can change less code
+    All dbc files will be backed up into a folder
+    """
+    for path in get_local_dbc_folder().iterdir():
+        if path.suffix == ".dbc":
+            print(path)

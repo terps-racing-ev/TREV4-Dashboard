@@ -82,6 +82,3 @@ BO_ 2147540693 battery: 8 Vector__XXX
     SG_ StateOfCharge : 32|16@1- (0.1,0) [0|100] "%" Vector__XXX
     SG_ CellVoltageMin : 48|8@1- (0.01,0) [3|4.2] "V" Vector__XXX
 
-BO_ 2147540694 gforce: 8 Vector__XXX
-	SG_ LateralG : 0|16@1- (0.1,0) [-2|2] "G" Vector__XXX
-	SG_ LongitudinalG : 16|16@1- (0.1,0) [-2|2] "G" Vector__XXX
