@@ -38,8 +38,8 @@ BU_:
 
 
 BO_ 2158739747 test: 8 Vector__XXX
-	SG_ Speed : 0|16@1- (0.1,0) [0|99] "mph" Vector__XXX
-	SG_ APPS : 16|16@1- (0.1,0) [-230|230] "" Vector__XXX
+	SG_ Speed : 0|16@1- (0.1,0) [0|140] "mph" Vector__XXX
+	SG_ APPS : 16|16@1- (0.1,0) [0|100] "" Vector__XXX
 
 BO_ 2147540653 tiretemp: 8 Vector__XXX
 	SG_ TTempFL : 0|16@1- (0.1,0) [0|99] "C" Vector__XXX
@@ -69,3 +69,16 @@ BA_ "DatabaseCompiler" "CSS ELECTRONICS (WWW.CSSELECTRONICS.COM)";
 BA_ "DatabaseVersion" "1.0.0";
 BA_ "VFrameFormat" BO_ 2158739747 3;
 BA_ "SPN" SG_ 2158739747 WheelBasedVehicleSpeed 84;
+
+BO_ 2147540691 braking: 8 Vector__XXX
+    SG_ BrakePressure : 0|16@1- (0.1,0) [0|100] "%" Vector__XXX
+
+BO_ 2147540692 motor: 8 Vector__XXX
+    SG_ MotorRPM : 0|16@1- (1,0) [0|6000] "rpm" Vector__XXX
+
+BO_ 2147540693 battery: 8 Vector__XXX
+    SG_ PackVoltage : 0|16@1- (0.1,0) [0|420] "V" Vector__XXX
+    SG_ PackCurrent : 16|16@1- (0.1,0) [0|300] "A" Vector__XXX
+    SG_ StateOfCharge : 32|16@1- (0.1,0) [0|100] "%" Vector__XXX
+    SG_ CellVoltageMin : 48|8@1- (0.01,0) [3|4.2] "V" Vector__XXX
+

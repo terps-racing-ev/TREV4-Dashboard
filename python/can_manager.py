@@ -116,8 +116,22 @@ class CANManager:
             self._rx_thread_active = False
             print("RX thread stopped")
     
+    def _get_spiral_values(self, elapsed: float) -> tuple:
+        """Generate spiral path coordinates for G-force visualization.
+        Returns (lateral_g, longitudinal_g) following an expanding spiral.
+        """
+        import math
+        # Angle increases with time (one full rotation every 4 seconds)
+        angle = (elapsed / 4.0) * 2 * math.pi
+        # Radius expands slowly, cycling back when too large
+        radius = (elapsed / 10.0) % 2.0
+        # Generate spiral coordinates, scaled to ±2G range
+        lateral = radius * math.cos(angle)
+        longitudinal = radius * math.sin(angle)
+        return (lateral, longitudinal)
+
     def _run_sim_rx_thread(self) -> None:
-        """Simulated RX thread - generates random CAN values."""
+        """Simulated RX thread - generates CAN values that cycle through their ranges."""
         if self.db is None:
             print("No .dbc loaded for simulation")
             return
@@ -141,9 +155,20 @@ class CANManager:
                             sim_signals[signal.name] = 1 if elapsed >= (i + 1) * 5 else 0
                     else:
                         for signal in message.signals:
-                            if value >= signal.maximum:
-                                continue
-                            sim_signals[signal.name] = value
+                            # Special handling for G-force signals (spiral path)
+                            if signal.name in ("LateralG", "LongitudinalG"):
+                                spiral_lat, spiral_lon = self._get_spiral_values(elapsed)
+                                if signal.name == "LateralG":
+                                    sim_signals[signal.name] = max(signal.minimum, min(signal.maximum, spiral_lat))
+                                else:  # LongitudinalG
+                                    sim_signals[signal.name] = max(signal.minimum, min(signal.maximum, spiral_lon))
+                            else:
+                                # Cycle the value through the signal's range using modulo
+                                max_val = signal.maximum
+                                min_val = signal.minimum
+                                range_val = max_val - min_val
+                                cycled_value = min_val + (value % (int(range_val) + 1))
+                                sim_signals[signal.name] = cycled_value
 
                     # Update shared data
                     self.shared_data.update(sim_signals)

@@ -23,7 +23,7 @@
       "signal": "PackVoltage",
       "label": "PACK VOLTAGE",
       "unit": "V",
-      "min_val": 280,
+      "min_val": 0,
       "max_val": 420,
       "box_xywh": [0, 36, 175, 71],
       "accent_color": [0, 212, 232],

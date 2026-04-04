@@ -15,6 +15,8 @@ from python.graphics_driver import *
 from python.constants.colors import *
 from python.shared_data import LatestValuesTable
 
+from python.constants.fonts import * 
+
 FPS_CAP = 60
 
 # ── Alert overlay (from new_dash) ────────────────────────────────────────────
@@ -62,7 +64,7 @@ class Dashboard:
         self.config_path = config_path
 
         # Default values
-        self.font_path = "/assets/monofonto_rg.otf"
+        self.font_path = jetbrains
         self.bg_color = BLACK
         self.xres, self.yres = 800, 480
         self.gauges = []
@@ -335,6 +337,8 @@ class Dashboard:
             elif gauge_type == "DarkSpeedArc":
                 return DarkSpeedArc(
                     signal=signal,
+                    brake_signal=cfg.get("brake_signal", "BrakePressure"),
+                    throttle_signal=cfg.get("throttle_signal", "ThrottlePct"),
                     min_val=min_val,
                     max_val=max_val,
                     box_xywh=box_xywh,
@@ -381,6 +385,15 @@ class Dashboard:
                 return Alert(
                     signal=signal,
                     thresh=cfg.get("thresh"),
+                    box_xywh=box_xywh,
+                    shared_data=self.shared_data,
+                    label=label or "",
+                )
+            elif gauge_type == "GMeter":
+                return GMeter(
+                    x_signal=cfg.get("signal_x"),
+                    y_signal=cfg.get("signal_y"),
+                    radius=cfg.get("radius", 2.0),
                     box_xywh=box_xywh,
                     shared_data=self.shared_data,
                     label=label or "",

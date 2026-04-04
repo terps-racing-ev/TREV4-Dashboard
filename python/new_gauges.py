@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Optional, Any, Dict
 from python.shared_data import LatestValuesTable
 from python.constants.events import *
+import python.constants.fonts as fonts
 
 import pygame
 
@@ -95,8 +96,8 @@ def get_font(size: int, bold: bool = False) -> pygame.font.Font:
     if key not in _font_cache:
         # Try to load the project font; fall back to a system monospace
         for path in [
-            "assets/fonts/monofonto rg.otf",
-            r"assets\fonts\monofonto rg.otf",
+            fonts.jetbrains,
+            fonts.jetbrains_backslash
         ]:
             try:
                 _font_cache[key] = pygame.font.Font(path, size)
@@ -192,7 +193,7 @@ class SpeedArcGauge(Gauge):
             y1 = cy - math.sin(angle) * (r - arc_w - 4)
             x2 = cx + math.cos(angle) * (r - arc_w - 4 - tick_len)
             y2 = cy - math.sin(angle) * (r - arc_w - 4 - tick_len)
-            pygame.draw.line(surf, PANEL_LIGHT, (int(x1), int(y1)), (int(x2), int(y2)), tick_w)
+            #pygame.draw.line(surf, PANEL_LIGHT, (int(x1), int(y1)), (int(x2), int(y2)), tick_w)
             # Tick label
             val_at_tick = self.min_val + t * (self.max_val - self.min_val)
             lx = cx + math.cos(angle) * (r - arc_w - 28)
@@ -200,16 +201,14 @@ class SpeedArcGauge(Gauge):
             render_text(surf, str(int(val_at_tick)), 13, PANEL_LIGHT, int(lx), int(ly))
 
         # Track arc (dim)
-        rect = pygame.Rect(cx - r, cy - r, r*2, r*2)
-        pygame.draw.arc(surf, PANEL_LIGHT, rect,
-                        math.radians(end_deg), math.radians(start_deg), arc_w)
+        #rect = pygame.Rect(cx - r, cy - r, r*2, r*2)
+        #pygame.draw.arc(surf, PANEL_LIGHT, rect,math.radians(end_deg), math.radians(start_deg), arc_w)
 
         # Active fill arc
-        if pct > 0:
-            fill_end = start_deg - pct * 240
-            fill_color = bar_color(pct)
-            pygame.draw.arc(surf, fill_color, rect,
-                            math.radians(fill_end), math.radians(start_deg), arc_w)
+        #if pct > 0:
+            #fill_end = start_deg - pct * 240
+            #fill_color = bar_color(pct)
+            #pygame.draw.arc(surf, fill_color, rect,math.radians(fill_end), math.radians(start_deg), arc_w)
 
         # ── Centre readout ────────────────────────────────────────
         if val is None:
@@ -535,6 +534,7 @@ _ND_TIRE_COLD  = ( 30,  60, 160)
 _ND_TIRE_OPT   = (  0, 140,  50)
 _ND_TIRE_HOT   = (200,  40,  10)
 _ND_CENTER_BG  = (  8,   8,  11)
+_ND_AQUA        = (  0, 210, 220)
 
 
 def _nd_gauge_color(pct):
@@ -612,10 +612,15 @@ class DarkCell(Gauge):
         val = self.get_value()
         pct = self.clamp_pct(val)
         surf.fill(_ND_CELL_BG, (x, y, w, h))
+        bar_w = int(max(0.0, min(1.0, pct)) * w)
+        if bar_w > 0:
+            alpha_bar = pygame.Surface((bar_w, h), pygame.SRCALPHA)
+            alpha_bar.fill((*self.accent, 75))
+            surf.blit(alpha_bar, (x, y))
         if not self.last:
             pygame.draw.line(surf, _ND_BORDER, (x, y + h - 1), (x + w, y + h - 1), 1)
         pygame.draw.rect(surf, self.accent, (x, y + 6, 3, h - 12), border_radius=1)
-        render_text(surf, self.label, 7, _ND_LABEL, x + 14, y + 10, anchor="midleft")
+        render_text(surf, self.label, 18, self.value_color, x + 14, y + 16, anchor="midleft")
         if val is None:
             render_text(surf, '-', 28, self.value_color, x + 14, y + h - 14, anchor="midleft")
         else:
@@ -623,8 +628,8 @@ class DarkCell(Gauge):
             render_text(surf, val_str, 28, self.value_color, x + 14, y + h - 14, anchor="midleft")
             if self.unit:
                 val_px_w = get_font(28).size(val_str)[0]
-                render_text(surf, self.unit, 8, _ND_DIM, x + 14 + val_px_w + 3, y + h - 16, anchor="midleft")
-        surf.fill(self.accent, (x, y + h - 2, int(max(0.0, min(1.0, pct)) * w), 2))
+                render_text(surf, self.unit, 14, self.value_color, x + 14 + val_px_w + 3, y + h - 16, anchor="midleft")
+        
 
 
 class CellVoltageCard:
@@ -644,7 +649,7 @@ class CellVoltageCard:
         if not self.last:
             pygame.draw.line(surf, _ND_BORDER, (x, y + h - 1), (x + w, y + h - 1), 1)
         pygame.draw.rect(surf, _ND_BORDER_HI, (x, y + 6, 3, h - 12), border_radius=1)
-        render_text(surf, "CELL VOLTAGE", 7, _ND_LABEL, x + 14, y + 10, anchor="midleft")
+        render_text(surf, "CELL VOLTAGE", 18,"white", x + 14, y + 16, anchor="midleft")
         vmin_v = self.shared_data.get_signal(self.signal_min)
         vmax_v = self.shared_data.get_signal(self.signal_max)
         vmin = float(vmin_v) if vmin_v is not None else None
@@ -657,15 +662,17 @@ class DarkSpeedArc(Gauge):
     """Large arc speedometer styled exactly like new_dash."""
 
     _ARC_R     = 108
-    _ARC_W     = 14
+    _ARC_W     = 20
     _ARC_START = 135.0
     _ARC_SWEEP = 270.0
     _BG_ARC    = (30, 30, 42)
 
-    def __init__(self, signal, min_val, max_val, box_xywh, shared_data,
+    def __init__(self, signal, brake_signal, throttle_signal, min_val, max_val, box_xywh, shared_data,
                  unit="MPH", decimal_places=0, label=""):
         x, y, w, h = box_xywh
         super().__init__(signal, label, min_val, max_val, shared_data)
+        self.brake_signal = brake_signal
+        self.throttle_signal = throttle_signal
         self.x, self.y, self.w, self.h = x, y, w, h
         self.cx = x + w // 2
         # Mirrors new_dash: GCY = MAIN_Y + (MAIN_H - CENTER_BOTTOM_H) // 2 + 10
@@ -674,10 +681,32 @@ class DarkSpeedArc(Gauge):
         self.unit = unit
         self.decimal_places = decimal_places
 
+    def get_brake_value(self):
+        v = self.shared_data.get_signal(self.brake_signal)
+        return float(v) if v is not None else None
+
+    def get_throttle_value(self):
+        v = self.shared_data.get_signal(self.throttle_signal)
+        return float(v) if v is not None else None
+
+    def get_brake_pct(self, brake_val):
+        if brake_val is None:
+            return 0.0
+        return max(0.0, min(1.0, brake_val / 100.0))
+
+    def get_throttle_pct(self, throttle_val):
+        if throttle_val is None:
+            return 0.0
+        return max(0.0, min(1.0, throttle_val / 100.0))
+
     def update(self, surf):
         x, y, w, h = self.x, self.y, self.w, self.h
         val = self.get_value()
         pct = self.clamp_pct(val)
+        brake_val = self.get_brake_value()
+        throttle_val = self.get_throttle_value()
+        brake_pct = self.get_brake_pct(brake_val)
+        throttle_pct = self.get_throttle_pct(throttle_val)
         cx, cy = self.cx, self.cy
 
         surf.fill(_ND_CENTER_BG, (x, y, w, h))
@@ -685,22 +714,128 @@ class DarkSpeedArc(Gauge):
         pygame.draw.line(surf, _ND_BORDER, (x, y), (x, y + h), 1)
         pygame.draw.line(surf, _ND_BORDER, (x + w - 1, y), (x + w - 1, y + h), 1)
 
-        # Background arc
-        _nd_draw_arc(surf, cx, cy, self._ARC_R,
-                     self._ARC_START, self._ARC_START + self._ARC_SWEEP,
-                     self._ARC_W, self._BG_ARC)
-        # Fill arc
-        if pct > 0:
-            _nd_draw_arc(surf, cx, cy, self._ARC_R,
-                         self._ARC_START, self._ARC_START + pct * self._ARC_SWEEP,
-                         self._ARC_W, _nd_gauge_color(pct))
+        # # Background arc
+        # _nd_draw_arc(surf, cx, cy, self._ARC_R,
+        #              self._ARC_START, self._ARC_START + self._ARC_SWEEP,
+        #              self._ARC_W, self._BG_ARC)
+        # # Fill arc
+        # if pct > 0:
+        #     _nd_draw_arc(surf, cx, cy, self._ARC_R,
+        #                  self._ARC_START, self._ARC_START + pct * self._ARC_SWEEP,
+        #                  self._ARC_W, _nd_gauge_color(pct))
+
+        #ALTERNATIVE SCORLLING TRANSPARENT COLOR
+        if val is not None:
+            # Vertical fill from bottom to top based on speed percent
+            fill_h = int(pct * h)
+            fill_y = y + h - fill_h
+            overlay = pygame.Surface((w, fill_h), pygame.SRCALPHA)
+            overlay.fill((*_nd_gauge_color(pct), 25))
+            surf.blit(overlay, (x, fill_y))
+
+            # Top bar at the top edge of the scrolling fill area
+            if fill_h > 0:
+                bar_y = max(fill_y, y)
+                pygame.draw.rect(surf, _nd_gauge_color(pct), (x, bar_y, w, 10))
+        
+        #border
+        rect = pygame.Rect(cx-80, cy-80, 160, 160)
+        radius = 16
+        border_width = 4
+
+        # solid black background behind outline
+        pygame.draw.rect(surf, BLACK, rect, width=0, border_radius=radius)
+        pygame.draw.rect(surf, _nd_gauge_color(pct), rect, width=border_width, border_radius=radius)
+
+        # brake/throttle dashes
+        dashes = 13
+        bar_w = 8
+        total_w = 240
+        padding = 14
+        available_w = total_w - padding * 2
+        gap = max(2, (available_w - dashes * bar_w) / (dashes - 1))
+
+        bar_rect_x = cx - 120
+        pygame.draw.rect(surf, BLACK, pygame.Rect(bar_rect_x, cy + 120, total_w, 35), width=0, border_radius=4)
+        pygame.draw.rect(surf, _nd_gauge_color(pct), pygame.Rect(bar_rect_x, cy + 120, total_w, 35), width=border_width, border_radius=4)
+
+        num_brake_dashes = int((brake_pct + .05) * 6)
+        num_throttle_dashes = int((throttle_pct + .05) * 6)
+        for i in range(dashes):
+            dash_x = int(bar_rect_x + padding + i * (bar_w + gap))
+            if i == 6:
+                color = WHITE
+            elif i < 6:
+                if 5-i < num_brake_dashes:
+                    color = RED
+                else:
+                    color = _ND_BORDER
+            else:
+                if i - 7 < num_throttle_dashes:
+                    color = GREEN
+                else:
+                    color = _ND_BORDER
+            pygame.draw.rect(surf, color, (dash_x, cy + 125, bar_w, 35-10), border_radius=2)
 
         if val is None:
-            render_text(surf, '-', 72, _ND_WHITE, cx, cy - 6, bold=True)
+            render_text(surf, '-', 86, _ND_WHITE, cx, cy - 6, bold=True)
         else:
-            val_str = str(int(val)) if self.decimal_places == 0 else f"{val:.{self.decimal_places}f}"
-            render_text(surf, val_str, 72, _ND_WHITE, cx, cy - 6, bold=True)
-        render_text(surf, self.unit, 10, _ND_ORANGE, cx, cy + 46)
+            val_str = (("00" if val < 10 else ("0" if val < 100 else "")) + str(int(val))) if self.decimal_places == 0 else f"{val:.{self.decimal_places}f}"
+            render_text(surf, val_str, 86, _ND_WHITE, cx, cy - 6, bold=True)
+        render_text(surf, self.unit, 24, _ND_ORANGE, cx, cy + 46)
+        render_text(surf, "BRAKE PRES    THROTTLE", 12, _ND_ORANGE, cx-7, cy + 160)
+
+class GMeter(Gauge):
+    #its a fucking g meter bro isnt ts tuff
+    #radius is in G, as in the max G force that is at the edge
+    def __init__(self, x_signal, y_signal, radius, box_xywh, shared_data, label="G-Meter"):
+        
+        x, y, w, h = box_xywh
+        if w != h:
+            raise ValueError("GMeter box must be square (w == h)")
+        
+        self.x_signal = x_signal
+        self.y_signal = y_signal
+        self.shared_data = shared_data
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.cx = x + w // 2
+        self.cy = y + h // 2
+        self.radius = radius
+        self.label = label
+
+    def update(self, surf):
+        x, y, w, h = self.x, self.y, self.w, self.h
+        g_x = self.shared_data.get_signal(self.x_signal)
+        g_y = self.shared_data.get_signal(self.y_signal)
+        g_x_val = float(g_x) if g_x is not None else 0.
+        g_y_val = float(g_y) if g_y is not None else 0.
+        surf.fill(_ND_CENTER_BG, (x, y, w, h))
+        
+        #pygame.draw.line(surf, _ND_BORDER, (self.cx - self.radius, self.cy), (self.cx + self.radius, self.cy), 1)
+        #pygame.draw.line(surf, _ND_BORDER, (self.cx, self.cy - self.radius), (self.cx, self.cy + self.radius), 1)
+         
+        #graph background
+        pygame.draw.arc(surf, _ND_BORDER, pygame.Rect(self.cx - 0.4 * w, self.cy - 0.4 * h, 0.8 * w, 0.8 * h), 0, 2*3.14159, 1)
+        pygame.draw.arc(surf, _ND_BORDER, pygame.Rect(self.cx - 0.2 * w, self.cy - 0.2 * h, 0.4 * w, 0.4 * h), 0, 2*3.14159, 1)
+        pygame.draw.arc(surf, _ND_BORDER, pygame.Rect(self.cx - 0.1 * w, self.cy - 0.1 * h, 0.2 * w, 0.2 * h), 0, 2*3.14159, 1)
+        pygame.draw.arc(surf, _ND_BORDER, pygame.Rect(self.cx - 0.3 * w, self.cy - 0.3 * h, 0.6 * w, 0.6 * h), 0, 2*3.14159, 1)
+        pygame.draw.line(surf, _ND_BORDER, (self.cx - 0.4 * w, self.cy), (self.cx + 0.4 * w, self.cy), 1)
+        pygame.draw.line(surf, _ND_BORDER, (self.cx, self.cy - 0.4 * h), (self.cx, self.cy + 0.4 * h), 1)
+
+        xdot = self.cx + int((g_x_val / self.radius) * 0.4 * w)
+        ydot = self.cy - int((g_y_val / self.radius) * 0.4 * h)
+
+        mag = math.sqrt(g_x_val**2 + g_y_val**2)
+
+        pygame.draw.line(surf, _ND_RED, (self.cx, self.cy), (xdot, ydot), 1)
+
+        pygame.draw.circle(surf, _ND_AQUA, (xdot, ydot), 4)
+        render_text(surf, self.label, 12, _ND_WHITE, self.cx, self.cy + self.radius + 14)
+        render_text(surf, str(self.radius), 12, _ND_WHITE, self.cx + 0.4 * w, self.cy)
+        render_text(surf, str(self.radius), 12, _ND_WHITE, self.cx, self.cy - 0.4 * h)
+        render_text(surf, "MAG: " + str(format(round(mag, 2), ".2f")), 12, _ND_WHITE, self.cx, self.cy+0.4*h)
+
+        
 
 
 class DarkTireQuad:
@@ -747,7 +882,7 @@ class DarkFaultRow:
             bg = _ND_RED if active else (10, 32, 20)
             pygame.draw.rect(surf, bg, (bx, y + 6, 34, h - 12), border_radius=2)
             text_col = _ND_WHITE if active else (26, 90, 40)
-            render_text(surf, label, 7, text_col, bx + 17, y + h // 2)
+            render_text(surf, label, 14, text_col, bx + 17, y + h // 2)
             bx += 40
 
 class Alert(Gauge):
