@@ -1,9 +1,5 @@
-import time
 import sys
-import json
-from pathlib import Path
-from typing import Tuple, Dict
-from python.constants.events import SCROLL
+from typing import Dict
 from python.dashboard import Dashboard
 from python.debug_simulator import DebugSimulator
 from python.graphics_driver import *
@@ -15,8 +11,6 @@ from gpiozero.pins.lgpio import LGPIOFactory
 gpiozero.Device.pin_Factory = LGPIOFactory
 
 
-SIG_PACK_TEMP  = "PackTemp"
-WARN_BAT_TEMP  = 48.0
 LEFT_PAGE_BUTTON = Button(17, bounce_time=0.5)    # GPIO PIN 5
 RIGHT_PAGE_BUTTON = Button(27, bounce_time=0.5)    # GPIO PIN 6
 
@@ -93,18 +87,6 @@ class PageManager:
             anchor="center",
         )
 
-    def _draw_alert_overlay(self, surf: pygame.Surface) -> None:
-        """Flash a warning card over the centre column when thresholds are exceeded."""
-        if not self._flash_state:
-            return
-        if self._get(SIG_PACK_TEMP) > WARN_BAT_TEMP:
-            _overlay_rounded_rect(surf, (255, 37, 37),
-                                  (_ALERT_X, _ALERT_BOTTOM - _ALERT_H, _ALERT_W, _ALERT_H),
-                                  radius=3, border=2, border_col=(242, 242, 242))
-            _overlay_text(surf, "HIGH BATTERY TEMP", 16, (242, 242, 242),
-                          _ALERT_X + _ALERT_W // 2, _ALERT_BOTTOM - _ALERT_H // 2,
-                          bold=True, anchor="center")
-
     def run_ui_thread(self) -> None:
         """
         UI thread: Renders at fixed fps.
@@ -115,12 +97,10 @@ class PageManager:
         print(f"UI thread started ({self.FPS_CAP} fps)")
 
         def _move_page_right():
-            print(f"\n Switching to page: {(self.current_page + 1) % len(self.pages)}")
-            self.current_page = (self.current_page + 1) % len(self.pages)
+            self._switch_to_page(self.current_page + 1)
 
         def _move_page_left():
-            print(f"\n Switching to page: {(self.current_page - 1) % len(self.pages)}")
-            self.current_page = (self.current_page - 1) % len(self.pages)
+            self._switch_to_page(self.current_page - 1)
 
         LEFT_PAGE_BUTTON.when_pressed = _move_page_left
         RIGHT_PAGE_BUTTON.when_pressed = _move_page_right
@@ -145,6 +125,7 @@ class PageManager:
                 frame = self.pages[self.current_page].render_frame()
                 self._draw_debug_overlay(frame)
                 blit_surface(frame)
+                dt = clock.tick_busy_loop(self.FPS_CAP)
                 self._flash_t += dt / 1000.0
                 if self._flash_t >= 0.5:
                     self._flash_t, self._flash_state = 0.0, not self._flash_state
