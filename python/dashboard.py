@@ -15,6 +15,7 @@ from gpiozero import Button
 
 from python.gauges import *
 from python.new_gauges import *
+from python.retro_gauges import *
 from python.graphics_driver import *
 from python.constants.colors import *
 from python.shared_data import LatestValuesTable
@@ -396,6 +397,11 @@ class Dashboard:
                     box_xywh=box_xywh,
                     shared_data=self.shared_data,
                     label=label or "",
+                )
+            elif gauge_type == "RetroHeroDash":
+                return RetroHeroDash(
+                    box_xywh=box_xywh,
+                    shared_data=self.shared_data,
                 )
             elif gauge_type == "GMeter":
                 return GMeter(

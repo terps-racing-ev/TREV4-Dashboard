@@ -54,3 +54,10 @@ class LatestValuesTable:
                 snapshot[signal_name] = entry['value']
 
         return snapshot
+
+    def invalidate(self, signal_names: list[str]) -> None:
+        """Expire selected signals immediately so readers fall back to fresh live data."""
+        for signal_name in signal_names:
+            with self._locks.setdefault(signal_name, threading.RLock()):
+                if signal_name in self._table:
+                    self._table[signal_name]['timestamp'] = 0.0

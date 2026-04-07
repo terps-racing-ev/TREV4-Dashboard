@@ -224,6 +224,16 @@
           "text_size": 32
         }
       ]
+    },
+    {
+      "display": {
+        "width": 800,
+        "height": 480,
+        "bg_color": [5, 5, 5]
+      },
+      "gauges": [
+        {"type": "RetroHeroDash", "box_xywh": [0, 0, 800, 480]}
+      ]
     }
   ]
 }
