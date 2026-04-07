@@ -8,6 +8,10 @@ import json
 from pathlib import Path
 from typing import Tuple, Dict, Optional
 import pygame
+import gpiozero
+from gpiozero.pins.lgpio import LGPIOFactory
+gpiozero.Device.pin_Factory = LGPIOFactory
+from gpiozero import Button
 
 from python.gauges import *
 from python.new_gauges import *
@@ -18,6 +22,9 @@ from python.shared_data import LatestValuesTable
 from python.constants.fonts import * 
 
 FPS_CAP = 60
+# GPIO BUTTONS!!!
+SCROLL_LIST_BUTTON= Button(4, bounce_time=0.5)  # GPIO PIN 4
+
 
 # ── Alert overlay (from new_dash) ────────────────────────────────────────────
 SIG_PACK_TEMP  = "PackTemp"
@@ -372,7 +379,8 @@ class Dashboard:
                     box_xywh=box_xywh,
                     signals=signals,
                     shared_data=self.shared_data,
-                    text_size=cfg.get("text_size", 16)
+                    text_size=cfg.get("text_size", 16),
+                    scroll_button=SCROLL_LIST_BUTTON
                 )
             elif gauge_type == "StatusHeader":
                 return StatusHeader(
