@@ -863,21 +863,24 @@ class FullListCard(Gauge):
         self.signals = signals
         self.scroll_offset = 0
         self.scroll_button = scroll_button
+        self._prev_pressed = False
 
     def update(self, surf):
         x, y, w, h = self.x, self.y, self.w, self.h
         surf.fill(_ND_CELL_BG, (x, y, w, h))
         
         # Handle space bar press
-        if self.scroll_button.is_pressed:
+        pressed = self.scroll_button.is_pressed
+        if pressed and not self._prev_pressed:
             self.scroll_offset += 3 * self.text_size
-            
+
             # Calculate total content height
             total_height = len(self.signals) * self.text_size
-            
+
             # If bottom of text is above bottom of viewport, reset to top
             if y + 10 + total_height - self.scroll_offset < y + h:
                 self.scroll_offset = 0
+        self._prev_pressed = pressed
         
         # Draw signals with scroll offset
         for i, sig in enumerate(self.signals):
