@@ -24,7 +24,6 @@ FPS_CAP = 60
 SCROLL_LIST_BUTTON= Button(4, bounce_time=0.5)  # GPIO PIN 4
 
 
-
 # ── Alert overlay (from new_dash) ────────────────────────────────────────────
 SIG_PACK_TEMP  = "PackTemp"
 WARN_BAT_TEMP  = 48.0
