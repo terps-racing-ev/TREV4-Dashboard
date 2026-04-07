@@ -11,8 +11,8 @@ from gpiozero.pins.lgpio import LGPIOFactory
 gpiozero.Device.pin_Factory = LGPIOFactory
 
 
-LEFT_PAGE_BUTTON = Button(17, bounce_time=0.5)    # GPIO PIN 5
-RIGHT_PAGE_BUTTON = Button(27, bounce_time=0.5)    # GPIO PIN 6
+LEFT_PAGE_BUTTON = Button(5, bounce_time=0.5)    # GPIO PIN 5
+RIGHT_PAGE_BUTTON = Button(6, bounce_time=0.5)    # GPIO PIN 6
 
 _ALERT_X, _ALERT_W        = 185, 430
 _ALERT_BOTTOM, _ALERT_H   = 446,  36
