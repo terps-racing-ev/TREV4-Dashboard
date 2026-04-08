@@ -988,6 +988,441 @@ class StatusHeader(Gauge):
             (cx,          y + h - pad),
             (cx - div//2, cy),
         ])
+
+
+class FSAEEVReferenceDash(Gauge):
+    """Full-screen FSAE EV dashboard styled after the reference timing display."""
+
+    _BG = BLACK
+    _GRID = WHITE
+    _GREEN = (18, 255, 102)
+    _RED = (255, 34, 18)
+    _YELLOW = (255, 231, 0)
+    _CYAN = (0, 232, 255)
+    _DARK = (12, 12, 12)
+    _MID = (26, 26, 26)
+
+    def __init__(self, box_xywh, shared_data):
+        x, y, w, h = box_xywh
+        super().__init__("", "", 0, 1, shared_data)
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self._display_fonts: Dict[tuple[int, bool], pygame.font.Font] = {}
+
+    def _display_font(self, size: int, bold: bool = False) -> pygame.font.Font:
+        key = (size, bold)
+        if key not in self._display_fonts:
+            for path in [
+                fonts.monofonto,
+                fonts.monofonto_backslash,
+                fonts.jetbrains,
+                fonts.jetbrains_backslash,
+            ]:
+                try:
+                    self._display_fonts[key] = pygame.font.Font(path, size)
+                    return self._display_fonts[key]
+                except Exception:
+                    pass
+            self._display_fonts[key] = pygame.font.Font(
+                pygame.font.match_font("couriernew,dejavusansmono,monospace", bold=bold),
+                size,
+            )
+        return self._display_fonts[key]
+
+    def _render(self, surf, text, size, color, x, y, anchor="center", bold=False, display=False):
+        font = self._display_font(size, bold) if display else get_font(size, bold)
+        img = font.render(str(text), True, color)
+        rect = img.get_rect()
+        setattr(rect, anchor, (int(x), int(y)))
+        surf.blit(img, rect)
+        return rect
+
+    def _sig(self, name: str, default=None):
+        value = self.shared_data.get_signal(name)
+        if value is None:
+            return default
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return default
+
+    def _fault_active(self, name: str) -> bool:
+        value = self.shared_data.get_signal(name)
+        if value is None:
+            return False
+        try:
+            return float(value) >= 1.0
+        except (TypeError, ValueError):
+            return bool(value)
+
+    def _clamp(self, value: float, lo: float = 0.0, hi: float = 1.0) -> float:
+        return max(lo, min(hi, value))
+
+    def _fmt(self, value, digits=0, fallback="--"):
+        if value is None:
+            return fallback
+        return f"{value:.{digits}f}"
+
+    def _box(self, surf, rect, border=2, fill=None):
+        fill_color = self._BG if fill is None else fill
+        pygame.draw.rect(surf, fill_color, rect)
+        pygame.draw.rect(surf, self._GRID, rect, border)
+
+    def _tile(self, surf, rect, label, value, value_color, *, unit="", value_size=54, digits=0, fill=None):
+        self._box(surf, rect, fill=fill)
+        x, y, w, h = rect
+        self._render(surf, label, 15, self._GRID, x + 10, y + 16, anchor="midleft", bold=True)
+        if value is None:
+            val_text = "--"
+        else:
+            val_text = f"{value:.{digits}f}"
+        self._render(
+            surf,
+            val_text,
+            value_size,
+            value_color,
+            x + w // 2,
+            y + h // 2 + 8,
+            display=True,
+        )
+        if unit:
+            self._render(surf, unit, 12, self._GRID, x + w - 12, y + h - 12, anchor="midright", bold=True)
+
+    def _summary_tile(self, surf, rect, label, value_text, color):
+        self._box(surf, rect)
+        x, y, w, h = rect
+        self._render(surf, label, 16, self._GRID, x + 10, y + 16, anchor="midleft", bold=True)
+        self._render(surf, value_text, 64, color, x + w // 2, y + h // 2 + 8, display=True)
+
+    def _draw_shift_lights(self, surf, rpm, rect):
+        x, y, w, h = rect
+        pygame.draw.rect(surf, self._BG, rect)
+        segs = 18
+        gap = 3
+        seg_w = (w - gap * (segs - 1)) // segs
+        pct = self._clamp((rpm or 0.0) / 6000.0)
+        active = int(round(pct * segs))
+        for i in range(segs):
+            sx = x + i * (seg_w + gap)
+            if i < active:
+                color = self._GREEN if i < 6 else self._YELLOW if i < 12 else self._RED
+            else:
+                color = self._MID
+            pygame.draw.rect(surf, color, (sx, y, seg_w, h))
+
+    def _chevron_points_right(self, x, y, w, h, tip):
+        cy = y + h // 2
+        return [(x, y), (x + w - tip, y), (x + w, cy), (x + w - tip, y + h), (x, y + h)]
+
+    def _chevron_points_left(self, x, y, w, h, tip):
+        cy = y + h // 2
+        return [(x + tip, y), (x + w, y), (x + w, y + h), (x + tip, y + h), (x, cy)]
+
+    def _draw_chevron_strip(self, surf, rect, left_items, right_items):
+        x, y, w, h = rect
+        pygame.draw.rect(surf, self._BG, rect)
+        pygame.draw.rect(surf, self._GRID, rect, 2)
+        tip = max(6, h // 3)
+        gap = 4
+        div_w = tip * 2
+        half_w = (w - div_w) // 2
+
+        def draw_items(items, start_x, direction):
+            if not items:
+                return
+            sec_w = (half_w - gap * (len(items) - 1)) // len(items)
+            for idx, (label, active, active_color) in enumerate(items):
+                sx = start_x + idx * (sec_w + gap)
+                rect_h = h - 6
+                sy = y + 3
+                pts = (
+                    self._chevron_points_right(sx, sy, sec_w, rect_h, tip)
+                    if direction == "right"
+                    else self._chevron_points_left(sx, sy, sec_w, rect_h, tip)
+                )
+                color = active_color if active else self._MID
+                pygame.draw.polygon(surf, color, pts)
+                pygame.draw.polygon(surf, self._GRID, pts, 1)
+                self._render(
+                    surf,
+                    label,
+                    11,
+                    self._BG if active else self._GRID,
+                    sx + sec_w // 2,
+                    y + h // 2,
+                    bold=True,
+                )
+
+        draw_items(left_items, x + 2, "right")
+        draw_items(list(reversed(right_items)), x + half_w + div_w - 2, "left")
+
+        cx = x + half_w + div_w // 2
+        cy = y + h // 2
+        pygame.draw.polygon(
+            surf,
+            self._YELLOW,
+            [(cx, y + 4), (cx + div_w // 2, cy), (cx, y + h - 4), (cx - div_w // 2, cy)],
+        )
+
+    def _draw_status_tile(self, surf, rect, title, body, fill, text_color):
+        self._box(surf, rect, fill=fill)
+        x, y, w, h = rect
+        self._render(surf, title, 15, text_color, x + 10, y + 18, anchor="midleft", bold=True)
+        self._render(surf, body, 44, text_color, x + w // 2, y + h // 2 + 10, bold=True)
+
+    def _draw_center_speed(self, surf, rect, speed):
+        self._box(surf, rect)
+        x, y, w, h = rect
+        self._render(surf, "SPEED", 20, self._GRID, x + 14, y + 18, anchor="midleft", bold=True)
+        pct = self._clamp((speed or 0.0) / 140.0)
+        fill_h = int(pct * max(0, h - 2))
+        if fill_h > 0:
+            overlay = pygame.Surface((w - 4, fill_h), pygame.SRCALPHA)
+            overlay.fill((*bar_color(pct), 38))
+            surf.blit(overlay, (x + 2, y + h - fill_h - 2))
+        speed_text = "--" if speed is None else f"{int(round(speed)):02d}"
+        self._render(surf, speed_text, 142, self._GRID, x + w // 2, y + h // 2 + 16, display=True)
+        self._render(surf, "MPH", 22, self._YELLOW, x + w // 2, y + h - 22, bold=True)
+
+    def _draw_cell_band(self, surf, rect, left_label, left_value, left_digits, right_label, right_value, right_digits):
+        self._box(surf, rect)
+        x, y, w, h = rect
+        mid_x = x + w // 2
+        pygame.draw.line(surf, self._GRID, (mid_x, y), (mid_x, y + h), 2)
+        self._render(surf, left_label, 14, self._GRID, x + 10, y + 16, anchor="midleft", bold=True)
+        self._render(
+            surf,
+            self._fmt(left_value, left_digits),
+            34,
+            self._CYAN,
+            x + w // 4,
+            y + h // 2 + 8,
+            display=True,
+        )
+        self._render(surf, right_label, 14, self._GRID, mid_x + 10, y + 16, anchor="midleft", bold=True)
+        self._render(
+            surf,
+            self._fmt(right_value, right_digits),
+            34,
+            self._YELLOW,
+            x + (3 * w) // 4,
+            y + h // 2 + 8,
+            display=True,
+        )
+
+    def _draw_segment_bar(self, surf, rect, throttle, brake, good_color, warn_color):
+        x, y, w, h = rect
+        self._box(surf, rect)
+        dot_color = self._RED if (brake or 0) > 5 else good_color
+        pygame.draw.circle(surf, dot_color, (x + 14, y + h // 2), 8)
+
+        seg_x = x + 28
+        seg_w = w - 34
+        left_count = 4
+        center_count = 2
+        right_count = 10
+        total = left_count + center_count + right_count
+        gap = 3
+        cell_w = (seg_w - gap * (total - 1)) // total
+
+        brake_active = int(round(self._clamp((brake or 0.0) / 100.0) * left_count))
+        throttle_active = int(round(self._clamp((throttle or 0.0) / 100.0) * right_count))
+
+        index = 0
+        for i in range(left_count):
+            sx = seg_x + index * (cell_w + gap)
+            color = self._RED if i >= left_count - brake_active else self._BG
+            pygame.draw.rect(surf, color, (sx, y + 3, cell_w, h - 6))
+            pygame.draw.rect(surf, self._GRID, (sx, y + 3, cell_w, h - 6), 1)
+            index += 1
+        for _ in range(center_count):
+            sx = seg_x + index * (cell_w + gap)
+            pygame.draw.rect(surf, self._BG, (sx, y + 3, cell_w, h - 6))
+            pygame.draw.rect(surf, self._GRID, (sx, y + 3, cell_w, h - 6), 1)
+            index += 1
+        for i in range(right_count):
+            sx = seg_x + index * (cell_w + gap)
+            color = good_color if i < throttle_active else self._BG
+            pygame.draw.rect(surf, color, (sx, y + 3, cell_w, h - 6))
+            pygame.draw.rect(surf, self._GRID, (sx, y + 3, cell_w, h - 6), 1)
+            index += 1
+
+    def _draw_battery_icon(self, surf, rect, soc, color):
+        x, y, w, h = rect
+        self._box(surf, rect)
+        body = pygame.Rect(x + 12, y + 10, w - 28, h - 20)
+        nub = pygame.Rect(body.right + 2, y + h // 2 - 6, 8, 12)
+        pygame.draw.rect(surf, self._GRID, body, 2)
+        pygame.draw.rect(surf, self._GRID, nub)
+        fill_pct = self._clamp((soc or 0.0) / 100.0)
+        inner = body.inflate(-6, -6)
+        inner_w = int(inner.w * fill_pct)
+        if inner_w > 0:
+            pygame.draw.rect(surf, color, (inner.x, inner.y, inner_w, inner.h))
+        self._render(surf, "BAT", 11, self._GRID, x + w // 2, y + h - 8, bold=True)
+
+    def _draw_motor_icon(self, surf, rect, color):
+        x, y, w, h = rect
+        self._box(surf, rect)
+        cx, cy = x + w // 2, y + h // 2 - 3
+        pygame.draw.circle(surf, self._GRID, (cx, cy), 16, 2)
+        pygame.draw.circle(surf, color, (cx, cy), 7)
+        for offset in (-12, 0, 12):
+            pygame.draw.line(surf, self._GRID, (cx + offset, cy - 18), (cx + offset, cy - 12), 2)
+            pygame.draw.line(surf, self._GRID, (cx + offset, cy + 18), (cx + offset, cy + 12), 2)
+        self._render(surf, "MTR", 11, self._GRID, x + w // 2, y + h - 8, bold=True)
+
+    def _draw_tire_icon(self, surf, rect, color):
+        x, y, w, h = rect
+        self._box(surf, rect)
+        tire = pygame.Rect(x + w // 2 - 12, y + 8, 24, h - 20)
+        pygame.draw.rect(surf, self._GRID, tire, 2, border_radius=4)
+        for offset in range(4):
+            ty = tire.y + 4 + offset * 7
+            pygame.draw.line(surf, color, (tire.x + 4, ty), (tire.right - 4, ty), 2)
+        self._render(surf, "TIRE", 10, self._GRID, x + w // 2, y + h - 8, bold=True)
+
+    def _draw_warning_icon(self, surf, rect, color):
+        x, y, w, h = rect
+        self._box(surf, rect)
+        pts = [(x + w // 2, y + 8), (x + 10, y + h - 14), (x + w - 10, y + h - 14)]
+        pygame.draw.polygon(surf, color, pts)
+        pygame.draw.polygon(surf, self._GRID, pts, 2)
+        self._render(surf, "!", 24, self._BG, x + w // 2, y + h // 2 + 2, bold=True)
+        self._render(surf, "WARN", 10, self._GRID, x + w // 2, y + h - 8, bold=True)
+
+    def update(self, surf):
+        x, y, w, h = self.x, self.y, self.w, self.h
+        pygame.draw.rect(surf, self._BG, (x, y, w, h))
+
+        speed = self._sig("Speed")
+        rpm = self._sig("MotorRPM")
+        apps = self._sig("APPS")
+        brake = self._sig("BrakePressure")
+        pack_v = self._sig("PackVoltage")
+        pack_i = self._sig("PackCurrent")
+        soc = self._sig("StateOfCharge")
+        lv = self._sig("LVBatteryVoltage")
+        pack_temp = self._sig("PackTemp")
+        inv_temp = self._sig("InverterTemp")
+        motor_temp = self._sig("MotorTemp")
+        cell_min = self._sig("CellVoltageMin")
+        cell_max = self._sig("CellVoltageMax")
+        tires = [self._sig(sig) for sig in ("TTempFL", "TTempFR", "TTempBL", "TTempBR")]
+        tire_values = [val for val in tires if val is not None]
+        tire_avg = sum(tire_values) / len(tire_values) if tire_values else None
+
+        pack_power = (pack_v * pack_i / 1000.0) if pack_v is not None and pack_i is not None else None
+        cell_delta = ((cell_max - cell_min) * 1000.0) if cell_min is not None and cell_max is not None else None
+
+        faults = {
+            "IMD": self._fault_active("IMDFault"),
+            "AMS": self._fault_active("AMSFault"),
+            "BSPD": self._fault_active("BSPDFault"),
+            "APPS": self._fault_active("APPSFault"),
+            "BRK": self._fault_active("BrakeFault"),
+        }
+        fault_count = sum(1 for active in faults.values() if active)
+
+        hot_limit = (
+            (pack_temp is not None and pack_temp >= 50.0)
+            or (motor_temp is not None and motor_temp >= 100.0)
+            or (inv_temp is not None and inv_temp >= 85.0)
+        )
+        caution = (
+            (soc is not None and soc <= 25.0)
+            or (lv is not None and lv < 12.0)
+            or (cell_delta is not None and cell_delta >= 30.0)
+        )
+        ready = (pack_v is not None and pack_v > 250.0) and fault_count == 0 and not hot_limit
+
+        status_label, status_fill, status_text = "READY", self._GREEN, self._BG
+        if fault_count:
+            status_label, status_fill, status_text = "FAULT", self._RED, self._GRID
+        elif hot_limit:
+            status_label, status_fill, status_text = "LIMIT", self._YELLOW, self._BG
+        elif caution:
+            status_label, status_fill, status_text = "CHECK", self._YELLOW, self._BG
+
+        soc_color = self._GREEN if (soc or 0.0) >= 35 else self._YELLOW if (soc or 0.0) >= 20 else self._RED
+        power_color = self._CYAN if (pack_power or 0.0) < 20 else self._YELLOW if (pack_power or 0.0) < 55 else self._RED
+        lv_color = self._GREEN if lv is not None and 12.2 <= lv <= 15.0 else self._YELLOW if lv is not None and lv >= 11.8 else self._RED
+        temp_pack_color = self._GREEN if (pack_temp or 0.0) < 42 else self._YELLOW if (pack_temp or 0.0) < 50 else self._RED
+        temp_inv_color = self._GREEN if (inv_temp or 0.0) < 70 else self._YELLOW if (inv_temp or 0.0) < 82 else self._RED
+        temp_motor_color = self._GREEN if (motor_temp or 0.0) < 85 else self._YELLOW if (motor_temp or 0.0) < 100 else self._RED
+        apps_color = self._GREEN if (apps or 0.0) < 80 else self._YELLOW if (apps or 0.0) < 95 else self._RED
+        brake_color = self._RED if (brake or 0.0) > 0 else self._GRID
+        tire_color = self._GREEN if (tire_avg or 0.0) < 58 else self._YELLOW if (tire_avg or 0.0) < 78 else self._RED
+        cell_color = self._GREEN if (cell_delta or 0.0) < 15 else self._YELLOW if (cell_delta or 0.0) < 30 else self._RED
+
+        self._draw_shift_lights(surf, rpm, (x, y, w, 10))
+        left_chevrons = [
+            ("PACK", pack_v is not None and pack_v > 250.0, self._GREEN),
+            ("LV", lv is not None and lv > 12.0, self._CYAN),
+            ("BRK", brake is not None and brake > 5.0, self._RED),
+        ]
+        right_chevrons = [
+            ("IMD", faults["IMD"], self._RED),
+            ("TEMP", hot_limit, self._YELLOW),
+            ("R2D", ready, self._GREEN),
+        ]
+        self._draw_chevron_strip(surf, (x, y + 10, w, 24), left_chevrons, right_chevrons)
+
+        top_y = y + 34
+        top_h = 74
+        third = w // 3
+        self._summary_tile(surf, (x, top_y, third, top_h), "SOC", self._fmt(soc, 1), soc_color)
+        self._summary_tile(
+            surf,
+            (x + third, top_y, third, top_h),
+            "PACK PWR",
+            self._fmt(pack_power, 1),
+            power_color,
+        )
+        self._summary_tile(surf, (x + 2 * third, top_y, w - 2 * third, top_h), "LV", self._fmt(lv, 1), lv_color)
+
+        main_y = top_y + top_h
+        main_h = 214
+        left_big_w = 186
+        slim_w = 74
+        center_w = 280
+        # Explicit layout keeps the reference-style proportions stable on 800×480.
+        x1 = x
+        x2 = x1 + left_big_w
+        x3 = x2 + slim_w
+        x4 = x3 + center_w
+        x5 = x4 + slim_w
+        right_big_w = w - (left_big_w + slim_w + center_w + slim_w)
+        half_main = main_h // 2
+
+        self._tile(surf, (x1, main_y, left_big_w, half_main), "PACK TEMP", pack_temp, temp_pack_color, unit="C", value_size=70, digits=0)
+        self._tile(surf, (x2, main_y, slim_w, half_main), "INV", inv_temp, temp_inv_color, unit="C", value_size=40, digits=0)
+        self._draw_center_speed(surf, (x3, main_y, center_w, main_h), speed)
+        self._tile(surf, (x4, main_y, slim_w, half_main), "APPS", apps, apps_color, unit="%", value_size=40, digits=0)
+        self._tile(surf, (x5, main_y, right_big_w, half_main), "PACK V", pack_v, self._GRID, unit="V", value_size=72, digits=0)
+
+        self._tile(surf, (x1, main_y + half_main, left_big_w, main_h - half_main), "MOTOR TEMP", motor_temp, temp_motor_color, unit="C", value_size=64, digits=0)
+        self._tile(surf, (x2, main_y + half_main, slim_w, main_h - half_main), "TIRE", tire_avg, tire_color, unit="C", value_size=34, digits=0)
+        self._tile(surf, (x4, main_y + half_main, slim_w, main_h - half_main), "BRK", brake, brake_color, unit="%", value_size=40, digits=0)
+        self._tile(surf, (x5, main_y + half_main, right_big_w, main_h - half_main), "RPM", rpm, self._GRID, unit="", value_size=70, digits=0)
+
+        lower_y = main_y + main_h
+        lower_h = 102
+        self._tile(surf, (x, lower_y, 188, lower_h), "PACK CUR", pack_i, self._YELLOW, unit="A", value_size=62, digits=0)
+        self._tile(surf, (x + 188, lower_y, 72, lower_h), "dV", cell_delta, cell_color, unit="mV", value_size=28, digits=0)
+        self._draw_cell_band(surf, (x + 260, lower_y, 280, lower_h), "CELL MIN", cell_min, 2, "CELL MAX", cell_max, 2)
+        self._tile(surf, (x + 540, lower_y, 72, lower_h), "FLT", fault_count, self._RED if fault_count else self._GREEN, unit="", value_size=34, digits=0)
+        self._draw_status_tile(surf, (x + 612, lower_y, 188, lower_h), "VEHICLE STATE", status_label, status_fill, status_text)
+
+        bottom_y = lower_y + lower_h
+        bottom_h = h - (bottom_y - y)
+        self._draw_segment_bar(surf, (x, bottom_y, 560, bottom_h), apps, brake, self._GREEN, self._YELLOW)
+
+        icon_w = 60
+        self._draw_battery_icon(surf, (x + 560, bottom_y, icon_w, bottom_h), soc, soc_color)
+        self._draw_motor_icon(surf, (x + 620, bottom_y, icon_w, bottom_h), temp_motor_color)
+        self._draw_tire_icon(surf, (x + 680, bottom_y, icon_w, bottom_h), tire_color)
+        self._draw_warning_icon(surf, (x + 740, bottom_y, 60, bottom_h), status_fill if fault_count or hot_limit or caution else self._GREEN)
+
 class FullListCard(Gauge):
     '''this is just a list of all the signals that are defined for the gauge'''
     def __init__(self, box_xywh, text_size: int, signals: list, shared_data, scroll_button: Button):
@@ -1039,4 +1474,3 @@ def draw_background(surf, w, h):
     for gx in range(0, w, spacing):
         for gy in range(26, h, spacing):
             pygame.draw.circle(surf, GRID_LINE, (gx, gy), 1)
-

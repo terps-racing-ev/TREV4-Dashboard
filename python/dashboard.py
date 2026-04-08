@@ -374,6 +374,11 @@ class Dashboard:
                     shared_data=self.shared_data,
                     label=label or "",
                 )
+            elif gauge_type == "FSAEEVReferenceDash":
+                return FSAEEVReferenceDash(
+                    box_xywh=box_xywh,
+                    shared_data=self.shared_data,
+                )
             else:
                 print(f"Unknown gauge type: {gauge_type}")
                 return None
