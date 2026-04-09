@@ -14,9 +14,9 @@ gpiozero.Device.pin_Factory = LGPIOFactory
 SIG_PACK_TEMP  = "PackTemp"
 WARN_BAT_TEMP  = 48.0
 
-LEFT_PAGE_BUTTON = Button(17, bounce_time=0.5)    # GPIO PIN 5
-RIGHT_PAGE_BUTTON = Button(27, bounce_time=0.5)    # GPIO PIN 6
-SCROLL_LIST_BUTTON= Button(4, bounce_time=0.5)  # GPIO PIN 4
+LEFT_PAGE_BUTTON = Button(17, bounce_time=0.1)    # GPIO PIN 5
+RIGHT_PAGE_BUTTON = Button(27, bounce_time=0.1)    # GPIO PIN 6
+SCROLL_LIST_BUTTON= Button(4, bounce_time=0.1)  # GPIO PIN 4
 
 _ALERT_X, _ALERT_W        = 185, 430
 _ALERT_BOTTOM, _ALERT_H   = 446,  36
