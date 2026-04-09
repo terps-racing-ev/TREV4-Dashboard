@@ -16,8 +16,10 @@ gpiozero.Device.pin_Factory = LGPIOFactory
 
 SIG_PACK_TEMP  = "PackTemp"
 WARN_BAT_TEMP  = 48.0
+
 LEFT_PAGE_BUTTON = Button(17, bounce_time=0.5)    # GPIO PIN 5
 RIGHT_PAGE_BUTTON = Button(27, bounce_time=0.5)    # GPIO PIN 6
+SCROLL_LIST_BUTTON= Button(4, bounce_time=0.5)  # GPIO PIN 4
 
 _ALERT_X, _ALERT_W        = 185, 430
 _ALERT_BOTTOM, _ALERT_H   = 446,  36
@@ -82,8 +84,12 @@ class PageManager:
             print(f"\n Switching to page: {(self.current_page - 1) % len(self.pages)}")
             self.current_page = (self.current_page - 1) % len(self.pages)
 
+        def _scroll_list():
+            pygame.event.post(SCROLL)
+
         LEFT_PAGE_BUTTON.when_pressed = _move_page_left
         RIGHT_PAGE_BUTTON.when_pressed = _move_page_right
+        SCROLL_LIST_BUTTON.when_pressed = _scroll_list
         
         try:
             while self._ui_thread_active:

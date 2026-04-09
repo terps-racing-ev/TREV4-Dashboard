@@ -21,7 +21,6 @@ from python.shared_data import LatestValuesTable
 
 FPS_CAP = 60
 # GPIO BUTTONS!!!
-SCROLL_LIST_BUTTON= Button(4, bounce_time=0.5)  # GPIO PIN 4
 
 
 # ── Alert overlay (from new_dash) ────────────────────────────────────────────
@@ -376,7 +375,6 @@ class Dashboard:
                     signals=signals,
                     shared_data=self.shared_data,
                     text_size=cfg.get("text_size", 16),
-                    scroll_button=SCROLL_LIST_BUTTON
                 )
             elif gauge_type == "StatusHeader":
                 return StatusHeader(

@@ -855,22 +855,24 @@ class StatusHeader(Gauge):
         ])
 class FullListCard(Gauge):
     '''this is just a list of all the signals that are defined for the gauge'''
-    def __init__(self, box_xywh, text_size: int, signals: list, shared_data, scroll_button: Button):
+    def __init__(self, box_xywh, text_size: int, signals: list, shared_data):
         x, y, w, h = box_xywh
         super().__init__("", "", 0, 1, shared_data)
         self.x, self.y, self.w, self.h = x, y, w, h
         self.text_size = text_size
         self.signals = signals
         self.scroll_offset = 0
-        self.scroll_button = scroll_button
         self._prev_pressed = False
 
     def update(self, surf):
         x, y, w, h = self.x, self.y, self.w, self.h
         surf.fill(_ND_CELL_BG, (x, y, w, h))
         
-        # Handle space bar press
-        pressed = self.scroll_button.is_pressed
+        # Handle pygame event 
+        for event in pygame.event.get():
+            if event.type == SCROLL:
+                pressed = True
+            
         if pressed and not self._prev_pressed:
             self.scroll_offset += 3 * self.text_size
 
