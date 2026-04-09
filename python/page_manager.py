@@ -8,6 +8,7 @@ import pygame
 from gpiozero import Button 
 import gpiozero
 from gpiozero.pins.lgpio import LGPIOFactory
+from constants import SCROLL
 gpiozero.Device.pin_Factory = LGPIOFactory
 
 
