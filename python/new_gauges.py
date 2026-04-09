@@ -1005,8 +1005,10 @@ class FullListCard(Gauge):
         surf.fill(_ND_CELL_BG, (x, y, w, h))
         
         # Handle pygame event 
+        self._pressed = False # set pressed to false by default
         for event in pygame.event.get():
             if event.type == SCROLL:
+                print("EVENT RECEIVED")
                 self._pressed = True
             
 
