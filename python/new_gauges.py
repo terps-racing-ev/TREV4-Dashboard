@@ -998,6 +998,7 @@ class FullListCard(Gauge):
         self.signals = signals
         self.scroll_offset = 0
         self._prev_pressed = False
+        self._pressed = False
 
     def update(self, surf):
         x, y, w, h = self.x, self.y, self.w, self.h
@@ -1006,10 +1007,10 @@ class FullListCard(Gauge):
         # Handle pygame event 
         for event in pygame.event.get():
             if event.type == SCROLL:
-                pressed = True
+                self._pressed = True
             
 
-        if pressed and not self._prev_pressed:
+        if self._pressed and not self._prev_pressed:
             self.scroll_offset += 3 * self.text_size
 
             # Calculate total content height
@@ -1018,7 +1019,7 @@ class FullListCard(Gauge):
             # If bottom of text is above bottom of viewport, reset to top
             if y + 10 + total_height - self.scroll_offset < y + h:
                 self.scroll_offset = 0
-        self._prev_pressed = pressed
+        self._prev_pressed = self._pressed
         
         # Draw signals with scroll offset
         for i, sig in enumerate(self.signals):
