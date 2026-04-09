@@ -873,6 +873,7 @@ class FullListCard(Gauge):
             if event.type == SCROLL:
                 pressed = True
             
+
         if pressed and not self._prev_pressed:
             self.scroll_offset += 3 * self.text_size
 
