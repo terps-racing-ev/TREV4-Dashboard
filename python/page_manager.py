@@ -118,7 +118,8 @@ class PageManager:
         try:
             while self._ui_thread_active:
                 # Process Pygame events to prevent freezing
-                for event in pygame.event.get():
+                events = pygame.event.get()
+                for event in events:
                     if event.type == pygame.QUIT:
                         print("\nWindow closed by user")
                         cleanup()
@@ -127,6 +128,8 @@ class PageManager:
                         print("\nEscape pressed, exiting...")
                         cleanup()
                         sys.exit(0)
+                    elif event.type == SCROLL:
+                        pygame.event.post(pygame.event.Event(SCROLL))
 
                 
                 frame = self.pages[self.current_page].render_frame()
