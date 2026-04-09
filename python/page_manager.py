@@ -108,7 +108,7 @@ class PageManager:
             self._switch_to_page(self.current_page - 1)
 
         def _scroll_list():
-            pygame.event.post(pygam.event.Event(SCROLL))
+            pygame.event.post(pygame.event.Event(SCROLL))
 
         LEFT_PAGE_BUTTON.when_pressed = _move_page_left
         RIGHT_PAGE_BUTTON.when_pressed = _move_page_right
