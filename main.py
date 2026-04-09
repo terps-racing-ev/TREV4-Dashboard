@@ -19,6 +19,32 @@ from python.page_manager import PageManager
 from python import config_loader
 
 
+def ensure_builtin_pages(prod_config: dict) -> dict:
+    """Append code-defined pages that should exist even when USB config is older."""
+    retro_page = {
+        "display": {
+            "width": 800,
+            "height": 480,
+            "bg_color": [5, 5, 5],
+        },
+        "gauges": [
+            {"type": "RetroHeroDash", "box_xywh": [0, 0, 800, 480]},
+        ],
+    }
+
+    pages = prod_config.get("pages")
+    if isinstance(pages, list):
+        has_retro = any(
+            any(gauge.get("type") == "RetroHeroDash" for gauge in page.get("gauges", []))
+            for page in pages
+            if isinstance(page, dict)
+        )
+        if not has_retro:
+            pages.append(retro_page)
+            print("Injected built-in RetroHeroDash page")
+    return prod_config
+
+
 def main():
     # Simulate values if you don't have CAN hardware
     SIM_MODE = False
@@ -41,6 +67,7 @@ def main():
 
     with open(config_path, encoding="utf-8") as f:
         prod_config = json.load(f)
+    prod_config = ensure_builtin_pages(prod_config)
 
     shared_data = LatestValuesTable()
 
