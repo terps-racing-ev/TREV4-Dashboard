@@ -43,20 +43,12 @@ class CANManager:
     def decode_message(self, msg: can.Message) -> Dict[str, Any]:
         """Decode a CAN message and update shared data."""       
         try:
-            data_hex = " ".join(f"{b:02X}" for b in msg.data)
-            data_dec = " ".join(str(b) for b in msg.data)
-            print(
-                f"RX CAN id=0x{msg.arbitration_id:X} ({msg.arbitration_id}) "
-                f"data_hex=[{data_hex}] data_dec=[{data_dec}]"
-            )
-
             # Find the message definition by arbitration ID
             dbc_message = self.db.get_message_by_frame_id(msg.arbitration_id)
             # Decode the message data
             decoded = dbc_message.decode(msg.data)
             # Update shared data (now keyed by signal name)
             self.shared_data.update(decoded)
-            print(f"Decoded {dbc_message.name}: {decoded}")
             return decoded
         except KeyError:
             # Message ID not in database
