@@ -194,9 +194,7 @@ class CANManager:
 
         # Messages to transmit, mapped to their signals with defaults
         TX_MESSAGES = {
-            "test": ["Speed", "APPS"],
-            "tiretemp": ["TTempFL", "TTempFR", "TTempBL", "TTempBR"],
-            "testagain": ["PackTemp"],
+
         }
 
         try:
