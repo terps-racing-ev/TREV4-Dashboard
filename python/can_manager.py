@@ -49,6 +49,7 @@ class CANManager:
             decoded = dbc_message.decode(msg.data)
             # Update shared data (now keyed by signal name)
             self.shared_data.update(decoded)
+            print(f"Decoded {dbc_message.name}: {decoded}")
             return decoded
         except KeyError:
             # Message ID not in database
