@@ -5,19 +5,48 @@ from python.debug_simulator import DebugSimulator
 from python.graphics_driver import *
 import pygame
 
-from gpiozero import Button 
-import gpiozero
-from gpiozero.pins.lgpio import LGPIOFactory
 from python.constants.events import SCROLL
-gpiozero.Device.pin_Factory = LGPIOFactory
+IS_WINDOWS = sys.platform.startswith("win")
+GPIO_AVAILABLE = False
 
+if not IS_WINDOWS:
+    try:
+        import gpiozero
+        from gpiozero.pins.lgpio import LGPIOFactory
+        from gpiozero import Button
+
+        setattr(gpiozero.Device, "pin_factory", LGPIOFactory())
+        GPIO_AVAILABLE = True
+    except Exception:
+        print("GPIO disabled: failed to initialize gpiozero/lgpio")
+
+
+class _NullButton:
+    @property
+    def when_pressed(self):
+        return None
+
+    @when_pressed.setter
+    def when_pressed(self, _handler):
+        return
 
 SIG_PACK_TEMP  = "PackTemp"
 WARN_BAT_TEMP  = 48.0
 
-LEFT_PAGE_BUTTON = Button(17, bounce_time=0.1)    # GPIO PIN 5
-RIGHT_PAGE_BUTTON = Button(27, bounce_time=0.1)    # GPIO PIN 6
-SCROLL_LIST_BUTTON= Button(4, bounce_time=0.1)  # GPIO PIN 4
+if not GPIO_AVAILABLE:
+    LEFT_PAGE_BUTTON = _NullButton()
+    RIGHT_PAGE_BUTTON = _NullButton()
+    SCROLL_LIST_BUTTON = _NullButton()
+else:
+    try:
+        LEFT_PAGE_BUTTON = Button(17, bounce_time=0.1)    # GPIO PIN 5
+        RIGHT_PAGE_BUTTON = Button(27, bounce_time=0.1)    # GPIO PIN 6
+        SCROLL_LIST_BUTTON = Button(4, bounce_time=0.1)  # GPIO PIN 4
+    except Exception:
+        print("GPIO buttons disabled: failed to create Button devices")
+        LEFT_PAGE_BUTTON = _NullButton()
+        RIGHT_PAGE_BUTTON = _NullButton()
+        SCROLL_LIST_BUTTON = _NullButton()
 
 _ALERT_X, _ALERT_W        = 185, 430
 _ALERT_BOTTOM, _ALERT_H   = 446,  36
@@ -124,10 +153,15 @@ class PageManager:
                         print("\nWindow closed by user")
                         cleanup()
                         sys.exit(0)
-                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                        print("\nEscape pressed, exiting...")
-                        cleanup()
-                        sys.exit(0)
+                    elif event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_ESCAPE:
+                            print("\nEscape pressed, exiting...")
+                            cleanup()
+                            sys.exit(0)
+                        elif event.key == pygame.K_LEFT:
+                            _move_page_left()
+                        elif event.key == pygame.K_RIGHT:
+                            _move_page_right()
                     elif event.type == SCROLL:
                         pygame.event.post(pygame.event.Event(SCROLL))
 

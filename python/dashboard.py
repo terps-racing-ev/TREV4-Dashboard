@@ -6,10 +6,23 @@ import json
 from pathlib import Path
 from typing import Optional
 import pygame
-import gpiozero
-from gpiozero.pins.lgpio import LGPIOFactory
-gpiozero.Device.pin_Factory = LGPIOFactory
-from gpiozero import Button
+
+if __import__("os").name != "nt":
+    try:
+        import gpiozero
+        from gpiozero.pins.lgpio import LGPIOFactory
+        from gpiozero import Button
+
+        setattr(gpiozero.Device, "pin_factory", LGPIOFactory())
+    except Exception:
+        print("GPIO disabled: failed to initialize lgpio pin factory")
+        gpiozero = None
+        LGPIOFactory = None
+        Button = None
+else:
+    gpiozero = None
+    LGPIOFactory = None
+    Button = None
 
 from python.gauges import *
 from python.new_gauges import *
