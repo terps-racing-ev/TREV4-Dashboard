@@ -67,7 +67,9 @@ def main():
 
     with open(config_path, encoding="utf-8") as f:
         prod_config = json.load(f)
-    prod_config = ensure_builtin_pages(prod_config)
+
+        #getting rid of the evangelion shit 
+    #prod_config = ensure_builtin_pages(prod_config)
 
     shared_data = LatestValuesTable()
 
