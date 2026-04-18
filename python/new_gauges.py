@@ -630,7 +630,7 @@ class DarkCell(Gauge):
         pct = self.clamp_pct(val)
         surf.fill(_ND_CELL_BG, (x, y, w, h))
 
-        font_size = round(self.h / 2.5)
+        font_size = round(self.h / 2)
 
         font_offset = round(self.h / 10)
         text_size = self.h / 7
@@ -654,10 +654,10 @@ class DarkCell(Gauge):
         #font_text = round(28 * ((self.h - 71)/100))
 
         if val is None:
-            render_text(surf, ':(', font_size, self.value_color, x + 14, y + h - 14 -font_offset, anchor="midleft")
+            render_text(surf, ':(', font_size, self.value_color, x + 14, y + h - 18 -font_offset, anchor="midleft")
         else:
             val_str = f"{val:.{self.decimal_places}f}"
-            render_text(surf, val_str, font_size, self.value_color, x + 14, y + h - 14 -font_offset, anchor="midleft")
+            render_text(surf, val_str, font_size, self.value_color, x + 14, y + h - 18 -font_offset, anchor="midleft")
             if self.unit:
                 val_px_w = val_str.__len__() * (font_size * 0.6) 
                 render_text(surf, self.unit, unit_size, self.value_color, x + 14 + val_px_w + 3, y + h - font_size/2.5, anchor="midleft")
@@ -881,18 +881,23 @@ class DarkTireQuad:
 
     def update(self, surf):
         x, y, w, h = self.x, self.y, self.w, self.h
+        font_size = round(h / 5)
+        label_size = max(12, round(font_size * 0.75))
         hw, hh = w // 2, h // 2
-        for i, (sig, _lbl) in enumerate(self.corners):
+        
+        for i, (sig, lbl) in enumerate(self.corners):
             tx, ty = x + (i % 2) * hw, y + (i // 2) * hh
             v = self.shared_data.get_signal(sig)
             val = float(v) if v is not None else None
             bg = _ND_BORDER if val is None else (_ND_TIRE_COLD if val < 60 else _ND_TIRE_OPT if val < 95 else _ND_TIRE_HOT)
             surf.fill(tuple(c // 4 for c in bg), (tx, ty, hw, hh))
             pygame.draw.rect(surf, _ND_BORDER, (tx, ty, hw, hh), 1)
+            render_text(surf, lbl, label_size, _ND_LABEL, tx + hw // 2, ty + hh // 2 - max(14, round(font_size * 0.75)) + 10, bold=True)
             if val is None:
-                render_text(surf, '-', 18, _ND_WHITE, tx + hw // 2, ty + hh // 2 + 4, bold=True)
+                render_text(surf, '-', font_size, _ND_WHITE, tx + hw // 2, ty + hh // 2 + 22, bold=True)
             else:
-                render_text(surf, f"{val:.0f}\u00b0", 18, _ND_WHITE, tx + hw // 2, ty + hh // 2 + 4, bold=True)
+                render_text(surf, f"{val:.0f}\u00b0", font_size, _ND_WHITE, tx + hw // 2, ty + hh // 2 + 22, bold=True)
+        render_text(surf, "TIRES", label_size-8, "white", x + w // 2, y + h // 2, bold=True)
 
 
 class DarkFaultRow:
