@@ -629,6 +629,18 @@ class DarkCell(Gauge):
         val = self.get_value()
         pct = self.clamp_pct(val)
         surf.fill(_ND_CELL_BG, (x, y, w, h))
+
+        font_size = round(self.h / 2.5)
+
+        font_offset = round(self.h / 10)
+        text_size = self.h / 7
+        while get_font(round(text_size)).size(self.label)[0] > self.w - 28:
+            text_size -= .01
+
+        text_size = round(text_size)
+
+        unit_size = round(font_size / 2)
+
         bar_w = int(max(0.0, min(1.0, pct)) * w)
         if bar_w > 0:
             alpha_bar = pygame.Surface((bar_w, h), pygame.SRCALPHA)
@@ -637,15 +649,18 @@ class DarkCell(Gauge):
         if not self.last:
             pygame.draw.line(surf, _ND_BORDER, (x, y + h - 1), (x + w, y + h - 1), 1)
         pygame.draw.rect(surf, self.accent, (x, y + 6, 3, h - 12), border_radius=1)
-        render_text(surf, self.label, 18, self.value_color, x + 14, y + 16, anchor="midleft")
+        render_text(surf, self.label, text_size, self.value_color, x + 14, y + 16, anchor="midleft")
+
+        #font_text = round(28 * ((self.h - 71)/100))
+
         if val is None:
-            render_text(surf, '-', 28, self.value_color, x + 14, y + h - 14, anchor="midleft")
+            render_text(surf, ':(', font_size, self.value_color, x + 14, y + h - 14 -font_offset, anchor="midleft")
         else:
             val_str = f"{val:.{self.decimal_places}f}"
-            render_text(surf, val_str, 28, self.value_color, x + 14, y + h - 14, anchor="midleft")
+            render_text(surf, val_str, font_size, self.value_color, x + 14, y + h - 14 -font_offset, anchor="midleft")
             if self.unit:
-                val_px_w = get_font(28).size(val_str)[0]
-                render_text(surf, self.unit, 14, self.value_color, x + 14 + val_px_w + 3, y + h - 16, anchor="midleft")
+                val_px_w = val_str.__len__() * (font_size * 0.6) 
+                render_text(surf, self.unit, unit_size, self.value_color, x + 14 + val_px_w + 3, y + h - font_size/2.5, anchor="midleft")
         
 
 
@@ -1003,7 +1018,7 @@ class StatusHeader(Gauge):
         ])
 class FullListCard(Gauge):
     '''this is just a list of all the signals that are defined for the gauge'''
-    def __init__(self, box_xywh, text_size: int, signals: list, shared_data):
+    def __init__(self, box_xywh, text_size: int, signals: list, shared_data, bg_color=None):
         x, y, w, h = box_xywh
         super().__init__("", "", 0, 1, shared_data)
         self.x, self.y, self.w, self.h = x, y, w, h
@@ -1012,10 +1027,11 @@ class FullListCard(Gauge):
         self.scroll_offset = 0
         self._prev_pressed = False
         self._pressed = False
+        self.bg_color = bg_color if bg_color else _ND_CELL_BG
 
     def update(self, surf):
         x, y, w, h = self.x, self.y, self.w, self.h
-        surf.fill(_ND_CELL_BG, (x, y, w, h))
+        surf.fill(self.bg_color, (x, y, w, h))
         
         # Handle pygame event 
         self._pressed = False # set pressed to false by default
@@ -1044,7 +1060,7 @@ class FullListCard(Gauge):
             
             # Only render if text is within visible bounds
             if text_y + self.text_size > y and text_y < y + h:
-                render_text(surf, f"{sig}: {val_str}", self.text_size, _ND_LABEL, x + 10, text_y, anchor="midleft")
+                render_text(surf, f"{sig}: {val_str}", self.text_size, "black", x + 10, text_y, anchor="midleft")
 
 
 

@@ -355,6 +355,7 @@ class Dashboard:
                     signals=signals,
                     shared_data=self.shared_data,
                     text_size=cfg.get("text_size", 16),
+                    bg_color=tuple(self.bg_color) if self.bg_color else None,
                 )
             elif gauge_type == "StatusHeader":
                 return StatusHeader(
