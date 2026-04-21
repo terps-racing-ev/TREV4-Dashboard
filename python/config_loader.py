@@ -18,6 +18,14 @@ DBC_FILENAME = "prod.dbc"
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
+def _safe_iterdir(path: Path) -> list[Path]:
+    """Return directory entries, skipping paths that cannot be read."""
+    try:
+        return list(path.iterdir())
+    except OSError:
+        return []
+
+
 def get_local_config_path() -> Path:
     """Return the fixed local prod_config.json path (project root)."""
     return _PROJECT_ROOT / CONFIG_FILENAME
@@ -43,7 +51,7 @@ def get_local_dbc_paths() -> list[Path]:
     root = get_local_dbc_folder()
     if not root.is_dir():
         return []
-    return sorted(path for path in root.iterdir() if path.is_file() and path.suffix.lower() == ".dbc")
+    return sorted(path for path in _safe_iterdir(root) if path.is_file() and path.suffix.lower() == ".dbc")
 
 
 def get_usb_mount_paths() -> list[Path]:
@@ -55,16 +63,16 @@ def get_usb_mount_paths() -> list[Path]:
     if sys.platform == "darwin":
         volumes = Path("/Volumes")
         if volumes.is_dir():
-            paths.extend(p for p in volumes.iterdir() if p.is_dir() and not p.name.startswith("."))
+            paths.extend(p for p in _safe_iterdir(volumes) if p.is_dir() and not p.name.startswith("."))
     elif sys.platform == "linux":
         for base in ("/media", "/run/media"):
             p = Path(base)
             if not p.is_dir():
                 continue
-            for item in p.iterdir():
+            for item in _safe_iterdir(p):
                 if item.is_dir():
                     paths.append(item)  # e.g. /media/MyUSB or /run/media/username
-                    for sub in item.iterdir():
+                    for sub in _safe_iterdir(item):
                         if sub.is_dir():
                             paths.append(sub)  # e.g. /run/media/username/MyUSB
     elif sys.platform == "win32":
@@ -86,7 +94,7 @@ def _find_file_on_usb(filename: str) -> Path | None:
         candidate = root / filename
         if candidate.is_file():
             return candidate
-        for sub in root.iterdir():
+        for sub in _safe_iterdir(root):
             if sub.is_dir():
                 candidate = sub / filename
                 try:
@@ -110,10 +118,10 @@ def find_dbc_on_usb() -> Path | None:
 def _find_usb_dbc_folder() -> Path | None:
     """Return the first folder on USB media that contains at least one .dbc file."""
     for root in get_usb_mount_paths():
-        if any(path.is_file() and path.suffix.lower() == ".dbc" for path in root.iterdir()):
+        if any(path.is_file() and path.suffix.lower() == ".dbc" for path in _safe_iterdir(root)):
             return root
-        for sub in root.iterdir():
-            if sub.is_dir() and any(path.is_file() and path.suffix.lower() == ".dbc" for path in sub.iterdir()):
+        for sub in _safe_iterdir(root):
+            if sub.is_dir() and any(path.is_file() and path.suffix.lower() == ".dbc" for path in _safe_iterdir(sub)):
                 return sub
     return None
 
@@ -168,7 +176,7 @@ def sync_dbcs_from_usb() -> bool:
 
     copied = False
     try:
-        for src in sorted(path for path in src_root.iterdir() if path.is_file() and path.suffix.lower() == ".dbc"):
+        for src in sorted(path for path in _safe_iterdir(src_root) if path.is_file() and path.suffix.lower() == ".dbc"):
             shutil.copy2(src, dst_root / src.name)
             print(f"Updated local {src.name} from USB: {src}")
             copied = True
