@@ -16,9 +16,10 @@ BAUD_RATE = 500000
 
 class CANManager:
     
-    def __init__(self, shared_data: LatestValuesTable, dbc_path: Path, sim_mode: bool = False):
+    def __init__(self, shared_data: LatestValuesTable, dbc_paths: list[Path], sim_mode: bool = False):
         self.db: Optional[cantools.database.Database] = None
-        self.dbc_path = dbc_path
+        self.dbs: list[cantools.database.Database] = []
+        self.dbc_paths = dbc_paths
         self.bus: Optional[can.Bus] = None
         
         # Shared state for latest values
@@ -33,8 +34,17 @@ class CANManager:
     
     def load_dbc(self) -> bool:        
         try:
-            self.db = cantools.database.load_file(str(self.dbc_path))
-            print(f"Loaded {len(self.db.messages)} message(s) from dbc")
+            self.dbs = []
+            for dbc_path in self.dbc_paths:
+                db = cantools.database.load_file(str(dbc_path))
+                self.dbs.append(db)
+                print(f"Loaded {len(db.messages)} message(s) from {dbc_path}")
+
+            if not self.dbs:
+                print("No DBC files were loaded")
+                return False
+
+            self.db = self.dbs[0]
             return True
         except Exception as e:
             print(f"Error loading .dbc file: {e}")
@@ -43,15 +53,15 @@ class CANManager:
     def decode_message(self, msg: can.Message) -> Dict[str, Any]:
         """Decode a CAN message and update shared data."""       
         try:
-            # Find the message definition by arbitration ID
-            dbc_message = self.db.get_message_by_frame_id(msg.arbitration_id)
-            # Decode the message data
-            decoded = dbc_message.decode(msg.data)
-            # Update shared data (now keyed by signal name)
-            self.shared_data.update(decoded)
-            return decoded
-        except KeyError:
-            # Message ID not in database
+            for db in self.dbs:
+                try:
+                    dbc_message = db.get_message_by_frame_id(msg.arbitration_id)
+                    decoded = dbc_message.decode(msg.data)
+                    self.shared_data.update(decoded)
+                    return decoded
+                except KeyError:
+                    continue
+
             return {}
         except Exception as e:
             print(f"Error decoding message {msg.arbitration_id:X}: {e}")
@@ -59,12 +69,15 @@ class CANManager:
 
     def encode_message(self, msg_name: str, sigs: Dict[str, Any]) -> Optional[can.Message]:
         try:
-            # Find the message definition by name
-            msg = self.db.get_message_by_name(msg_name)
-            # Encode the signals
-            data = msg.encode(sigs)
-            # Create CAN message
-            return can.Message(arbitration_id=msg.frame_id, data=data)
+            for db in self.dbs:
+                try:
+                    msg = db.get_message_by_name(msg_name)
+                    data = msg.encode(sigs)
+                    return can.Message(arbitration_id=msg.frame_id, data=data)
+                except KeyError:
+                    continue
+
+            raise KeyError(msg_name)
         except Exception as e:
             print(f"Error encoding message {msg_name}: {e}")
             return None 
@@ -132,7 +145,7 @@ class CANManager:
 
     def _run_sim_rx_thread(self) -> None:
         """Simulated RX thread - generates CAN values that cycle through their ranges."""
-        if self.db is None:
+        if not self.dbs:
             print("No .dbc loaded for simulation")
             return
         
@@ -145,33 +158,34 @@ class CANManager:
             while self._rx_thread_active:
                 elapsed = time.time() - start_time
 
-                # Generate simulated data for each message in the database
-                for message in self.db.messages:
-                    sim_signals = {}
+                # Generate simulated data for each message in every loaded database
+                for db in self.dbs:
+                    for message in db.messages:
+                        sim_signals = {}
 
-                    if message.name == "statustest":
-                        # Signals activate one-by-one in 5s increments, ordered by start bit
-                        for i, signal in enumerate(sorted(message.signals, key=lambda s: s.start)):
-                            sim_signals[signal.name] = 1 if elapsed >= (i + 1) * 5 else 0
-                    else:
-                        for signal in message.signals:
-                            # Special handling for G-force signals (spiral path)
-                            if signal.name in ("LateralG", "LongitudinalG"):
-                                spiral_lat, spiral_lon = self._get_spiral_values(elapsed)
-                                if signal.name == "LateralG":
-                                    sim_signals[signal.name] = max(signal.minimum, min(signal.maximum, spiral_lat))
-                                else:  # LongitudinalG
-                                    sim_signals[signal.name] = max(signal.minimum, min(signal.maximum, spiral_lon))
-                            else:
-                                # Cycle the value through the signal's range using modulo
-                                max_val = signal.maximum
-                                min_val = signal.minimum
-                                range_val = max_val - min_val
-                                cycled_value = min_val + (value % (int(range_val) + 1))
-                                sim_signals[signal.name] = cycled_value
+                        if message.name == "statustest":
+                            # Signals activate one-by-one in 5s increments, ordered by start bit
+                            for i, signal in enumerate(sorted(message.signals, key=lambda s: s.start)):
+                                sim_signals[signal.name] = 1 if elapsed >= (i + 1) * 5 else 0
+                        else:
+                            for signal in message.signals:
+                                # Special handling for G-force signals (spiral path)
+                                if signal.name in ("LateralG", "LongitudinalG"):
+                                    spiral_lat, spiral_lon = self._get_spiral_values(elapsed)
+                                    if signal.name == "LateralG":
+                                        sim_signals[signal.name] = max(signal.minimum, min(signal.maximum, spiral_lat))
+                                    else:  # LongitudinalG
+                                        sim_signals[signal.name] = max(signal.minimum, min(signal.maximum, spiral_lon))
+                                else:
+                                    # Cycle the value through the signal's range using modulo
+                                    max_val = signal.maximum
+                                    min_val = signal.minimum
+                                    range_val = max_val - min_val
+                                    cycled_value = min_val + (value % (int(range_val) + 1))
+                                    sim_signals[signal.name] = cycled_value
 
-                    # Update shared data
-                    self.shared_data.update(sim_signals)
+                        # Update shared data
+                        self.shared_data.update(sim_signals)
 
                 value += 1
                 time.sleep(0.05)
@@ -229,13 +243,14 @@ class CANManager:
     
     # for debugging
     def get_all_signal_names(self) -> list:
-        if self.db is None:
+        if not self.dbs:
             return []
         
         signal_names = []
-        for message in self.db.messages:
-            for signal in message.signals:
-                signal_names.append(signal.name)
+        for db in self.dbs:
+            for message in db.messages:
+                for signal in message.signals:
+                    signal_names.append(signal.name)
         return signal_names
     
     def stop(self):
