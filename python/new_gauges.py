@@ -633,7 +633,7 @@ class DarkCell(Gauge):
         font_size = round(self.h / 2)
 
         font_offset = round(self.h / 10)
-        text_size = self.h / 7
+        text_size = self.h / 6
         while get_font(round(text_size)).size(self.label)[0] > self.w - 28:
             text_size -= .01
 
@@ -648,7 +648,7 @@ class DarkCell(Gauge):
             surf.blit(alpha_bar, (x, y))
         if not self.last:
             pygame.draw.line(surf, _ND_BORDER, (x, y + h - 1), (x + w, y + h - 1), 1)
-        pygame.draw.rect(surf, self.accent, (x, y + 6, 3, h - 12), border_radius=1)
+        pygame.draw.rect(surf, self.accent, (x, y , 4, h ), border_radius=1)
         render_text(surf, self.label, text_size, self.value_color, x + 14, y + 16, anchor="midleft")
 
         #font_text = round(28 * ((self.h - 71)/100))
