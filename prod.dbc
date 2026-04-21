@@ -38,8 +38,8 @@ BU_:
 
 
 BO_ 2158739747 test: 8 Vector__XXX
-	SG_ Speed : 0|16@1- (0.1,0) [0|99] "mph" Vector__XXX
-	SG_ APPS : 16|16@1- (0.1,0) [-230|230] "" Vector__XXX
+	SG_ Speed : 0|16@1- (0.1,0) [0|140] "mph" Vector__XXX
+	SG_ APPS : 16|16@1- (0.1,0) [0|100] "" Vector__XXX
 
 BO_ 2147540653 tiretemp: 8 Vector__XXX
 	SG_ TTempFL : 0|16@1- (0.1,0) [0|99] "C" Vector__XXX
@@ -49,14 +49,6 @@ BO_ 2147540653 tiretemp: 8 Vector__XXX
 
 BO_ 2147540690 testagain: 8 Vector__XXX
 	SG_ PackTemp : 0|16@1- (0.1, 0) [0|99] "C" Vector__XXX
-
-BO_ 2147540691 statustest: 8 Vector_XXX
-	SG_ HW1 : 0|1@1+ (1,0) [0|1] "" Vector_XXX
-	SG_ HW2 : 1|1@1+ (1,0) [0|1] "" Vector_XXX
-	SG_ HW3 : 2|1@1+ (1,0) [0|1] "" Vector_XXX
-	SG_ SW1 : 3|1@1+ (1,0) [0|1] "" Vector_XXX
-	SG_ SW2 : 4|1@1+ (1,0) [0|1] "" Vector_XXX
-	SG_ SW3 : 5|1@1+ (1,0) [0|1] "" Vector_XXX
 
 
 BA_DEF_ SG_  "SPN" INT 0 524287;
@@ -77,3 +69,9 @@ BA_ "DatabaseCompiler" "CSS ELECTRONICS (WWW.CSSELECTRONICS.COM)";
 BA_ "DatabaseVersion" "1.0.0";
 BA_ "VFrameFormat" BO_ 2158739747 3;
 BA_ "SPN" SG_ 2158739747 WheelBasedVehicleSpeed 84;
+
+BO_ 2147540691 braking: 8 Vector__XXX
+    SG_ BrakePressure : 0|16@1- (0.1,0) [0|100] "%" Vector__XXX
+
+BO_ 2147540692 motor: 8 Vector__XXX
+    SG_ MotorRPM : 0|16@1- (1,0) [0|6000] "rpm" Vector__XXX
