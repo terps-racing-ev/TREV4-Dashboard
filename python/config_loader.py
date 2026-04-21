@@ -32,9 +32,10 @@ def get_local_dbc_path() -> Path:
 
 def get_local_dbc_folder() -> Path:
     """
-    Return the path where dbc files are stored locally
+    Return the folder where local DBC files live for this platform.
+    This keeps folder-based loading aligned with the original get_local_dbc_path().
     """
-    return _PROJECT_ROOT / "dbc"
+    return get_local_dbc_path().parent
 
 
 def get_local_dbc_paths() -> list[Path]:
