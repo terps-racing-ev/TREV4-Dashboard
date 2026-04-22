@@ -48,21 +48,23 @@ def ensure_builtin_pages(prod_config: dict) -> dict:
 def main():
     # Simulate values if you don't have CAN hardware
     SIM_MODE = False
+    on_windows = platform == "win32"
 
-    if platform == "win32":
+    if on_windows:
         print("Running on Windows - using virtual CAN interface (sim mode)")
         SIM_MODE = True
 
-    # Sync prod_config.json and prod.dbc from USB if present, then load from local
-    config_loader.sync_config_from_usb()
-    config_loader.sync_dbc_from_usb()
+    # On Windows, load local files only. On other platforms, refresh local copies from USB first.
+    if not on_windows:
+        config_loader.sync_config_from_usb()
+        config_loader.sync_dbcs_from_usb()
     config_path = config_loader.get_local_config_path()
-    dbc_path = config_loader.get_local_dbc_path()
+    dbc_paths = config_loader.get_local_dbc_paths()
     if not config_path.is_file():
-        print("prod_config.json not found locally or on USB. Exiting.")
+        print("prod_config.json not found locally. Exiting.")
         return
-    if not dbc_path.is_file():
-        print("prod.dbc not found locally or on USB. Exiting.")
+    if not dbc_paths:
+        print("No .dbc files found locally. Exiting.")
         return
 
     with open(config_path, encoding="utf-8") as f:
@@ -86,7 +88,7 @@ def main():
         print("No dashboard pages loaded from prod_config.json. Exiting.")
         return
 
-    can_mgr = CANManager(shared_data=shared_data, dbc_path=dbc_path, sim_mode=SIM_MODE)
+    can_mgr = CANManager(shared_data=shared_data, dbc_paths=dbc_paths, sim_mode=SIM_MODE)
 
     pages = PageManager(dashboards)
     
@@ -125,11 +127,12 @@ def main():
             if not ui_thread.is_alive():
                 print("\nUI thread stopped, shutting down...")
                 break
-            now = time.monotonic()
-            if now - last_sync >= SYNC_INTERVAL_SEC:
-                config_loader.sync_config_from_usb()
-                config_loader.sync_dbc_from_usb()
-                last_sync = now
+            if not on_windows:
+                now = time.monotonic()
+                if now - last_sync >= SYNC_INTERVAL_SEC:
+                    config_loader.sync_config_from_usb()
+                    config_loader.sync_dbcs_from_usb()
+                    last_sync = now
             sleep(0.1)
     except KeyboardInterrupt:
         print("\nShutting down...")

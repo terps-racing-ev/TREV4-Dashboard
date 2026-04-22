@@ -13,10 +13,17 @@ from pathlib import Path
 
 CONFIG_FILENAME = "prod_config.json"
 DBC_FILENAME = "prod.dbc"
-DBC_FILENAMES = [DBC_FILENAME, "prod2.dbc"]
 
 # Project root: parent of python/ (this file lives in python/config_loader.py)
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+
+def _safe_iterdir(path: Path) -> list[Path]:
+    """Return directory entries, skipping paths that cannot be read."""
+    try:
+        return list(path.iterdir())
+    except OSError:
+        return []
 
 
 def get_local_config_path() -> Path:
@@ -33,12 +40,18 @@ def get_local_dbc_path() -> Path:
 
 def get_local_dbc_folder() -> Path:
     """
-    Return the path where dbc files are stored locally
+    Return the folder where local DBC files live for this platform.
+    This keeps folder-based loading aligned with the original get_local_dbc_path().
     """
-    if sys.platform != "win32":
-        return _PROJECT_ROOT / "dbc"
-    else:
-        return _PROJECT_ROOT
+    return get_local_dbc_path().parent
+
+
+def get_local_dbc_paths() -> list[Path]:
+    """Return all local .dbc files in the dbc folder."""
+    root = get_local_dbc_folder()
+    if not root.is_dir():
+        return []
+    return sorted(path for path in _safe_iterdir(root) if path.is_file() and path.suffix.lower() == ".dbc")
 
 
 def get_usb_mount_paths() -> list[Path]:
@@ -50,16 +63,16 @@ def get_usb_mount_paths() -> list[Path]:
     if sys.platform == "darwin":
         volumes = Path("/Volumes")
         if volumes.is_dir():
-            paths.extend(p for p in volumes.iterdir() if p.is_dir() and not p.name.startswith("."))
+            paths.extend(p for p in _safe_iterdir(volumes) if p.is_dir() and not p.name.startswith("."))
     elif sys.platform == "linux":
         for base in ("/media", "/run/media"):
             p = Path(base)
             if not p.is_dir():
                 continue
-            for item in p.iterdir():
+            for item in _safe_iterdir(p):
                 if item.is_dir():
                     paths.append(item)  # e.g. /media/MyUSB or /run/media/username
-                    for sub in item.iterdir():
+                    for sub in _safe_iterdir(item):
                         if sub.is_dir():
                             paths.append(sub)  # e.g. /run/media/username/MyUSB
     elif sys.platform == "win32":
@@ -81,7 +94,7 @@ def _find_file_on_usb(filename: str) -> Path | None:
         candidate = root / filename
         if candidate.is_file():
             return candidate
-        for sub in root.iterdir():
+        for sub in _safe_iterdir(root):
             if sub.is_dir():
                 candidate = sub / filename
                 try:
@@ -100,6 +113,17 @@ def find_config_on_usb() -> Path | None:
 def find_dbc_on_usb() -> Path | None:
     """Search USB mount paths for prod.dbc."""
     return _find_file_on_usb(DBC_FILENAME)
+
+
+def _find_usb_dbc_folder() -> Path | None:
+    """Return the first folder on USB media that contains at least one .dbc file."""
+    for root in get_usb_mount_paths():
+        if any(path.is_file() and path.suffix.lower() == ".dbc" for path in _safe_iterdir(root)):
+            return root
+        for sub in _safe_iterdir(root):
+            if sub.is_dir() and any(path.is_file() and path.suffix.lower() == ".dbc" for path in _safe_iterdir(sub)):
+                return sub
+    return None
 
 
 def sync_config_from_usb() -> bool:
@@ -138,6 +162,27 @@ def sync_dbc_from_usb() -> bool:
         return True
     except OSError as e:
         print(f"Failed to sync DBC from USB ({src}): {e}")
+        return False
+
+
+def sync_dbcs_from_usb() -> bool:
+    """Copy every .dbc file from the USB dbc folder into the local dbc folder."""
+    src_root = _find_usb_dbc_folder()
+    if src_root is None:
+        return False
+
+    dst_root = get_local_dbc_folder()
+    dst_root.mkdir(parents=True, exist_ok=True)
+
+    copied = False
+    try:
+        for src in sorted(path for path in _safe_iterdir(src_root) if path.is_file() and path.suffix.lower() == ".dbc"):
+            shutil.copy2(src, dst_root / src.name)
+            print(f"Updated local {src.name} from USB: {src}")
+            copied = True
+        return copied
+    except OSError as e:
+        print(f"Failed to sync DBCs from USB ({src_root}): {e}")
         return False
 
 def find_other_dbcs():

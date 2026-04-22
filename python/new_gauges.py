@@ -610,9 +610,60 @@ class ShiftLightsGauge(Gauge):
             pygame.draw.rect(surf, col, (x + 4 + i * (dot_w + 3), y + 2, dot_w, h - 4), border_radius=2)
 
 
-class DarkCell(Gauge):
-    """Cell card styled like new_dash: dark bg, left accent stripe, label top-left, big value, bottom bar."""
+class TextDarkCell(Gauge):
+    """Cell card styled like new_dash: dark bg, left accent stripe, label top-left, big value, bottom bar.
+    """
 
+    
+    def __init__(self, signal, label, min_val, max_val, box_xywh, shared_data,
+                 text : list[str], accent_color=None, value_color=None, last=False):
+        x, y, w, h = box_xywh
+        super().__init__(signal, label, min_val, max_val, shared_data)
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.text = text
+        self.accent = tuple(accent_color) if accent_color else _ND_BORDER_HI
+        self.value_color = tuple(value_color) if value_color else _ND_WHITE
+        self.last = last
+
+    def update(self, surf):
+        x, y, w, h = self.x, self.y, self.w, self.h
+        val = self.get_value()
+        pct = self.clamp_pct(val)
+        surf.fill(_ND_CELL_BG, (x, y, w, h))
+
+        font_size = round(self.h / 2)
+        while font_size > 8 and get_font(font_size).size(':(' if val is None else self.text[int(val)])[0] > self.w - 28:
+            font_size -= 1
+
+        font_offset = round(self.h / 10)
+        text_size = self.h / 6
+        while get_font(round(text_size)).size(self.label)[0] > self.w - 28:
+            text_size -= .01
+
+        text_size = round(text_size)
+
+
+        # bar_w = int(max(0.0, min(1.0, pct)) * w)
+        # if bar_w > 0:
+        #     alpha_bar = pygame.Surface((bar_w, h), pygame.SRCALPHA)
+        #     alpha_bar.fill((*self.accent, 75))
+        #     surf.blit(alpha_bar, (x, y))
+        if not self.last:
+            pygame.draw.line(surf, _ND_BORDER, (x, y + h - 1), (x + w, y + h - 1), 1)
+        pygame.draw.rect(surf, self.accent, (x, y , 4, h ), border_radius=1)
+        render_text(surf, self.label, text_size, self.value_color, x + 14, y + 16, anchor="midleft")
+
+        #font_text = round(28 * ((self.h - 71)/100))
+
+        if val is None:
+            render_text(surf, ':(', font_size, self.value_color, x + 14, y + h - 18 -font_offset, anchor="midleft")
+        else:
+            render_text(surf, self.text[int(val)], font_size, self.value_color, x + 14, y + h - 18 -font_offset, anchor="midleft")
+            
+        
+class DarkCell(Gauge):
+    """ In the text list, put strings according to the index that will cause them to print, the final string will be the default if the value is None. For example, ["Cold", "Hot", "No Data"] would print "Cold" if the value is in the lower half of the range, "Hot" if it's in the upper half, and "No Data" if it's None.
+"""
     def __init__(self, signal, label, min_val, max_val, box_xywh, shared_data,
                  unit="", decimal_places=1, accent_color=None, value_color=None, last=False):
         x, y, w, h = box_xywh
@@ -662,7 +713,6 @@ class DarkCell(Gauge):
                 val_px_w = val_str.__len__() * (font_size * 0.6) 
                 render_text(surf, self.unit, unit_size, self.value_color, x + 14 + val_px_w + 3, y + h - font_size/2.5, anchor="midleft")
         
-
 
 class CellVoltageCard:
     """Min/max cell voltage dual-readout card styled like new_dash."""
