@@ -308,6 +308,25 @@ class Dashboard:
                     value_color=value_color,
                     last=cfg.get("last", False),
                 )
+            elif gauge_type == "TextDarkCell":
+                accent_color = cfg.get("accent_color")
+                if accent_color is not None:
+                    accent_color = tuple(accent_color)
+                value_color = cfg.get("value_color")
+                if value_color is not None:
+                    value_color = tuple(value_color)
+                return TextDarkCell(
+                    signal=signal,
+                    label=label or "",
+                    min_val=min_val,
+                    max_val=max_val,
+                    box_xywh=box_xywh,
+                    shared_data=self.shared_data,
+                    text=cfg.get("text"),
+                    accent_color=accent_color,
+                    value_color=value_color,
+                    last=cfg.get("last", False),
+                )
             elif gauge_type == "CellVoltageCard":
                 return CellVoltageCard(
                     signal_min=cfg.get("signal_min"),
