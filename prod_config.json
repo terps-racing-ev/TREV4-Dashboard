@@ -51,9 +51,9 @@
       "gauges": [
         {
           "type": "DarkSpeedArc",
-          "signal": "Speed",
-          "brake_signal": "BrakePressure",
-          "throttle_signal": "APPS",
+          "signal": "VCU_Speed",
+          "brake_signal": "VCU_BSE_PSI",
+          "throttle_signal": "VCU_APPS_Value",
           "label": "",
           "min_val": 0,
           "max_val": 140,
@@ -66,13 +66,13 @@
           "unit": "MPH",
           "decimal_places": 0
         },
-        {"type": "DarkCell", "signal": "PackVoltage", "label": "PACK VOLTAGE", "unit": "V", "min_val": 0, "max_val": 420, "box_xywh": [0, 0, 225, 118], "accent_color": [0, 212, 232], "decimal_places": 0},
-        {"type": "DarkCell", "signal": "PackCurrent", "label": "PACK CURRENT", "unit": "A", "min_val": 0, "max_val": 100, "box_xywh": [0, 118, 225, 119], "accent_color": [230, 0, 0], "decimal_places": 0},
+        {"type": "DarkCell", "signal": "HVC_Pack_Voltage", "label": "PACK VOLTAGE", "unit": "V", "min_val": 0, "max_val": 420, "box_xywh": [0, 0, 225, 118], "accent_color": [0, 212, 232], "decimal_places": 0},
+        {"type": "DarkCell", "signal": "HVC_Pack_Current", "label": "PACK CURRENT", "unit": "A", "min_val": 0, "max_val": 100, "box_xywh": [0, 118, 225, 119], "accent_color": [230, 0, 0], "decimal_places": 0},
         {"type": "DarkCell", "signal": "MotorRPM", "label": "MOTOR RPM", "unit": "RPM", "min_val": 0, "max_val": 1000, "box_xywh": [0, 237, 225, 118], "accent_color": [255, 0, 147], "decimal_places": 0},
-        {"type": "DarkCell", "signal": "StateOfCharge", "label": "CHARGE STATE", "unit": "%", "min_val": 0, "max_val": 100, "box_xywh": [0, 356, 225, 124], "accent_color": [0, 230, 0], "decimal_places": 1},
+        {"type": "DarkCell", "signal": "HVC_SOC", "label": "CHARGE STATE", "unit": "%", "min_val": 0, "max_val": 100, "box_xywh": [0, 356, 225, 124], "accent_color": [0, 230, 0], "decimal_places": 1},
         {"type": "DarkCell", "signal": "CellTemp", "label": "CELL TEMP", "unit": "°C", "min_val": 0, "max_val": 200, "box_xywh": [575, 0, 225, 131], "accent_color": [128, 0, 128], "decimal_places": 0},
         {"type": "DarkTireQuad", "FL": "TTempFL", "FR": "TTempFR", "RL": "TTempBL", "RR": "TTempBR", "box_xywh": [575, 131, 225, 225]},
-        {"type": "DarkCell", "signal": "VehicleState", "label": "VEHICLE STATE", "unit": "", "min_val": 0, "max_val": 100, "box_xywh": [575, 356, 225, 124], "accent_color": [230, 230, 0], "decimal_places": 1},
+        {"type": "TextDarkCell", "signal": "VCU_State", "label": "VEHICLE STATE", "text": ["NOT READY", "PLAYING RTD", "DRIVE", "BAP FAULT", "HARD FAULT", "?"], "min_val": 0, "max_val": 100, "box_xywh": [575, 356, 225, 124], "accent_color": [230, 230, 0]},
         {"type": "DarkCell", "signal": "FrontBrakeTemp", "label": "REAR BRAKE TEMP", "unit": "°C", "min_val": 0, "max_val": 5, "box_xywh": [225, 356, 175, 124], "accent_color": [230, 160, 0], "decimal_places": 1},
         {"type": "DarkCell", "signal": "RearBrakeTemp", "label": "FRONT BRAKE TEMP", "unit": "°C", "min_val": 0, "max_val": 5, "box_xywh": [400, 356, 175, 124], "accent_color": [230, 160, 0], "decimal_places": 1}
       ]
