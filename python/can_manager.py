@@ -15,20 +15,20 @@ BAUD_RATE = 500000
 # Note: This requires the pi to have can-init.service
 
 class CANManager:
-    
+
     def __init__(self, shared_data: LatestValuesTable, dbc_paths: list[Path], sim_mode: bool = False):
         self.db: Optional[cantools.database.Database] = None
         self.dbs: list[cantools.database.Database] = []
         self.dbc_paths = dbc_paths
-        self.bus: Optional[can.Bus] = None
-        
+        self.buses: list[can.Bus] = []
+
         # Shared state for latest values
         self.shared_data = shared_data
-        
+
         # Thread control
         self._rx_thread_active = False
         self._tx_thread_active = False
-        
+
         # Simulation mode
         self.sim_mode = sim_mode
     
@@ -83,23 +83,35 @@ class CANManager:
             return None 
 
     
-    # TODO support two busses
-    def start_can_listener(self, interface: str = 'can0', bitrate: int = BAUD_RATE) -> bool:
+    def start_can_listener(self, interfaces: list[str] | None = None, bitrate: int = BAUD_RATE) -> bool:
+        # TODO: driver stuff
+        if interfaces is None:
+            interfaces = ['can0', 'can1']
+
         if self.sim_mode:
             print("CAN simulation mode enabled - no hardware interface")
             return True
-        
-        try:
-            self.bus = can.interface.Bus(
-                channel=interface,
-                bustype='socketcan',
-                bitrate=bitrate
-            )
-            print(f"CAN listener started on {interface} at {bitrate} bps")
-            return True
-        except Exception as e:
-            print(f"Error starting CAN listener: {e}")
+
+        self.buses = []
+        failed = []
+        for interface in interfaces:
+            try:
+                bus = can.interface.Bus(
+                    channel=interface,
+                    bustype='socketcan',
+                    bitrate=bitrate
+                )
+                self.buses.append(bus)
+                print(f"CAN listener started on {interface} at {bitrate} bps")
+            except Exception as e:
+                print(f"Error starting CAN listener on {interface}: {e}")
+                failed.append(interface)
+
+        if not self.buses:
             return False
+        if failed:
+            print(f"Warning: failed to open interfaces: {failed}")
+        return True
     
     def run_rx_thread(self) -> None:
         """
@@ -110,19 +122,20 @@ class CANManager:
             self._run_sim_rx_thread()
             return
         
-        if self.bus is None:
+        if not self.buses:
             print("CAN bus not initialized")
             return
         
-        print("RX thread started")
+        print(f"RX thread started ({len(self.buses)} bus(es))")
         self._rx_thread_active = True
         
         try:
             while self._rx_thread_active:
-                msg = self.bus.recv(timeout=0.1)
-                if msg is not None:
-                    print(msg)
-                    self.decode_message(msg)
+                for bus in self.buses:
+                    msg = bus.recv(timeout=0.01)
+                    if msg is not None:
+                        print(msg)
+                        self.decode_message(msg)
         except Exception as e:
             print(f"RX thread error: {e}")
         finally:
@@ -230,8 +243,9 @@ class CANManager:
                     if self.sim_mode:
                         pass
                         #print(f"[TX SIM] {msg_name}: {sigs}")
-                    elif self.bus is not None:
-                        self.bus.send(can_msg)
+                    else:
+                        for bus in self.buses:
+                            bus.send(can_msg)
 
                 time.sleep(tx_interval)
 
@@ -254,6 +268,6 @@ class CANManager:
         return signal_names
     
     def stop(self):
-        if self.bus:
-            self.bus.shutdown()
-            self.bus = None
+        for bus in self.buses:
+            bus.shutdown()
+        self.buses = []

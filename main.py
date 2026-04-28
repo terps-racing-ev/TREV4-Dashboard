@@ -97,8 +97,10 @@ def main():
         print("Failed to load .dbc file. Exiting.")
         return
     
+    # can_interfaces = prod_config.get("can_interfaces", ["can0", "can1"])
     print("Starting CAN listener...")
-    if not can_mgr.start_can_listener():
+    #if not can_mgr.start_can_listener(interfaces=can_interfaces):
+    if not can_mgr.start_can_listener(interfaces=["can0", "can1"]):
         print("Failed to start CAN listener. Exiting.")
         return
         
