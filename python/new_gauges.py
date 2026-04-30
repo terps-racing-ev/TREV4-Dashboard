@@ -1012,7 +1012,7 @@ class DarkFaultRow:
                 box_color = (50, 200, 50)  # Light green
                 text_color = (255, 255, 255)  # White text
             else:
-                box_color = (20, 80, 20)  # Dark green
+                box_color = (50, 50, 50)  # Dark green
                 text_color = (100, 160, 100)  # Dim green text
             
             # Draw the box
