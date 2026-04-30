@@ -26,6 +26,14 @@ def _safe_iterdir(path: Path) -> list[Path]:
         return []
 
 
+def _is_file_safely(path: Path) -> bool:
+    """Return True when a path is a file; treat access errors as False."""
+    try:
+        return path.is_file()
+    except OSError:
+        return False
+
+
 def get_local_config_path() -> Path:
     """Return the fixed local prod_config.json path (project root)."""
     return _PROJECT_ROOT / CONFIG_FILENAME
@@ -92,16 +100,17 @@ def _find_file_on_usb(filename: str) -> Path | None:
     """
     for root in get_usb_mount_paths():
         candidate = root / filename
-        if candidate.is_file():
+        if _is_file_safely(candidate):
             return candidate
         for sub in _safe_iterdir(root):
-            if sub.is_dir():
-                candidate = sub / filename
-                try:
-                    if candidate.is_file():
-                        return candidate
-                except PermissionError:
-                        pass
+            try:
+                if not sub.is_dir():
+                    continue
+            except OSError:
+                continue
+            candidate = sub / filename
+            if _is_file_safely(candidate):
+                return candidate
     return None
 
 
@@ -118,10 +127,15 @@ def find_dbc_on_usb() -> Path | None:
 def _find_usb_dbc_folder() -> Path | None:
     """Return the first folder on USB media that contains at least one .dbc file."""
     for root in get_usb_mount_paths():
-        if any(path.is_file() and path.suffix.lower() == ".dbc" for path in _safe_iterdir(root)):
+        if any(_is_file_safely(path) and path.suffix.lower() == ".dbc" for path in _safe_iterdir(root)):
             return root
         for sub in _safe_iterdir(root):
-            if sub.is_dir() and any(path.is_file() and path.suffix.lower() == ".dbc" for path in _safe_iterdir(sub)):
+            try:
+                if not sub.is_dir():
+                    continue
+            except OSError:
+                continue
+            if any(_is_file_safely(path) and path.suffix.lower() == ".dbc" for path in _safe_iterdir(sub)):
                 return sub
     return None
 
