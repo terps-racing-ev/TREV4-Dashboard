@@ -917,11 +917,9 @@ class GMeter(Gauge):
         render_text(surf, str(self.radius), 12, _ND_WHITE, self.cx, self.cy - 0.4 * h)
         render_text(surf, "MAG: " + str(format(round(mag, 2), ".2f")), 12, _ND_WHITE, self.cx, self.cy+0.4*h)
 
-        
-
 
 class DarkTireQuad:
-    """2×2 tire temperature grid styled like new_dash."""
+    """2x2 tire temperature grid styled like new_dash."""
 
     def __init__(self, box_xywh, FL, FR, RL, RR, shared_data):
         x, y, w, h = box_xywh
@@ -1015,7 +1013,7 @@ class DarkFaultRow:
                 text_color = (255, 255, 255)  # White text
             else:
                 box_color = (20, 80, 20)  # Dark green
-                text_color = (50, 80, 50)  # Dim green text
+                text_color = (100, 160, 100)  # Dim green text
             
             # Draw the box
             box_rect = (bx, y + 4, box_width, box_height)
