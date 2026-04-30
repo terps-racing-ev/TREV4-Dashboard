@@ -1015,7 +1015,7 @@ class DarkFaultRow:
                 text_color = (255, 255, 255)  # White text
             else:
                 box_color = (20, 80, 20)  # Dark green
-                text_color = (100, 150, 100)  # Dim green text
+                text_color = (50, 80, 50)  # Dim green text
             
             # Draw the box
             box_rect = (bx, y + 4, box_width, box_height)
