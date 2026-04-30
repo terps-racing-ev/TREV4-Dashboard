@@ -358,15 +358,8 @@ class Dashboard:
                     shared_data=self.shared_data,
                 )
             elif gauge_type == "DarkFaultRow":
-                return DarkFaultRow(
-                    box_xywh=box_xywh,
-                    IMD=cfg.get("IMD"),
-                    AMS=cfg.get("AMS"),
-                    BSPD=cfg.get("BSPD"),
-                    APPS=cfg.get("APPS"),
-                    BRAKE=cfg.get("BRAKE"),
-                    shared_data=self.shared_data,
-                )
+                signals = cfg.get("signals", [])
+                return DarkFaultRow(box_xywh, signals, shared_data=self.shared_data)
             elif gauge_type == "FullList":
                 signals = cfg.get("signals", [])
                 return FullListCard(

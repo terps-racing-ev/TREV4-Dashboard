@@ -21,13 +21,14 @@
           "max_val": 140,
           "box_xywh": [
             225,
-            0,
+            40,
             350,
-            356
+            316
           ],
           "unit": "MPH",
           "decimal_places": 0
         },
+        {"type": "DarkFaultRow", "box_xywh": [225, 0, 315, 40], "signals": [["MOBO_SDC_Raw", "RAW"], ["MOBO_SDC_Post_IL", "POST"], ["MOBO_SDC_Post_Loop", "LOOP"], ["HVC_SDC_OK", "OK"]]},
         {"type": "DarkCell", "signal": "HVC_Pack_Voltage", "label": "PACK VOLTAGE", "unit": "V", "min_val": 0, "max_val": 420, "box_xywh": [0, 0, 225, 178], "accent_color": [0, 212, 232], "decimal_places": 0},
         {"type": "DarkCell", "signal": "HVC_Pack_Current", "label": "PACK CURRENT", "unit": "A", "min_val": 0, "max_val": 100, "box_xywh": [0, 178, 225, 178], "accent_color": [230, 0, 0], "decimal_places": 0},
         {"type": "DarkCell", "signal": "HVC_SOC", "label": "CHARGE STATE", "unit": "%", "min_val": 0, "max_val": 100, "box_xywh": [0, 356, 225, 124], "accent_color": [0, 230, 0], "decimal_places": 1},

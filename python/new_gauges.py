@@ -821,7 +821,7 @@ class DarkSpeedArc(Gauge):
                 pygame.draw.rect(surf, _nd_gauge_color(pct), (x, bar_y, w, 10))
         
         #border
-        rect = pygame.Rect(cx-80, cy-80, 160, 160)
+        rect = pygame.Rect(cx-100, cy-100, 200, 200)
         radius = 16
         border_width = 4
 
@@ -863,7 +863,7 @@ class DarkSpeedArc(Gauge):
             render_text(surf, '-', 86, _ND_WHITE, cx, cy - 6, bold=True)
         else:
             val_str = (("00" if val < 10 else ("0" if val < 100 else "")) + str(int(val))) if self.decimal_places == 0 else f"{val:.{self.decimal_places}f}"
-            render_text(surf, val_str, 86, _ND_WHITE, cx, cy - 6, bold=True)
+            render_text(surf, val_str, 110, _ND_WHITE, cx, cy - 6, bold=True)
         render_text(surf, self.unit, 24, _ND_ORANGE, cx, cy + 46)
         render_text(surf, "BRAKE PRES    THROTTLE", 12, _ND_ORANGE, cx-7, cy + 160)
 
@@ -951,26 +951,82 @@ class DarkTireQuad:
 
 
 class DarkFaultRow:
-    """Fault light strip styled like new_dash."""
+    """Fault light strip styled like new_dash.
 
-    def __init__(self, box_xywh, IMD, AMS, BSPD, APPS, BRAKE, shared_data):
+    Accepts `signals` as a 2D list of [signal_name, label] pairs.
+    """
+
+
+    
+    def __init__(self, box_xywh, signals, shared_data):
         x, y, w, h = box_xywh
         self.x, self.y, self.w, self.h = x, y, w, h
-        self.lights = [("IMD", IMD), ("AMS", AMS), ("BSPD", BSPD), ("APPS", APPS), ("BRK", BRAKE)]
+        # Normalize signals into list of (sig, label) pairs, filtering out None values
+        normalized = []
+        if isinstance(signals, dict):
+            for k, v in signals.items():
+                if k and v:
+                    normalized.append((str(k), v))
+        elif isinstance(signals, list):
+            for item in signals:
+                if isinstance(item, (list, tuple)) and len(item) >= 2:
+                    sig, label = item[0], item[1]
+                    if sig and label:
+                        normalized.append((sig, str(label)))
+        else:
+            try:
+                sig, label = signals
+                if sig and label:
+                    normalized.append((sig, str(label)))
+            except Exception:
+                normalized = []
+
+        self.signals = normalized
         self.shared_data = shared_data
+        if not self.signals:
+            print(f"WARNING: DarkFaultRow initialized with empty signals list. Input was: {signals}")
 
     def update(self, surf):
         x, y, w, h = self.x, self.y, self.w, self.h
+        font_size = 24
+        
+        # Fill background
         surf.fill(_ND_DARK_FAULT, (x, y, w, h))
-        bx = x + 58
-        for label, sig in self.lights:
-            v = self.shared_data.get_signal(sig)
-            active = v is not None and float(v) >= 1.0
-            bg = _ND_RED if active else (10, 32, 20)
-            pygame.draw.rect(surf, bg, (bx, y + 6, 34, h - 12), border_radius=2)
-            text_col = _ND_WHITE if active else (26, 90, 40)
-            render_text(surf, label, 14, text_col, bx + 17, y + h // 2)
-            bx += 40
+        
+        # Draw each light
+        bx = x + 10
+        box_width = 54
+        box_height = h - 8
+        for sig, label in self.signals:
+            if not label or not sig:
+                bx += box_width + 8
+                continue
+            
+            # Get signal value and determine if active
+            try:
+                v = self.shared_data.get_signal(sig)
+                active = v is not None and float(v) >= 1.0
+            except Exception:
+                active = False
+            
+            # Choose colors: light green if active, dark green if inactive
+            if active:
+                box_color = (50, 200, 50)  # Light green
+                text_color = (255, 255, 255)  # White text
+            else:
+                box_color = (20, 80, 20)  # Dark green
+                text_color = (100, 150, 100)  # Dim green text
+            
+            # Draw the box
+            box_rect = (bx, y + 4, box_width, box_height)
+            pygame.draw.rect(surf, box_color, box_rect, border_radius=6)
+            
+            # Draw the label text centered in the box
+            text_x = bx + box_width // 2
+            text_y = y + h // 2
+            render_text(surf, label, font_size, text_color, text_x, text_y, anchor="center")
+            
+            bx += box_width + 8
 
 class Alert(Gauge):
     def __init__(self, signal, thresh, box_xywh, shared_data, label=""):

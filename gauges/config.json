@@ -76,7 +76,7 @@
       "label": "",
       "min_val": 0,
       "max_val": 99,
-      "box_xywh": [175, 36, 450, 356],
+      "box_xywh": [175, 36, 450, 300],
       "unit": "MPH",
       "decimal_places": 0
     },
@@ -88,7 +88,7 @@
       "unit": "%",
       "min_val": 0,
       "max_val": 100,
-      "box_xywh": [175, 392, 225, 60],
+      "box_xywh": [175, 366, 225, 50],
       "accent_color": [0, 224, 96],
       "decimal_places": 0,
       "last": true
@@ -100,7 +100,7 @@
       "unit": "%",
       "min_val": 0,
       "max_val": 100,
-      "box_xywh": [400, 392, 225, 60],
+      "box_xywh": [400, 366, 225, 50],
       "accent_color": [255, 37, 37],
       "decimal_places": 0,
       "last": true
@@ -162,12 +162,14 @@
 
     {
       "type": "DarkFaultRow",
-      "box_xywh": [0, 452, 800, 28],
-      "IMD": "IMDFault",
-      "AMS": "AMSFault",
-      "BSPD": "BSPDFault",
-      "APPS": "APPSFault",
-      "BRAKE": "BrakeFault"
+      "box_xywh": [0, 392, 800, 50],
+      "signals": [
+        ["IMDFault", "IMD"],
+        ["AMSFault", "AMS"],
+        ["BSPDFault", "BSPD"],
+        ["APPSFault", "APPS"],
+        ["BrakeFault", "BRK"]
+      ]
     }
   ]
 }
