@@ -40,11 +40,8 @@ def get_local_config_path() -> Path:
 
 
 def get_local_dbc_path() -> Path:
-    """Return the fixed local prod.dbc path (project root)."""
-    if sys.platform == "win32":
-        return _PROJECT_ROOT / "dbc" / DBC_FILENAME
-    else:
-        return _PROJECT_ROOT / DBC_FILENAME
+    """Return the fixed local prod.dbc path in the dbc folder."""
+    return _PROJECT_ROOT / "dbc" / DBC_FILENAME
 
 def get_local_dbc_folder() -> Path:
     """
