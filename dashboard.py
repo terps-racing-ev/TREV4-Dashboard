@@ -36,29 +36,11 @@ class Dashboard:
         if not self.load_config():
             return
     
-    def load_config(self) -> bool:
-        """Load gauges from config.json. Returns True if successful."""
-        try:
-            with open(self.config_path) as f:
-                config = json.load(f)
-
-            self.bg_color = config.get("display").get("bg_color")
-            
-            gauge_configs = config.get("gauges", [])
-            if not gauge_configs:
-                print("No gauges in config")
-                return False
-            
-            for gauge_cfg in gauge_configs:
-                gauge = self._instantiate_gauge(gauge_cfg)
-                if gauge:
-                    self.gauges.append(gauge)
-            
-            print(f"Loaded {len(self.gauges)} gauge(s) from config")
-            return len(self.gauges) > 0
-        except Exception as e:
-            print(f"Error loading config: {e}")
-            return False
+    def _parse_color(self, value: list | None, default: Tuple[int, int, int] | None) -> Tuple[int, int, int] | None:
+        """Parse color from config. None stays None, missing uses default, list converts to tuple."""
+        if value is None:
+            return None
+        return tuple(value) if value else default
     
     def _instantiate_gauge(self, cfg: dict) -> Gauge | None:
         """Create a gauge instance from config dict."""
@@ -70,9 +52,10 @@ class Dashboard:
             max_val = cfg.get("max_val", 100)
             box_xywh = tuple(cfg.get("box_xywh", (0, 0, 100, 100)))
             decimal_places = cfg.get("decimal_places", 0)
-            box_color = cfg.get("box_color")
-            border_color = tuple(cfg.get("border_color", WHITE))
-            text_color = tuple(cfg.get("text_color", WHITE))
+            
+            box_color = self._parse_color(cfg.get("box_color"), None)
+            border_color = self._parse_color(cfg.get("border_color"), WHITE)
+            text_color = self._parse_color(cfg.get("text_color"), WHITE)
             
             if gauge_type == "SimpleGauge":
                 return SimpleGauge(
@@ -88,7 +71,7 @@ class Dashboard:
                     shared_data=self.shared_data,
                 )
             elif gauge_type == "UnsignedLinearGauge":
-                fill_color = tuple(cfg.get("fill_color", GREEN))
+                fill_color = self._parse_color(cfg.get("fill_color"), GREEN)
                 vertical = cfg.get("vertical", True)
                 show_value = cfg.get("show_value", True)
                 return UnsignedLinearGauge(
@@ -107,8 +90,8 @@ class Dashboard:
                     shared_data=self.shared_data,
                 )
             elif gauge_type == "SignedLinearGauge":
-                pos_color = tuple(cfg.get("pos_color", GREEN))
-                neg_color = tuple(cfg.get("neg_color", RED))
+                pos_color = self._parse_color(cfg.get("pos_color"), GREEN)
+                neg_color = self._parse_color(cfg.get("neg_color"), RED)
                 vertical = cfg.get("vertical", True)
                 show_value = cfg.get("show_value", True)
                 return SignedLinearGauge(
@@ -133,7 +116,31 @@ class Dashboard:
         except Exception as e:
             print(f"Error instantiating gauge: {e}")
             return None
+        
+    def load_config(self) -> bool:
+        """Load gauges from config.json. Returns True if successful."""
+        try:
+            with open(self.config_path) as f:
+                config = json.load(f)
 
+            self.bg_color = config.get("display").get("bg_color")
+            
+            gauge_configs = config.get("gauges", [])
+            if not gauge_configs:
+                print("No gauges in config")
+                return False
+            
+            for gauge_cfg in gauge_configs:
+                gauge = self._instantiate_gauge(gauge_cfg)
+                if gauge:
+                    self.gauges.append(gauge)
+            
+            print(f"Loaded {len(self.gauges)} gauge(s) from config")
+            return len(self.gauges) > 0
+        except Exception as e:
+            print(f"Error loading config: {e}")
+            return False
+        
     def create_frame(self) -> pygame.Surface:
         """Create a fresh frame surface."""
         surface = create_surface(self.xres, self.yres)

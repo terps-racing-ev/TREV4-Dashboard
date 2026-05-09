@@ -2,7 +2,7 @@
   "display": {
     "width": 800,
     "height": 480,
-    "bg_color": [0, 100, 0]
+    "bg_color": [0, 0, 0]
   },
   "gauges": [
     {
@@ -23,7 +23,43 @@
       "label": "TTEMPFL",
       "min_val": 0,
       "max_val": 99,
-      "box_xywh": [120, 120, 120, 120],
+      "box_xywh": [125, 80, 135, 135],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": [255, 255, 255],
+      "text_color": [255, 255, 255]
+    },
+    {
+      "type": "SimpleGauge",
+      "signal": "TTempBL",
+      "label": "TTEMPBL",
+      "min_val": 0,
+      "max_val": 99,
+      "box_xywh": [540, 240, 135, 135],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": [255, 255, 255],
+      "text_color": [255, 255, 255]
+    },
+    {
+      "type": "SimpleGauge",
+      "signal": "TTempFR",
+      "label": "TTEMPFR",
+      "min_val": 0,
+      "max_val": 99,
+      "box_xywh": [540, 80, 135, 135],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": [255, 255, 255],
+      "text_color": [255, 255, 255]
+    },
+    {
+      "type": "SimpleGauge",
+      "signal": "TTempBR",
+      "label": "TTEMPBR",
+      "min_val": 0,
+      "max_val": 99,
+      "box_xywh": [125, 240, 135, 135],
       "decimal_places": 0,
       "box_color": null,
       "border_color": [255, 255, 255],
@@ -37,13 +73,19 @@
       "max_val": 230,
       "box_xywh": [750, 50, 20, 350],
       "decimal_places": 0,
-      "box_color": null,
-      "border_color": [255, 255, 255],
+      "box_color": [23, 23, 23],
+      "border_color": null,
       "pos_color": [0, 255, 0],
       "neg_color": [255, 0, 0],
       "text_color": [255, 255, 255],
       "vertical": true,
       "show_value": false
+    },
+    {
+        "type": "BoolBanner",
+        "signal": "HVC_SDC",
+        "label": "HVC",
+        "box_xywh":
     }
   ]
 }

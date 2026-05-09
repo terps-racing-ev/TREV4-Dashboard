@@ -356,7 +356,8 @@ class SignedLinearGauge(Gauge):
                 bottom = max(val_y, zero_y)
                 pygame.draw.rect(surface, self.neg_color, (self.x, top, self.w, bottom - top))
             # Zero marker line
-            pygame.draw.line(surface, WHITE, (self.x, zero_y), (self.x + self.w, zero_y), BORDER_WIDTH)
+            # todo idk why we need -1, this whole class is fucked
+            pygame.draw.line(surface, WHITE, (self.x, zero_y), (self.x + self.w - 1, zero_y), 2)
         else:
             zero_x = self.x + int(self.w * zero_ratio)
             val_x = self.x + int(self.w * value_ratio)
@@ -369,7 +370,7 @@ class SignedLinearGauge(Gauge):
                 right = max(val_x, zero_x)
                 pygame.draw.rect(surface, self.neg_color, (left, self.y, right - left, self.h))
             # Zero marker line
-            pygame.draw.line(surface, WHITE, (zero_x, self.y), (zero_x, self.y + self.h), BORDER_WIDTH)
+            pygame.draw.line(surface, WHITE, (zero_x, self.y), (zero_x, self.y + self.h), 2)
 
         self._draw_border(surface)
 
