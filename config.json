@@ -80,12 +80,6 @@
       "text_color": [255, 255, 255],
       "vertical": true,
       "show_value": false
-    },
-    {
-        "type": "BoolBanner",
-        "signal": "HVC_SDC",
-        "label": "HVC",
-        "box_xywh":
     }
   ]
 }

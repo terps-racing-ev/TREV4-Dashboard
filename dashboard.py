@@ -25,7 +25,7 @@ class Dashboard:
         self.config_path = config_path
         
         # Default values
-        self.font_path = "assets\fonts\monofonto rg.otf"
+        self.font_path = "assets/fonts/monofonto rg.otf"
         self.bg_color = BLACK
         self.xres, self.yres = 800, 480
         self.gauges = []
@@ -165,21 +165,22 @@ class Dashboard:
         """
         UI thread: Renders at fixed fps.
         """
-        # Initialize display
-        init_display()
-        clock = get_clock()
-        
-        self._ui_thread_active = True
-        print(f"UI thread started ({FPS_CAP} fps)")
-        
         try:
+            # Initialize display
+            init_display()
+            clock = get_clock()
+
+            self._ui_thread_active = True
+            print(f"UI thread started ({FPS_CAP} fps)")
+
             while self._ui_thread_active:
                 # Process Pygame events to prevent freezing
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        print("\nWindow closed by user")
-                        cleanup()
-                        sys.exit(0)
+                if pygame.display.get_init():
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            print("\nWindow closed by user")
+                            cleanup()
+                            sys.exit(0)
                                 
                 frame = self.render_frame()
                 blit_surface(frame)

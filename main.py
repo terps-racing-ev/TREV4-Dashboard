@@ -42,7 +42,8 @@ def search_for_file(filename: str, search_paths: list | None = None) -> Path | N
 def main():
 
     # Simulate values if you don't have CAN hardware
-    SIM_MODE = True
+    SIM_MODE = False
+    CAN_INTERFACES = ("can0", "can1")
     
     SEARCH_PATHS = ["."]  # TODO: add USB mount paths
     
@@ -51,6 +52,10 @@ def main():
     dbc_path = search_for_file("*.dbc", SEARCH_PATHS)
     if not dbc_path:
         return
+    dbc_paths = {
+        interface: search_for_file(f"{interface}.dbc", SEARCH_PATHS) or dbc_path
+        for interface in CAN_INTERFACES
+    }
     
     print("Searching for config.json...")
     config_path = search_for_file("config.json", SEARCH_PATHS)
@@ -60,7 +65,7 @@ def main():
     # Shared state for all threads to access values
     shared_data = LatestValuesTable()
     
-    can_mgr = CANManager(shared_data=shared_data, dbc_path=dbc_path, sim_mode=SIM_MODE)
+    can_mgr = CANManager(shared_data=shared_data, dbc_paths=dbc_paths, sim_mode=SIM_MODE)
     dashboard = Dashboard(shared_data=shared_data, config_path=config_path)
     
     # Load DBC
@@ -69,14 +74,15 @@ def main():
         return
     
     print("Starting CAN listener...")
-    if not can_mgr.start_can_listener():
+    if not can_mgr.start_can_listener(CAN_INTERFACES):
         print("Failed to start CAN listener. Exiting.")
         return
         
-    # RX
-    rx_thread = threading.Thread(target=can_mgr.run_rx_thread, daemon=True)
-    rx_thread.name = "RX"
-    rx_thread.start()
+    # Real CAN RX loops start inside CANManager. Simulation still needs a loop.
+    rx_thread = None
+    if can_mgr.sim_mode:
+        rx_thread = threading.Thread(target=can_mgr.run_rx_thread, daemon=True, name="RX")
+        rx_thread.start()
 
     # TX
     tx_thread = threading.Thread(target=can_mgr.run_tx_thread, daemon=True)
@@ -107,7 +113,8 @@ def main():
         dashboard._ui_thread_active = False
 
         # Wait for threads to finish (with timeout)
-        rx_thread.join(timeout=2.0)
+        if rx_thread:
+            rx_thread.join(timeout=2.0)
         tx_thread.join(timeout=2.0)
         ui_thread.join(timeout=2.0)
         
