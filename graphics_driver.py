@@ -94,6 +94,31 @@ def _try_display(driver: str | None, flags: int) -> pygame.Surface:
     return screen
 
 
+def _init_linux_display() -> pygame.Surface:
+    """Try Linux SDL video backends in order until one initializes."""
+    last_error: Exception | None = None
+
+    requested_driver = os.environ.get("SDL_VIDEODRIVER")
+    driver_candidates = [requested_driver] if requested_driver else ["kmsdrm", "fbcon", "x11", "dummy"]
+
+    for driver in driver_candidates:
+        try:
+            os.environ["SDL_VIDEODRIVER"] = driver
+            pygame.display.quit()
+            pygame.display.init()
+            try:
+                _surface = pygame.display.set_mode(DISP_RES, pygame.SCALED)
+            except Exception:
+                _surface = pygame.display.set_mode(DISP_RES)
+            print(f"Display initialized with SDL driver '{driver}': {DISP_RES}")
+            return _surface
+        except Exception as e:
+            last_error = e
+            print(f"SDL driver '{driver}' failed: {e}")
+
+    raise RuntimeError(f"No usable SDL video driver found. Last error: {last_error}")
+
+
 def init_display() -> pygame.Surface:
     """Initialize display and return the surface."""
     global _screen, _clock, _fb

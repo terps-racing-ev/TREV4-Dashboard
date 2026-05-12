@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from typing import Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 from pathlib import Path
 import pygame
 import math
@@ -132,11 +132,11 @@ class Gauge:
             neg_template = pos_template
         return neg_template if len(neg_template) > len(pos_template) else pos_template
 
-    def _make_value_font(self, enabled: bool = True) -> Optional[pygame.font.Font]:
+    def _make_value_font(self, enabled: bool = True, text: str | None = None) -> Optional[pygame.font.Font]:
         if not enabled:
             return None
         pygame.font.init()
-        template = self._template_str()
+        template = text if text is not None else self._template_str()
         size = _dim_to_font_size(self.w, self.h, template)
         return pygame.font.Font(DEFAULT_FONT, size)
 
@@ -146,6 +146,24 @@ class Gauge:
     def _current_value(self) -> int | float:
         val = self.shared_data.get_signal(self.signal)
         return val if val is not None else 0
+
+    def _current_display_value(self) -> Any:
+        if self.shared_data is None:
+            return self._current_value()
+        display_value = self.shared_data.get_display_signal(self.signal)
+        return display_value if display_value is not None else self._current_value()
+
+    def _value_text(self, value: Any) -> str:
+        if isinstance(value, str):
+            return value
+        return self._format_value(value)
+
+    def _make_display_font(self, value: Any, enabled: bool = True) -> Optional[pygame.font.Font]:
+        if not enabled:
+            return None
+        if isinstance(value, str):
+            return self._make_value_font(True, value)
+        return self.data_font
 
     def _fill_background(self, surface: pygame.Surface) -> None:
         if self.box_color is not None:
@@ -186,6 +204,7 @@ class SimpleGauge(Gauge):
 
     def update(self, surface: pygame.Surface) -> pygame.Surface:
         value = self._current_value()
+        display_value = self._current_display_value()
 
         # Background + border
         self._fill_background(surface)
@@ -197,9 +216,16 @@ class SimpleGauge(Gauge):
         surface.blit(label_text, label_rect)
 
         # Value (pre-sized font, centered below label accounting for its height)
-        value_str = self._format_value(value)
-        value_text = self.data_font.render(value_str, True, self.text_color)
+        value_str = self._value_text(display_value)
         available_height = self.h - label_rect.height - 2 * LABEL_PADDING
+        # Recalculate font size based on available height to prevent overflow
+        if isinstance(display_value, str):
+            value_font = self._make_value_font(True, value_str)
+        else:
+            template = value_str
+            size = int(min(self.w / len(template) / FONT_WIDTH_RATIO, available_height / FONT_HEIGHT_RATIO))
+            value_font = pygame.font.Font(DEFAULT_FONT, max(8, size))
+        value_text = value_font.render(value_str, True, self.text_color)
         center_y = self.y + label_rect.height + LABEL_PADDING + available_height // 2
         value_rect = value_text.get_rect(center=(self.cx, center_y))
         surface.blit(value_text, value_rect)
@@ -243,6 +269,7 @@ class UnsignedLinearGauge(Gauge):
 
     def update(self, surface: pygame.Surface) -> pygame.Surface:
         value = self._current_value()
+        display_value = self._current_display_value()
 
         # Compute ratio
         clamped = max(self.min_val, min(value, self.max_val))
@@ -271,8 +298,9 @@ class UnsignedLinearGauge(Gauge):
 
         # Optional value text (accounting for available space)
         if self.show_value and self.data_font is not None:
-            value_str = self._format_value(value)
-            value_text = self.data_font.render(value_str, True, self.text_color)
+            value_str = self._value_text(display_value)
+            value_font = self._make_display_font(display_value)
+            value_text = value_font.render(value_str, True, self.text_color)
             if self.vertical:
                 # Top center for vertical (account for label padding)
                 value_rect = value_text.get_rect(midtop=(self.cx, self.y + LABEL_PADDING))
@@ -333,6 +361,7 @@ class SignedLinearGauge(Gauge):
 
     def update(self, surface: pygame.Surface) -> pygame.Surface:
         value = self._current_value()
+        display_value = self._current_display_value()
 
         clamped = max(self.min_val, min(value, self.max_val))
         zero_ratio = self._zero_ratio()
@@ -381,8 +410,9 @@ class SignedLinearGauge(Gauge):
 
         # Value (accounting for available vertical space)
         if self.show_value and self.data_font is not None:
-            value_str = self._format_value(value)
-            value_text = self.data_font.render(value_str, True, self.text_color)
+            value_str = self._value_text(display_value)
+            value_font = self._make_display_font(display_value)
+            value_text = value_font.render(value_str, True, self.text_color)
             if self.vertical:
                 # Left middle for vertical, vertically centered in box (so text outside the box)
                 value_rect = value_text.get_rect(midright=(self.x - LABEL_PADDING, self.cy))

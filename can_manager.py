@@ -67,11 +67,13 @@ class CANManager:
         try:
             # Find the message definition by arbitration ID
             dbc_message = db.get_message_by_frame_id(msg.arbitration_id)
-            # Decode the message data
-            decoded = dbc_message.decode(msg.data)
+            # Decode the message data twice so we keep raw numbers for gauge math
+            # while also preserving enum labels for display.
+            decoded = dbc_message.decode(msg.data, decode_choices=False)
+            display_decoded = dbc_message.decode(msg.data)
             # Update shared data (now keyed by signal name)
-            self.shared_data.update(decoded)
-            return decoded
+            self.shared_data.update(decoded, display_decoded)
+            return display_decoded
         except KeyError:
             # Message ID not in database
             return {}
