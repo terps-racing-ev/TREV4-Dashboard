@@ -28,14 +28,16 @@ function App() {
   const [signals, setSignals] = useState([]);
   const [signalMetadata, setSignalMetadata] = useState({});
   const [colors, setColors] = useState({});
+  const [dbcs, setDbcs] = useState({});
   const [selected, setSelected] = useState(0);
   const [warnings, setWarnings] = useState([]);
   const [mockValues, setMockValues] = useState({});
   const [previewNonce, setPreviewNonce] = useState(Date.now());
   const [error, setError] = useState("");
   const [interaction, setInteraction] = useState(null);
-  const [snapIndex, setSnapIndex] = useState(0);
+  const [snapIndex, setSnapIndex] = useState(SNAP_OPTIONS.indexOf(20));
   const importRef = useRef(null);
+  const dbcInputRefs = useRef({});
   const draftRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -53,8 +55,9 @@ function App() {
       api("/api/gauge-types").then((r) => r.json()),
       api("/api/signals").then((r) => r.json()),
       api("/api/colors").then((r) => r.json()),
+      api("/api/dbcs").then((r) => r.json()),
     ])
-      .then(([config, types, signalPayload, colorPayload]) => {
+      .then(([config, types, signalPayload, colorPayload, dbcPayload]) => {
         setSaved(config.saved);
         setDraft(config.draft);
         setWarnings(config.validation.warnings);
@@ -62,6 +65,7 @@ function App() {
         setSignals(signalPayload.signals);
         setSignalMetadata(signalPayload.metadata);
         setColors(colorPayload.colors);
+        setDbcs(dbcPayload.dbcs);
         setMockValues(
           Object.fromEntries(
             Object.entries(signalPayload.metadata)
@@ -118,16 +122,6 @@ function App() {
     pushDraft(next).catch((err) => setError(err.message));
   }
 
-  function moveGauge(direction) {
-    if (!gauge) return;
-    const target = selected + direction;
-    if (target < 0 || target >= draft.gauges.length) return;
-    const next = clone(draft);
-    [next.gauges[selected], next.gauges[target]] = [next.gauges[target], next.gauges[selected]];
-    setSelected(target);
-    pushDraft(next).catch((err) => setError(err.message));
-  }
-
   async function save() {
     const payload = await api("/api/save", { method: "POST" }).then((r) => r.json());
     setSaved(payload.saved);
@@ -154,6 +148,27 @@ function App() {
     link.download = "dashboard-config.json";
     link.click();
     URL.revokeObjectURL(href);
+  }
+
+  async function replaceDbc(interfaceName, file) {
+    if (!file) return;
+    const payload = await api(`/api/dbcs/${interfaceName}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/octet-stream" },
+      body: await file.arrayBuffer(),
+    }).then((r) => r.json());
+    const signalPayload = await api("/api/signals").then((r) => r.json());
+    setDbcs(payload.dbcs);
+    setSignals(signalPayload.signals);
+    setSignalMetadata(signalPayload.metadata);
+    setMockValues(
+      Object.fromEntries(
+        Object.entries(signalPayload.metadata)
+          .filter(([, metadata]) => metadata.choices.length > 0)
+          .map(([name, metadata]) => [name, metadata.choices[0].value]),
+      ),
+    );
+    setPreviewNonce(Date.now());
   }
 
   async function setMock(signal, value) {
@@ -211,6 +226,21 @@ function App() {
     return () => window.removeEventListener("pointermove", onMove);
   }, [interaction]);
 
+  useEffect(() => {
+    function onKeyDown(event) {
+      const target = event.target;
+      const isEditing =
+        target instanceof HTMLElement &&
+        (target.isContentEditable || ["INPUT", "SELECT", "TEXTAREA"].includes(target.tagName));
+      if (event.key === "Delete" && gauge && !isEditing) {
+        event.preventDefault();
+        deleteGauge();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [gauge, selected, draft]);
+
   if (!draft) return <main className="loading">Loading editor…</main>;
 
   return (
@@ -219,6 +249,23 @@ function App() {
         <div>
           <h1>Dashboard Editor</h1>
           <span className={dirty ? "dirty" : "clean"}>{dirty ? "Unsaved changes" : "Saved"}</span>
+        </div>
+        <div className="dbc-center">
+          {Object.entries(dbcs).map(([interfaceName, dbc]) => (
+            <div className="dbc-pill" key={interfaceName}>
+              <span>{interfaceName}: {dbc.filename}{dbc.fallback ? " (fallback)" : ""}</span>
+              <button onClick={() => dbcInputRefs.current[interfaceName]?.click()}>Swap</button>
+              <input
+                ref={(node) => {
+                  dbcInputRefs.current[interfaceName] = node;
+                }}
+                type="file"
+                accept=".dbc"
+                hidden
+                onChange={(event) => replaceDbc(interfaceName, event.target.files[0]).catch((err) => setError(err.message))}
+              />
+            </div>
+          ))}
         </div>
         <nav>
           <button onClick={save}>Save</button>
@@ -234,8 +281,8 @@ function App() {
       <section className="workspace">
         <aside>
           <div className="row">
-            <select onChange={(e) => addGauge(e.target.value)} value="">
-              <option value="" disabled>Add gauge…</option>
+            <select className="add-gauge-select primary" onChange={(e) => addGauge(e.target.value)} value="">
+              <option value="" disabled>Add gauge +</option>
               {Object.keys(gaugeTypes).map((type) => <option key={type}>{type}</option>)}
             </select>
           </div>
@@ -246,15 +293,15 @@ function App() {
               </button>
             ))}
           </div>
-          <div className="row actions">
-            <button onClick={duplicateGauge} disabled={!gauge}>Duplicate</button>
-            <button onClick={deleteGauge} disabled={!gauge}>Delete</button>
-            <button onClick={() => moveGauge(-1)} disabled={!gauge || selected === 0}>↑</button>
-            <button onClick={() => moveGauge(1)} disabled={!gauge || selected === draft.gauges.length - 1}>↓</button>
-          </div>
         </aside>
 
         <div className="preview-column">
+          <div className="preview-toolbar">
+            <div className="row actions">
+              <button onClick={duplicateGauge} disabled={!gauge}>Duplicate</button>
+              <button onClick={deleteGauge} disabled={!gauge}>Delete</button>
+            </div>
+          </div>
           <div
             ref={canvasRef}
             className={`canvas ${snapSize > 0 ? "with-grid" : ""}`}
@@ -293,6 +340,31 @@ function App() {
 
         <aside className="inspector">
           <h2>{gauge?.type || "No gauge selected"}</h2>
+          {gauge?.signal && (
+            <div className="preview-value-block">
+              <label>
+                <span>Preview value</span>
+                {gaugeSignalMetadata?.choices?.length > 0 ? (
+                  <select
+                    value={mockValues[gauge.signal] ?? gaugeSignalMetadata.choices[0].value}
+                    onChange={(event) => setMock(gauge.signal, event.target.value)}
+                  >
+                    {gaugeSignalMetadata.choices.map((choice) => (
+                      <option key={choice.value} value={choice.value}>
+                        {choice.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="number"
+                    value={mockValues[gauge.signal] ?? 0}
+                    onChange={(event) => setMock(gauge.signal, event.target.value)}
+                  />
+                )}
+              </label>
+            </div>
+          )}
           {gauge &&
             gaugeTypes[gauge.type].fields.map((field) => (
               <label key={field.name}>
@@ -306,29 +378,7 @@ function App() {
                 />
               </label>
             ))}
-          {gauge?.signal && (
-            <label>
-              <span>Preview value</span>
-              {gaugeSignalMetadata?.choices?.length > 0 ? (
-                <select
-                  value={mockValues[gauge.signal] ?? gaugeSignalMetadata.choices[0].value}
-                  onChange={(event) => setMock(gauge.signal, event.target.value)}
-                >
-                  {gaugeSignalMetadata.choices.map((choice) => (
-                    <option key={choice.value} value={choice.value}>
-                      {choice.label}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type="number"
-                  value={mockValues[gauge.signal] ?? 0}
-                  onChange={(event) => setMock(gauge.signal, event.target.value)}
-                />
-              )}
-            </label>
-          )}
+
         </aside>
       </section>
     </main>
@@ -377,3 +427,6 @@ function FieldInput({ field, value, signals, colors, onChange }) {
 }
 
 createRoot(document.getElementById("root")).render(<App />);
+
+
+

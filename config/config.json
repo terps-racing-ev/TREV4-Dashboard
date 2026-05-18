@@ -11,113 +11,13 @@
   "gauges": [
     {
       "type": "SimpleGauge",
-      "signal": "MOBO_SDC_Raw",
-      "label": "RAW",
-      "min_val": 0,
-      "max_val": 1,
-      "box_xywh": [
-        80,
-        10,
-        140,
-        60
-      ],
-      "decimal_places": 0,
-      "box_color": null,
-      "border_color": [
-        255,
-        255,
-        255
-      ],
-      "text_color": [
-        255,
-        255,
-        255
-      ]
-    },
-    {
-      "type": "SimpleGauge",
-      "signal": "MOBO_SDC_Post_IL",
-      "label": "IL",
-      "min_val": 0,
-      "max_val": 1,
-      "box_xywh": [
-        220,
-        10,
-        160,
-        60
-      ],
-      "decimal_places": 0,
-      "box_color": null,
-      "border_color": [
-        255,
-        255,
-        255
-      ],
-      "text_color": [
-        255,
-        255,
-        255
-      ]
-    },
-    {
-      "type": "SimpleGauge",
-      "signal": "MOBO_SDC_Post_Loop",
-      "label": "LOOP",
-      "min_val": 0,
-      "max_val": 1,
-      "box_xywh": [
-        380,
-        10,
-        160,
-        60
-      ],
-      "decimal_places": 0,
-      "box_color": null,
-      "border_color": [
-        255,
-        255,
-        255
-      ],
-      "text_color": [
-        255,
-        255,
-        255
-      ]
-    },
-    {
-      "type": "SimpleGauge",
-      "signal": "HVC_SDC_OK",
-      "label": "HVC",
-      "min_val": 0,
-      "max_val": 1,
-      "box_xywh": [
-        540,
-        10,
-        150,
-        60
-      ],
-      "decimal_places": 0,
-      "box_color": null,
-      "border_color": [
-        255,
-        255,
-        255
-      ],
-      "text_color": [
-        255,
-        255,
-        255
-      ]
-    },
-    {
-      "type": "SimpleGauge",
       "signal": "VCU_Speed",
       "label": "SPEED",
       "min_val": 0,
       "max_val": 99,
       "box_xywh": [
         280,
-        100,
+        120,
         240,
         240
       ],
@@ -142,7 +42,7 @@
       "max_val": 99,
       "box_xywh": [
         80,
-        90,
+        100,
         180,
         140
       ],
@@ -167,7 +67,7 @@
       "max_val": 99,
       "box_xywh": [
         540,
-        240,
+        260,
         180,
         140
       ],
@@ -192,7 +92,7 @@
       "max_val": 99,
       "box_xywh": [
         540,
-        90,
+        100,
         180,
         140
       ],
@@ -217,7 +117,7 @@
       "max_val": 99,
       "box_xywh": [
         80,
-        240,
+        260,
         180,
         140
       ],
@@ -239,12 +139,12 @@
       "signal": "VCU_State",
       "label": "VCU STATE",
       "min_val": 0,
-      "max_val": 1,
+      "max_val": 5,
       "box_xywh": [
         280,
-        360,
+        20,
         240,
-        100
+        80
       ],
       "decimal_places": 0,
       "box_color": null,
@@ -266,8 +166,8 @@
       "min_val": -230,
       "max_val": 230,
       "box_xywh": [
-        750,
-        50,
+        740,
+        80,
         20,
         350
       ],
@@ -294,6 +194,190 @@
         0
       ],
       "vertical": true,
+      "show_value": false
+    },
+    {
+      "type": "GradientGauge",
+      "signal": "MOBO_SDC_Raw",
+      "label": "RAW",
+      "min_val": 0,
+      "max_val": 1,
+      "box_xywh": [
+        20,
+        20,
+        60,
+        40
+      ],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": "WHITE",
+      "text_color": "WHITE",
+      "min_color": "RED",
+      "max_color": "GREEN",
+      "gradient_text": false,
+      "gradient_box": true,
+      "gradient_border": false,
+      "show_value": false
+    },
+    {
+      "type": "GradientGauge",
+      "signal": "MOBO_SDC_Post_IL",
+      "label": "IL",
+      "min_val": 0,
+      "max_val": 1,
+      "box_xywh": [
+        80,
+        20,
+        60,
+        40
+      ],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": "WHITE",
+      "text_color": "WHITE",
+      "min_color": "RED",
+      "max_color": "GREEN",
+      "gradient_text": false,
+      "gradient_box": true,
+      "gradient_border": false,
+      "show_value": false
+    },
+    {
+      "type": "GradientGauge",
+      "signal": "MOBO_SDC_Post_Loop",
+      "label": "LOOP",
+      "min_val": 0,
+      "max_val": 1,
+      "box_xywh": [
+        140,
+        20,
+        60,
+        40
+      ],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": "WHITE",
+      "text_color": "WHITE",
+      "min_color": "RED",
+      "max_color": "GREEN",
+      "gradient_text": false,
+      "gradient_box": true,
+      "gradient_border": false,
+      "show_value": false
+    },
+    {
+      "type": "GradientGauge",
+      "signal": "HVC_SDC_OK",
+      "label": "HVC",
+      "min_val": 0,
+      "max_val": 1,
+      "box_xywh": [
+        200,
+        20,
+        60,
+        40
+      ],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": "WHITE",
+      "text_color": "WHITE",
+      "min_color": "RED",
+      "max_color": "GREEN",
+      "gradient_text": false,
+      "gradient_box": true,
+      "gradient_border": false,
+      "show_value": false
+    },
+    {
+      "type": "GradientGauge",
+      "signal": "VCU_APPS1_Valid",
+      "label": "AP1",
+      "min_val": 0,
+      "max_val": 1,
+      "box_xywh": [
+        600,
+        20,
+        60,
+        40
+      ],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": "WHITE",
+      "text_color": "WHITE",
+      "min_color": "RED",
+      "max_color": "GREEN",
+      "gradient_text": false,
+      "gradient_box": true,
+      "gradient_border": false,
+      "show_value": false
+    },
+    {
+      "type": "GradientGauge",
+      "signal": "VCU_APPS2_Valid",
+      "label": "AP2",
+      "min_val": 0,
+      "max_val": 1,
+      "box_xywh": [
+        660,
+        20,
+        60,
+        40
+      ],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": "WHITE",
+      "text_color": "WHITE",
+      "min_color": "RED",
+      "max_color": "GREEN",
+      "gradient_text": false,
+      "gradient_box": true,
+      "gradient_border": false,
+      "show_value": false
+    },
+    {
+      "type": "GradientGauge",
+      "signal": "VCU_BSE_Valid",
+      "label": "BSE",
+      "min_val": 0,
+      "max_val": 1,
+      "box_xywh": [
+        720,
+        20,
+        60,
+        40
+      ],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": "WHITE",
+      "text_color": "WHITE",
+      "min_color": "RED",
+      "max_color": "GREEN",
+      "gradient_text": false,
+      "gradient_box": true,
+      "gradient_border": false,
+      "show_value": false
+    },
+    {
+      "type": "GradientGauge",
+      "signal": "VCU_RTD_Active",
+      "label": "RTD",
+      "min_val": 0,
+      "max_val": 1,
+      "box_xywh": [
+        540,
+        20,
+        60,
+        40
+      ],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": "WHITE",
+      "text_color": "WHITE",
+      "min_color": "RED",
+      "max_color": "GREEN",
+      "gradient_text": false,
+      "gradient_box": true,
+      "gradient_border": false,
       "show_value": false
     }
   ]

@@ -34,6 +34,8 @@ class Dashboard:
         self.bg_color = BLACK
         self.xres, self.yres = DISPLAY_SIZE
         self.gauges = []
+        self._config_mtime_ns: int | None = None
+        self._next_config_check_at = 0.0
 
         self._ui_thread_active = False
         
@@ -50,21 +52,51 @@ class Dashboard:
                 config = load_dashboard_config(self.config_path)
             else:
                 raise ValueError("Either config_path or config must be provided")
-            self.bg_color = tuple(config["display"]["bg_color"])
-            
+            bg_color = tuple(config["display"]["bg_color"])
             gauge_configs = config.get("gauges", [])
             if not gauge_configs:
                 print("No gauges in config")
                 return False
-            
+
+            gauges = []
             for gauge_cfg in gauge_configs:
-                self.gauges.append(instantiate_gauge(gauge_cfg, self.shared_data))
-            
+                gauges.append(instantiate_gauge(gauge_cfg, self.shared_data))
+
+            self.bg_color = bg_color
+            self.gauges = gauges
+            if self.config_path is not None:
+                self._config_mtime_ns = self.config_path.stat().st_mtime_ns
+
             print(f"Loaded {len(self.gauges)} gauge(s) from config")
             return len(self.gauges) > 0
         except Exception as e:
             print(f"Error loading config: {e}")
             return False
+
+    def _reload_config_if_changed(self) -> None:
+        if self.config_path is None or self._config_override is not None:
+            return
+
+        now = time.monotonic()
+        if now < self._next_config_check_at:
+            return
+        self._next_config_check_at = now + 1.0
+
+        try:
+            latest_mtime_ns = self.config_path.stat().st_mtime_ns
+        except OSError as exc:
+            print(f"Could not check config for reload: {exc}")
+            return
+
+        if self._config_mtime_ns is None:
+            self._config_mtime_ns = latest_mtime_ns
+            return
+        if latest_mtime_ns == self._config_mtime_ns:
+            return
+
+        print("Config changed, reloading dashboard...")
+        if not self.load_config():
+            print("Config reload failed; keeping previous dashboard state")
         
     def create_frame(self) -> pygame.Surface:
         """Create a fresh frame surface."""
@@ -78,6 +110,7 @@ class Dashboard:
         Called by UI thread.
         Returns the rendered surface.
         """
+        self._reload_config_if_changed()
         frame = self.create_frame()
         
         # Update all gauges

@@ -51,6 +51,27 @@ class LatestValuesTable:
             if entry:
                 return entry.get('display_value', entry['value'])
         return None
+
+    def is_signal_stale(self, signal_name: str, max_age_seconds: float) -> bool:
+        """Return True when a signal is missing or older than the allowed age."""
+        now = time.perf_counter()
+        with self._lock:
+            entry = self._table.get(signal_name)
+            if entry is None:
+                return True
+            return now - entry['timestamp'] > max_age_seconds
+
+    def refresh_timestamps(self) -> None:
+        """Mark all existing values as freshly observed without changing them."""
+        timestamp = time.perf_counter()
+        with self._lock:
+            for entry in self._table.values():
+                entry['timestamp'] = timestamp
+
+    def clear(self) -> None:
+        """Discard all known signal values."""
+        with self._lock:
+            self._table.clear()
     
     def get_snapshot(self) -> Dict[str, Any]:
         """

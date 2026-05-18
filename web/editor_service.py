@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import pygame
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
@@ -28,6 +28,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG_DIR = ROOT / "config"
 DEFAULT_CONFIG_PATH = CONFIG_DIR / "config.json"
 WEB_DIST_DIR = ROOT / "web" / "dist"
+CAN_INTERFACES = ("can0", "can1")
 
 
 def _normalize_dashboard_config(raw: dict[str, Any]) -> dict[str, Any]:
@@ -59,9 +60,52 @@ class EditorState:
         self.saved = load_dashboard_config(config_path)
         self.draft = copy.deepcopy(self.saved)
         self.preview_values = LatestValuesTable()
-        self.signal_metadata = load_signal_metadata(sorted(CONFIG_DIR.glob("*.dbc")))
-        self.signal_names = list(self.signal_metadata)
+        self.signal_metadata = {}
+        self.signal_names = []
+        self.reload_signal_metadata()
         self._seed_enum_preview_values()
+
+    def active_dbc_paths(self) -> dict[str, Path]:
+        available = sorted(CONFIG_DIR.glob("*.dbc"))
+        fallback = next((path for path in available if path.name not in {f"{interface}.dbc" for interface in CAN_INTERFACES}), None)
+        fallback = fallback or (available[0] if available else None)
+        return {
+            interface: (CONFIG_DIR / f"{interface}.dbc") if (CONFIG_DIR / f"{interface}.dbc").exists() else fallback
+            for interface in CAN_INTERFACES
+            if (CONFIG_DIR / f"{interface}.dbc").exists() or fallback is not None
+        }
+
+    def dbc_payload(self) -> dict[str, Any]:
+        paths = self.active_dbc_paths()
+        return {
+            "dbcs": {
+                interface: {
+                    "filename": path.name,
+                    "fallback": path.name != f"{interface}.dbc",
+                }
+                for interface, path in paths.items()
+            }
+        }
+
+    def reload_signal_metadata(self) -> None:
+        unique_paths = sorted(set(self.active_dbc_paths().values()))
+        self.signal_metadata = load_signal_metadata(unique_paths)
+        self.signal_names = list(self.signal_metadata)
+
+    def replace_dbc(self, interface: str, content: bytes) -> dict[str, Any]:
+        if interface not in CAN_INTERFACES:
+            raise ValueError(f"Unknown interface: {interface}")
+        if not content:
+            raise ValueError("DBC upload is empty")
+
+        target = CONFIG_DIR / f"{interface}.dbc"
+        temp_target = target.with_suffix(".dbc.tmp")
+        temp_target.write_bytes(content)
+        temp_target.replace(target)
+        self.preview_values.clear()
+        self.reload_signal_metadata()
+        self._seed_enum_preview_values()
+        return self.dbc_payload()
 
     def _seed_enum_preview_values(self) -> None:
         raw_values: dict[str, Any] = {}
@@ -105,6 +149,7 @@ class EditorState:
         return self.response_payload()
 
     def render_preview(self) -> bytes:
+        self.preview_values.refresh_timestamps()
         dashboard = Dashboard(self.preview_values, config=self.draft)
         frame = dashboard.render_frame()
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp:
@@ -176,6 +221,17 @@ def create_app(config_path: Path = DEFAULT_CONFIG_PATH) -> FastAPI:
     @app.get("/api/signals")
     def signals() -> dict[str, Any]:
         return {"signals": state.signal_names, "metadata": state.signal_metadata}
+
+    @app.get("/api/dbcs")
+    def dbcs() -> dict[str, Any]:
+        return state.dbc_payload()
+
+    @app.put("/api/dbcs/{interface}")
+    async def put_dbc(interface: str, request: Request) -> dict[str, Any]:
+        try:
+            return state.replace_dbc(interface, await request.body())
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail={"errors": [str(exc)], "warnings": []}) from exc
 
     @app.get("/api/colors")
     def colors() -> dict[str, dict[str, list[int]]]:

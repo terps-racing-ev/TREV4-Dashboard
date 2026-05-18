@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .colors import named_colors, parse_color
-from .gauges import Gauge, SignedLinearGauge, SimpleGauge, UnsignedLinearGauge
+from .gauges import Gauge, GradientGauge, SignedLinearGauge, SimpleGauge, UnsignedLinearGauge
 from .shared_data import LatestValuesTable
 
 DISPLAY_SIZE = (800, 480)
@@ -48,6 +48,19 @@ COMMON_FIELDS = (
 
 GAUGE_SPECS: dict[str, GaugeSpec] = {
     "SimpleGauge": GaugeSpec("SimpleGauge", SimpleGauge, COMMON_FIELDS),
+    "GradientGauge": GaugeSpec(
+        "GradientGauge",
+        GradientGauge,
+        COMMON_FIELDS
+        + (
+            FieldSpec("min_color", "Min Color", "color", "GREEN"),
+            FieldSpec("max_color", "Max Color", "color", "RED"),
+            FieldSpec("gradient_text", "Gradient Text", "bool", True),
+            FieldSpec("gradient_box", "Gradient Box", "bool", False),
+            FieldSpec("gradient_border", "Gradient Border", "bool", False),
+            FieldSpec("show_value", "Show Value", "bool", True),
+        ),
+    ),
     "UnsignedLinearGauge": GaugeSpec(
         "UnsignedLinearGauge",
         UnsignedLinearGauge,

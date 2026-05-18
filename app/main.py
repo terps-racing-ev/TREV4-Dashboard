@@ -6,11 +6,20 @@ Handles RX, TX, and UI threads
 import threading
 import time
 import glob
+import sys
 from pathlib import Path
 
-from .shared_data import LatestValuesTable
-from .can_manager import CANManager
-from .dashboard import Dashboard
+if __package__ in (None, ""):
+    ROOT_DIR = Path(__file__).resolve().parents[1]
+    if str(ROOT_DIR) not in sys.path:
+        sys.path.insert(0, str(ROOT_DIR))
+    from app.shared_data import LatestValuesTable
+    from app.can_manager import CANManager
+    from app.dashboard import Dashboard
+else:
+    from .shared_data import LatestValuesTable
+    from .can_manager import CANManager
+    from .dashboard import Dashboard
 
 
 def search_for_file(filename: str, search_paths: list | None = None) -> Path | None:
@@ -45,17 +54,23 @@ def main():
     SIM_MODE = False
     CAN_INTERFACES = ("can0", "can1")
     
-    SEARCH_PATHS = ["config", "."]  # TODO: add USB mount paths
+    ROOT_DIR = Path(__file__).resolve().parents[1]
+    SEARCH_PATHS = [str(ROOT_DIR / "config"), str(ROOT_DIR)]  # TODO: add USB mount paths
     
     # Search for files
     print("Searching for .dbc file...")
     dbc_path = search_for_file("*.dbc", SEARCH_PATHS)
     if not dbc_path:
         return
-    dbc_paths = {
-        interface: search_for_file(f"{interface}.dbc", SEARCH_PATHS) or dbc_path
-        for interface in CAN_INTERFACES
-    }
+    def resolve_dbc_paths() -> dict[str, Path]:
+        return {
+            interface: (ROOT_DIR / "config" / f"{interface}.dbc")
+            if (ROOT_DIR / "config" / f"{interface}.dbc").exists()
+            else dbc_path
+            for interface in CAN_INTERFACES
+        }
+
+    dbc_paths = resolve_dbc_paths()
     
     print("Searching for config.json...")
     config_path = search_for_file("config.json", SEARCH_PATHS)
@@ -99,6 +114,8 @@ def main():
         
     try:
         while True:
+            can_mgr.replace_dbc_paths(resolve_dbc_paths())
+            can_mgr.reload_dbc_if_changed()
             # Exit if UI thread stops
             if not ui_thread.is_alive():
                 print("\nUI thread stopped, shutting down...")

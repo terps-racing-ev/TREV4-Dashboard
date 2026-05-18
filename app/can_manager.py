@@ -28,6 +28,8 @@ class CANManager:
             raise ValueError("A DBC path or interface-to-DBC mapping is required")
         self.dbc_paths = dict(dbc_paths) if isinstance(dbc_paths, Mapping) else {"default": dbc_paths}
         self.dbs: dict[str, cantools.database.Database] = {}
+        self._dbc_mtimes_ns: dict[str, int] = {}
+        self._next_dbc_check_at = 0.0
         self.buses: list[can.Bus] = []
         self.threads: list[threading.Thread] = []
         
@@ -48,12 +50,60 @@ class CANManager:
                 for interface, path in self.dbc_paths.items()
             }
             self.db = next(iter(self.dbs.values()), None)
+            self._dbc_mtimes_ns = {
+                interface: path.stat().st_mtime_ns
+                for interface, path in self.dbc_paths.items()
+            }
             for interface, db in self.dbs.items():
                 print(f"Loaded {len(db.messages)} message(s) from {interface} dbc")
             return True
         except Exception as e:
             print(f"Error loading .dbc file: {e}")
             return False
+
+    def reload_dbc_if_changed(self) -> bool:
+        """Reload databases after a DBC file is replaced on disk."""
+        now = time.monotonic()
+        if now < self._next_dbc_check_at:
+            return False
+        self._next_dbc_check_at = now + 1.0
+
+        try:
+            latest_mtimes = {
+                interface: path.stat().st_mtime_ns
+                for interface, path in self.dbc_paths.items()
+            }
+        except OSError as exc:
+            print(f"Could not check DBC files for reload: {exc}")
+            return False
+
+        if latest_mtimes == self._dbc_mtimes_ns:
+            return False
+
+        print("DBC changed, reloading databases...")
+        if self.load_dbc():
+            self.shared_data.clear()
+            print("DBC reload complete; cleared shared signal table")
+            return True
+
+        print("DBC reload failed; keeping previous databases")
+        return False
+
+    def replace_dbc_paths(self, dbc_paths: Mapping[str, Path]) -> bool:
+        """Switch to a new interface-to-DBC mapping and rebuild the signal table."""
+        next_paths = dict(dbc_paths)
+        if next_paths == self.dbc_paths:
+            return False
+        previous_paths = self.dbc_paths
+        self.dbc_paths = next_paths
+        print("DBC mapping changed, reloading databases...")
+        if self.load_dbc():
+            self.shared_data.clear()
+            print("DBC mapping reload complete; cleared shared signal table")
+            return True
+        self.dbc_paths = previous_paths
+        print("DBC mapping reload failed; keeping previous databases")
+        return False
     
     def _db_for(self, interface: str | None) -> Optional[cantools.database.Database]:
         return self.dbs.get(str(interface)) or self.dbs.get("default")
@@ -145,24 +195,50 @@ class CANManager:
         try:
             while self._rx_thread_active:
                 # Generate simulated data for each message in the database
+                updated_signals: set[str] = set()
                 for db in self.dbs.values():
                     for message in db.messages:
                     
-                        # Create random signal values
+                        # Create simulated raw values plus display labels for enums,
+                        # mirroring the split produced by real CAN decoding.
                         sim_signals = {}
+                        display_signals = {}
                         for signal in message.signals:
-                            value = self.shared_data.get_signal(signal.name) or 0
-                            
-                            value += 1
-                            if value >= signal.maximum:
-                                value = signal.minimum
-                            
+                            # The runtime may point multiple simulated interfaces at the
+                            # same fallback DBC. Since shared data is keyed by signal name,
+                            # advance each signal only once per sim cycle or enums such as
+                            # False/True can flip twice and appear not to move at all.
+                            # CALEB TODO THIS IS BECAUSE OF THE DOUBLE DBC, MAYBE SWITCH THE BUS BIT ON THE CONTROLS?
+                            if signal.name in updated_signals:
+                                continue
+
+                            current_value = self.shared_data.get_signal(signal.name)
+                            choices = sorted((signal.choices or {}).items())
+
+                            if choices:
+                                choice_values = [value for value, _label in choices]
+                                if current_value in choice_values:
+                                    current_index = choice_values.index(current_value)
+                                    next_index = (current_index + 1) % len(choice_values)
+                                else:
+                                    next_index = 0
+                                value, label = choices[next_index]
+                                display_signals[signal.name] = str(label)
+                            else:
+                                value = current_value if current_value is not None else (signal.minimum or 0)
+                                value += 1
+                                if signal.maximum is not None and value > signal.maximum:
+                                    value = signal.minimum if signal.minimum is not None else 0
+                                display_signals[signal.name] = value
+
                             sim_signals[signal.name] = value
+                            updated_signals.add(signal.name)
                         
                         # Update shared data
-                        self.shared_data.update(sim_signals)
+                        if sim_signals:
+                            self.shared_data.update(sim_signals, display_signals)
                 
-                time.sleep(0.05)
+                time.sleep(0.5)
         except Exception as e:
             print(f"RX simulation thread error: {e}")
         finally:

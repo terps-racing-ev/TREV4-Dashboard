@@ -33,8 +33,10 @@ label {
 }
 
 header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 14px;
 }
 
@@ -53,6 +55,31 @@ nav,
 .actions {
   display: flex;
   gap: 8px;
+}
+
+header nav {
+  justify-self: end;
+}
+
+.dbc-center {
+  display: flex;
+  gap: 8px;
+  justify-self: center;
+}
+
+.dbc-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #34405f;
+  border-radius: 999px;
+  background: #121a31;
+  padding: 4px 4px 4px 10px;
+  font-size: 12px;
+}
+
+.dbc-pill button {
+  padding: 5px 8px;
 }
 
 button,
@@ -133,6 +160,22 @@ aside {
   min-width: 0;
 }
 
+.add-gauge-select {
+  appearance: none;
+  font-weight: 600;
+  text-align: center;
+}
+
+.primary {
+  background: #2563eb;
+  border-color: #3b82f6;
+}
+
+.primary:hover:not(:disabled) {
+  background: #1d4ed8;
+  border-color: #60a5fa;
+}
+
 .gauge-list {
   display: grid;
   gap: 6px;
@@ -162,6 +205,12 @@ aside {
   gap: 10px;
   justify-items: start;
   justify-self: center;
+}
+
+.preview-toolbar {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
 }
 
 .canvas img {
@@ -210,6 +259,12 @@ aside {
   gap: 5px;
 }
 
+.preview-value-block {
+  margin-bottom: 2px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #34405f;
+}
+
 .actions {
   flex-wrap: wrap;
 }
@@ -241,8 +296,13 @@ aside {
 
 @media (max-width: 1085px) {
   header {
-    flex-wrap: wrap;
+    grid-template-columns: 1fr;
     gap: 12px;
+  }
+
+  header nav,
+  .dbc-center {
+    justify-self: start;
   }
 
   .workspace {

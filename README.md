@@ -3,7 +3,7 @@
 ## Runtime dashboard
 
 ```bash
-python main.py
+python -m app.main
 ```
 
 Runtime configuration now lives in `config/config.json`; DBC files live in `config/`.
