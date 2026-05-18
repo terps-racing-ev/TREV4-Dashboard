@@ -7,7 +7,7 @@ from typing import Optional, Dict, Any, Mapping, Sequence
 import can
 import cantools
 
-from shared_data import LatestValuesTable
+from .shared_data import LatestValuesTable
 
 BAUD_RATE = 500000
 

@@ -1,0 +1,5 @@
+cantools
+fastapi
+pygame
+python-can
+uvicorn[standard]

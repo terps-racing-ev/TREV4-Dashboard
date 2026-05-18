@@ -81,6 +81,11 @@ _COLOR_MAP = {
 }
 
 
+def named_colors() -> dict[str, Color]:
+	"""Return JSON/editor-safe color names mapped to their RGB(A) tuples."""
+	return dict(sorted(_COLOR_MAP.items()))
+
+
 def parse_color(value: Union[str, Sequence[Union[int, float]], int, None]) -> Optional[Color]:
 	"""
 	Parse a JSON-friendly color specification into an (R,G,B) or (R,G,B,A) tuple.

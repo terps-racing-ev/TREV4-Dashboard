@@ -8,9 +8,9 @@ import time
 import glob
 from pathlib import Path
 
-from shared_data import LatestValuesTable
-from can_manager import CANManager
-from dashboard import Dashboard
+from .shared_data import LatestValuesTable
+from .can_manager import CANManager
+from .dashboard import Dashboard
 
 
 def search_for_file(filename: str, search_paths: list | None = None) -> Path | None:
@@ -45,7 +45,7 @@ def main():
     SIM_MODE = False
     CAN_INTERFACES = ("can0", "can1")
     
-    SEARCH_PATHS = ["."]  # TODO: add USB mount paths
+    SEARCH_PATHS = ["config", "."]  # TODO: add USB mount paths
     
     # Search for files
     print("Searching for .dbc file...")

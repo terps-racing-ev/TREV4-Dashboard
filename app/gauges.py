@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
 from typing import Any, Optional, Tuple, Union
-from pathlib import Path
 import pygame
 import math
+from pathlib import Path
 
-from colors import *
-from shared_data import LatestValuesTable
+from .colors import *
+from .shared_data import LatestValuesTable
 
-DEFAULT_FONT = "assets/fonts/monofonto rg.otf"
+ROOT_DIR = Path(__file__).resolve().parents[1]
+DEFAULT_FONT = str(ROOT_DIR / "assets" / "fonts" / "monofonto rg.otf")
 
 # Lazy-loaded fonts (initialized on first access)
 _SMALL_FONT = None

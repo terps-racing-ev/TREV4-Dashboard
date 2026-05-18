@@ -1,0 +1,300 @@
+{
+  "display": {
+    "width": 800,
+    "height": 480,
+    "bg_color": [
+      0,
+      0,
+      0
+    ]
+  },
+  "gauges": [
+    {
+      "type": "SimpleGauge",
+      "signal": "MOBO_SDC_Raw",
+      "label": "RAW",
+      "min_val": 0,
+      "max_val": 1,
+      "box_xywh": [
+        80,
+        10,
+        140,
+        60
+      ],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": [
+        255,
+        255,
+        255
+      ],
+      "text_color": [
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "type": "SimpleGauge",
+      "signal": "MOBO_SDC_Post_IL",
+      "label": "IL",
+      "min_val": 0,
+      "max_val": 1,
+      "box_xywh": [
+        220,
+        10,
+        160,
+        60
+      ],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": [
+        255,
+        255,
+        255
+      ],
+      "text_color": [
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "type": "SimpleGauge",
+      "signal": "MOBO_SDC_Post_Loop",
+      "label": "LOOP",
+      "min_val": 0,
+      "max_val": 1,
+      "box_xywh": [
+        380,
+        10,
+        160,
+        60
+      ],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": [
+        255,
+        255,
+        255
+      ],
+      "text_color": [
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "type": "SimpleGauge",
+      "signal": "HVC_SDC_OK",
+      "label": "HVC",
+      "min_val": 0,
+      "max_val": 1,
+      "box_xywh": [
+        540,
+        10,
+        150,
+        60
+      ],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": [
+        255,
+        255,
+        255
+      ],
+      "text_color": [
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "type": "SimpleGauge",
+      "signal": "VCU_Speed",
+      "label": "SPEED",
+      "min_val": 0,
+      "max_val": 99,
+      "box_xywh": [
+        280,
+        100,
+        240,
+        240
+      ],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": [
+        255,
+        255,
+        255
+      ],
+      "text_color": [
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "type": "SimpleGauge",
+      "signal": "HVC_Pack_Voltage",
+      "label": "PACK V",
+      "min_val": 0,
+      "max_val": 99,
+      "box_xywh": [
+        80,
+        90,
+        180,
+        140
+      ],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": [
+        255,
+        255,
+        255
+      ],
+      "text_color": [
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "type": "SimpleGauge",
+      "signal": "HVC_Pack_Current_Hi",
+      "label": "PACK A",
+      "min_val": 0,
+      "max_val": 99,
+      "box_xywh": [
+        540,
+        240,
+        180,
+        140
+      ],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": [
+        255,
+        255,
+        255
+      ],
+      "text_color": [
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "type": "SimpleGauge",
+      "signal": "HVC_Cell_Volt_Min",
+      "label": "MIN CELL V",
+      "min_val": 0,
+      "max_val": 99,
+      "box_xywh": [
+        540,
+        90,
+        180,
+        140
+      ],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": [
+        255,
+        255,
+        255
+      ],
+      "text_color": [
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "type": "SimpleGauge",
+      "signal": "HVC_Cell_Temp_Max",
+      "label": "MAX CELL TEMP",
+      "min_val": 0,
+      "max_val": 99,
+      "box_xywh": [
+        80,
+        240,
+        180,
+        140
+      ],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": [
+        255,
+        255,
+        255
+      ],
+      "text_color": [
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "type": "SimpleGauge",
+      "signal": "VCU_State",
+      "label": "VCU STATE",
+      "min_val": 0,
+      "max_val": 1,
+      "box_xywh": [
+        280,
+        360,
+        240,
+        100
+      ],
+      "decimal_places": 0,
+      "box_color": null,
+      "border_color": [
+        255,
+        255,
+        255
+      ],
+      "text_color": [
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "type": "SignedLinearGauge",
+      "signal": "INV_Torque_Feedback_Fast",
+      "label": "TORQUE",
+      "min_val": -230,
+      "max_val": 230,
+      "box_xywh": [
+        750,
+        50,
+        20,
+        350
+      ],
+      "decimal_places": 0,
+      "box_color": [
+        23,
+        23,
+        23
+      ],
+      "border_color": null,
+      "text_color": [
+        255,
+        255,
+        255
+      ],
+      "pos_color": [
+        0,
+        255,
+        0
+      ],
+      "neg_color": [
+        255,
+        0,
+        0
+      ],
+      "vertical": true,
+      "show_value": false
+    }
+  ]
+}
