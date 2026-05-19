@@ -11,15 +11,15 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from app.colors import named_colors, parse_color
+from app.colors import named_colors
 from app.dashboard import Dashboard
 from app.dbc_utils import load_signal_metadata
 from app.gauge_config import (
-    DISPLAY_SIZE,
     GAUGE_SPECS,
-    load_dashboard_config,
-    normalize_gauge_config,
-    save_dashboard_config,
+    get_dashboard_by_id,
+    load_dashboard_library_config,
+    normalize_dashboard_library_config,
+    save_dashboard_library_config,
     validate_layout,
 )
 from app.shared_data import LatestValuesTable
@@ -29,19 +29,6 @@ CONFIG_DIR = ROOT / "config"
 DEFAULT_CONFIG_PATH = CONFIG_DIR / "config.json"
 WEB_DIST_DIR = ROOT / "web" / "dist"
 CAN_INTERFACES = ("can0", "can1")
-
-
-def _normalize_dashboard_config(raw: dict[str, Any]) -> dict[str, Any]:
-    display = raw.get("display", {})
-    normalized = {
-        "display": {
-            "width": DISPLAY_SIZE[0],
-            "height": DISPLAY_SIZE[1],
-            "bg_color": list(parse_color(display.get("bg_color", [0, 0, 0])) or (0, 0, 0)),
-        },
-        "gauges": [normalize_gauge_config(gauge) for gauge in raw.get("gauges", [])],
-    }
-    return normalized
 
 
 def _json_safe(value: Any) -> Any:
@@ -57,8 +44,9 @@ def _json_safe(value: Any) -> Any:
 class EditorState:
     def __init__(self, config_path: Path = DEFAULT_CONFIG_PATH) -> None:
         self.config_path = config_path
-        self.saved = load_dashboard_config(config_path)
+        self.saved = load_dashboard_library_config(config_path)
         self.draft = copy.deepcopy(self.saved)
+        self.selected_dashboard_id = self.draft["active_dashboard_id"]
         self.preview_values = LatestValuesTable()
         self.signal_metadata = {}
         self.signal_names = []
@@ -131,26 +119,63 @@ class EditorState:
         return {
             "saved": self.saved,
             "draft": self.draft,
+            "active_dashboard_id": self.saved["active_dashboard_id"],
+            "selected_dashboard_id": self.selected_dashboard_id,
             "validation": self.validation_payload(),
         }
 
-    def validation_payload(self) -> dict[str, list[str]]:
-        return {"errors": [], "warnings": validate_layout(self.draft, signal_names=set(self.signal_names))}
+    def selected_dashboard(self) -> dict[str, Any]:
+        return get_dashboard_by_id(self.draft, self.selected_dashboard_id)
+
+    def validation_payload(self) -> dict[str, Any]:
+        signal_names = set(self.signal_names)
+        dashboard_warnings = {
+            dashboard["id"]: validate_layout(dashboard, signal_names=signal_names)
+            for dashboard in self.draft.get("dashboards", [])
+        }
+        return {
+            "errors": [],
+            "warnings": dashboard_warnings.get(self.selected_dashboard()["id"], []),
+            "dashboards": dashboard_warnings,
+        }
 
     def replace_draft(self, raw: dict[str, Any]) -> dict[str, Any]:
-        self.draft = _normalize_dashboard_config(raw)
+        self.draft = normalize_dashboard_library_config(raw)
+        if not any(dashboard["id"] == self.selected_dashboard_id for dashboard in self.draft["dashboards"]):
+            self.selected_dashboard_id = self.draft["active_dashboard_id"]
+        return self.response_payload()
+
+    def select_dashboard(self, dashboard_id: str) -> dict[str, Any]:
+        if not any(dashboard["id"] == dashboard_id for dashboard in self.draft["dashboards"]):
+            raise ValueError(f"Unknown dashboard: {dashboard_id}")
+        self.selected_dashboard_id = dashboard_id
         return self.response_payload()
 
     def save(self) -> dict[str, Any]:
-        normalized = _normalize_dashboard_config(self.draft)
-        save_dashboard_config(normalized, self.config_path)
-        self.saved = load_dashboard_config(self.config_path)
+        normalized = normalize_dashboard_library_config(self.draft)
+        normalized["active_dashboard_id"] = self.saved["active_dashboard_id"]
+        normalized = normalize_dashboard_library_config(normalized)
+        save_dashboard_library_config(normalized, self.config_path)
+        self.saved = load_dashboard_library_config(self.config_path)
         self.draft = copy.deepcopy(self.saved)
+        if not any(dashboard["id"] == self.selected_dashboard_id for dashboard in self.draft["dashboards"]):
+            self.selected_dashboard_id = self.draft["active_dashboard_id"]
         return self.response_payload()
 
-    def render_preview(self) -> bytes:
+    def activate(self, dashboard_id: str) -> dict[str, Any]:
+        if not any(dashboard["id"] == dashboard_id for dashboard in self.draft["dashboards"]):
+            raise ValueError(f"Unknown dashboard: {dashboard_id}")
+        self.draft["active_dashboard_id"] = dashboard_id
+        save_dashboard_library_config(self.draft, self.config_path)
+        self.saved = load_dashboard_library_config(self.config_path)
+        self.draft = copy.deepcopy(self.saved)
+        self.selected_dashboard_id = dashboard_id
+        return self.response_payload()
+
+    def render_preview(self, dashboard_id: str | None = None) -> bytes:
         self.preview_values.refresh_timestamps()
-        dashboard = Dashboard(self.preview_values, config=self.draft)
+        dashboard_config = get_dashboard_by_id(self.draft, dashboard_id or self.selected_dashboard_id)
+        dashboard = Dashboard(self.preview_values, config=dashboard_config)
         frame = dashboard.render_frame()
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp:
             temp_path = Path(temp.name)
@@ -181,6 +206,20 @@ def create_app(config_path: Path = DEFAULT_CONFIG_PATH) -> FastAPI:
     def save() -> dict[str, Any]:
         try:
             return state.save()
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail={"errors": [str(exc)], "warnings": []}) from exc
+
+    @app.post("/api/select/{dashboard_id}")
+    def select_dashboard(dashboard_id: str) -> dict[str, Any]:
+        try:
+            return state.select_dashboard(dashboard_id)
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail={"errors": [str(exc)], "warnings": []}) from exc
+
+    @app.post("/api/activate/{dashboard_id}")
+    def activate_dashboard(dashboard_id: str) -> dict[str, Any]:
+        try:
+            return state.activate(dashboard_id)
         except Exception as exc:
             raise HTTPException(status_code=400, detail={"errors": [str(exc)], "warnings": []}) from exc
 
@@ -243,9 +282,9 @@ def create_app(config_path: Path = DEFAULT_CONFIG_PATH) -> FastAPI:
         return {"values": state.preview_values.get_snapshot()}
 
     @app.get("/api/preview.png")
-    def preview() -> Response:
+    def preview(dashboard_id: str | None = None) -> Response:
         try:
-            return Response(content=state.render_preview(), media_type="image/png")
+            return Response(content=state.render_preview(dashboard_id), media_type="image/png")
         except Exception as exc:
             return JSONResponse(status_code=400, content={"errors": [str(exc)], "warnings": []})
 

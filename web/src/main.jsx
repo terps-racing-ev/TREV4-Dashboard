@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { FaFileExport, FaFileImport, FaRegCopy, FaRegSave, FaRegTrashAlt } from "react-icons/fa";
 import "./styles.css";
 
 const CANVAS = { width: 800, height: 480 };
@@ -21,16 +22,32 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function makeDashboardId() {
+  if (crypto.randomUUID) return `dash-${crypto.randomUUID()}`;
+  return `dash-${Date.now()}-${Math.round(Math.random() * 100000)}`;
+}
+
+function defaultDashboard(name = "New Dashboard") {
+  return {
+    id: makeDashboardId(),
+    name,
+    display: { width: CANVAS.width, height: CANVAS.height, bg_color: [0, 0, 0] },
+    gauges: [],
+  };
+}
+
 function App() {
   const [saved, setSaved] = useState(null);
   const [draft, setDraft] = useState(null);
+  const [activeDashboardId, setActiveDashboardId] = useState(null);
+  const [selectedDashboardId, setSelectedDashboardId] = useState(null);
   const [gaugeTypes, setGaugeTypes] = useState({});
   const [signals, setSignals] = useState([]);
   const [signalMetadata, setSignalMetadata] = useState({});
   const [colors, setColors] = useState({});
   const [dbcs, setDbcs] = useState({});
   const [selected, setSelected] = useState(0);
-  const [warnings, setWarnings] = useState([]);
+  const [warningsByDashboard, setWarningsByDashboard] = useState({});
   const [mockValues, setMockValues] = useState({});
   const [previewNonce, setPreviewNonce] = useState(Date.now());
   const [error, setError] = useState("");
@@ -41,9 +58,12 @@ function App() {
   const draftRef = useRef(null);
   const canvasRef = useRef(null);
 
+  const dashboards = draft?.dashboards ?? [];
+  const dashboard = dashboards.find((item) => item.id === selectedDashboardId) ?? dashboards[0];
   const dirty = useMemo(() => JSON.stringify(saved) !== JSON.stringify(draft), [saved, draft]);
-  const gauge = draft?.gauges?.[selected];
+  const gauge = dashboard?.gauges?.[selected];
   const snapSize = SNAP_OPTIONS[snapIndex];
+  const warnings = dashboard ? warningsByDashboard[dashboard.id] ?? [] : [];
 
   useEffect(() => {
     draftRef.current = draft;
@@ -60,7 +80,9 @@ function App() {
       .then(([config, types, signalPayload, colorPayload, dbcPayload]) => {
         setSaved(config.saved);
         setDraft(config.draft);
-        setWarnings(config.validation.warnings);
+        setActiveDashboardId(config.active_dashboard_id);
+        setSelectedDashboardId(config.selected_dashboard_id);
+        setWarningsByDashboard(config.validation.dashboards ?? {});
         setGaugeTypes(types);
         setSignals(signalPayload.signals);
         setSignalMetadata(signalPayload.metadata);
@@ -77,57 +99,144 @@ function App() {
       .catch((err) => setError(err.message));
   }, []);
 
-  async function pushDraft(next) {
-    setDraft(next);
-    const payload = await api("/api/draft", { method: "PUT", body: JSON.stringify(next) }).then((r) => r.json());
+  function applyConfigPayload(payload) {
+    setSaved(payload.saved);
     setDraft(payload.draft);
-    setWarnings(payload.validation.warnings);
+    setActiveDashboardId(payload.active_dashboard_id);
+    setSelectedDashboardId(payload.selected_dashboard_id);
+    setWarningsByDashboard(payload.validation.dashboards ?? {});
     setPreviewNonce(Date.now());
   }
 
-  function updateGauge(index, patch) {
+  async function pushDraft(next, { refreshPreview = true } = {}) {
+    setDraft(next);
+    const payload = await api("/api/draft", { method: "PUT", body: JSON.stringify(next) }).then((r) => r.json());
+    setDraft(payload.draft);
+    setActiveDashboardId(payload.active_dashboard_id);
+    setSelectedDashboardId(payload.selected_dashboard_id);
+    setWarningsByDashboard(payload.validation.dashboards ?? {});
+    if (refreshPreview) setPreviewNonce(Date.now());
+  }
+
+  function updateSelectedDashboard(updater, options) {
+    if (!dashboard) return;
     const next = clone(draft);
-    next.gauges[index] = { ...next.gauges[index], ...patch };
+    const index = next.dashboards.findIndex((item) => item.id === dashboard.id);
+    next.dashboards[index] = updater(next.dashboards[index]);
+    pushDraft(next, options).catch((err) => setError(err.message));
+  }
+
+  async function selectDashboard(dashboardId) {
+    setSelectedDashboardId(dashboardId);
+    const nextDashboard = dashboards.find((item) => item.id === dashboardId);
+    setSelected(nextDashboard?.gauges?.length > 0 ? 0 : null);
+    const payload = await api(`/api/select/${encodeURIComponent(dashboardId)}`, { method: "POST" }).then((r) => r.json());
+    setWarningsByDashboard(payload.validation.dashboards ?? {});
+  }
+
+  function renameDashboard(dashboardId, name) {
+    const next = clone(draft);
+    const item = next.dashboards.find((candidate) => candidate.id === dashboardId);
+    if (!item) return;
+    item.name = name;
+    draftRef.current = next;
+    setDraft(next);
+  }
+
+  function commitDashboardRename() {
+    pushDraft(draftRef.current, { refreshPreview: false }).catch((err) => setError(err.message));
+  }
+
+  function addDashboard() {
+    const next = clone(draft);
+    const created = defaultDashboard(`Dashboard ${next.dashboards.length + 1}`);
+    next.dashboards.push(created);
+    setSelectedDashboardId(created.id);
+    setSelected(null);
     pushDraft(next).catch((err) => setError(err.message));
   }
 
+  function duplicateDashboard(dashboardId = dashboard?.id) {
+    const sourceDashboard = dashboards.find((item) => item.id === dashboardId);
+    if (!sourceDashboard) return;
+    const next = clone(draft);
+    const sourceIndex = next.dashboards.findIndex((item) => item.id === sourceDashboard.id);
+    const copy = clone(next.dashboards[sourceIndex]);
+    copy.id = makeDashboardId();
+    copy.name = `${copy.name || "Dashboard"} Copy`;
+    next.dashboards.splice(sourceIndex + 1, 0, copy);
+    setSelectedDashboardId(copy.id);
+    setSelected(copy.gauges.length > 0 ? 0 : null);
+    pushDraft(next).catch((err) => setError(err.message));
+  }
+
+  function deleteDashboard(dashboardId) {
+    if (dashboards.length <= 1) return;
+    const next = clone(draft);
+    const deleteIndex = next.dashboards.findIndex((item) => item.id === dashboardId);
+    if (deleteIndex < 0) return;
+    next.dashboards.splice(deleteIndex, 1);
+    if (next.active_dashboard_id === dashboardId) {
+      next.active_dashboard_id = next.dashboards[Math.max(0, deleteIndex - 1)].id;
+    }
+    const nextSelected = selectedDashboardId === dashboardId ? next.dashboards[Math.max(0, deleteIndex - 1)] : dashboard;
+    setSelectedDashboardId(nextSelected.id);
+    setSelected(nextSelected.gauges.length > 0 ? 0 : null);
+    pushDraft(next).catch((err) => setError(err.message));
+  }
+
+  async function activateDashboard(dashboardId = dashboard?.id) {
+    if (!dashboardId) return;
+    const payload = await api(`/api/activate/${encodeURIComponent(dashboardId)}`, { method: "POST" }).then((r) => r.json());
+    applyConfigPayload(payload);
+  }
+
+  function updateGauge(index, patch) {
+    if (!dashboard || index == null) return;
+    updateSelectedDashboard((item) => {
+      item.gauges[index] = { ...item.gauges[index], ...patch };
+      return item;
+    });
+  }
+
   function addGauge(type) {
+    if (!dashboard) return;
     const fields = gaugeTypes[type].fields;
     const nextGauge = { type };
     fields.forEach((field) => {
       nextGauge[field.name] = clone(field.default);
     });
-    nextGauge.box_xywh = [20 + draft.gauges.length * 12, 20 + draft.gauges.length * 12, 120, 80];
-    const next = clone(draft);
-    next.gauges.push(nextGauge);
-    setSelected(next.gauges.length - 1);
-    pushDraft(next).catch((err) => setError(err.message));
+    nextGauge.box_xywh = [20 + dashboard.gauges.length * 12, 20 + dashboard.gauges.length * 12, 120, 80];
+    updateSelectedDashboard((item) => {
+      item.gauges.push(nextGauge);
+      setSelected(item.gauges.length - 1);
+      return item;
+    });
   }
 
   function duplicateGauge() {
     if (!gauge) return;
-    const next = clone(draft);
-    const copy = clone(next.gauges[selected]);
-    copy.box_xywh = [copy.box_xywh[0] + 12, copy.box_xywh[1] + 12, copy.box_xywh[2], copy.box_xywh[3]];
-    next.gauges.splice(selected + 1, 0, copy);
-    setSelected(selected + 1);
-    pushDraft(next).catch((err) => setError(err.message));
+    updateSelectedDashboard((item) => {
+      const copy = clone(item.gauges[selected]);
+      copy.box_xywh = [copy.box_xywh[0] + 12, copy.box_xywh[1] + 12, copy.box_xywh[2], copy.box_xywh[3]];
+      item.gauges.splice(selected + 1, 0, copy);
+      setSelected(selected + 1);
+      return item;
+    });
   }
 
   function deleteGauge() {
     if (!gauge) return;
-    const next = clone(draft);
-    next.gauges.splice(selected, 1);
-    setSelected(next.gauges.length > 0 ? Math.max(0, selected - 1) : null);
-    pushDraft(next).catch((err) => setError(err.message));
+    updateSelectedDashboard((item) => {
+      item.gauges.splice(selected, 1);
+      setSelected(item.gauges.length > 0 ? Math.max(0, selected - 1) : null);
+      return item;
+    });
   }
 
   async function save() {
     const payload = await api("/api/save", { method: "POST" }).then((r) => r.json());
-    setSaved(payload.saved);
-    setDraft(payload.draft);
-    setWarnings(payload.validation.warnings);
-    setPreviewNonce(Date.now());
+    applyConfigPayload(payload);
   }
 
   async function importFile(file) {
@@ -135,7 +244,9 @@ function App() {
     const parsed = JSON.parse(text);
     const payload = await api("/api/import", { method: "POST", body: JSON.stringify(parsed) }).then((r) => r.json());
     setDraft(payload.draft);
-    setWarnings(payload.validation.warnings);
+    setActiveDashboardId(payload.active_dashboard_id);
+    setSelectedDashboardId(payload.selected_dashboard_id);
+    setWarningsByDashboard(payload.validation.dashboards ?? {});
     setSelected(0);
     setPreviewNonce(Date.now());
   }
@@ -183,7 +294,7 @@ function App() {
   function beginPointer(event, index, mode) {
     event.preventDefault();
     event.stopPropagation();
-    const startRect = clone(draft.gauges[index].box_xywh);
+    const startRect = clone(dashboard.gauges[index].box_xywh);
     const scale = canvasRef.current ? canvasRef.current.clientWidth / CANVAS.width : 1;
     setSelected(index);
     setInteraction({ index, mode, startX: event.clientX, startY: event.clientY, rect: startRect, scale });
@@ -194,7 +305,7 @@ function App() {
   }
 
   useEffect(() => {
-    if (!interaction) return;
+    if (!interaction || !dashboard) return;
     function onMove(event) {
       const dx = (event.clientX - interaction.startX) / interaction.scale;
       const dy = (event.clientY - interaction.startY) / interaction.scale;
@@ -214,7 +325,8 @@ function App() {
               h,
             ];
       const next = clone(draft);
-      next.gauges[interaction.index].box_xywh = box;
+      const dashboardIndex = next.dashboards.findIndex((item) => item.id === dashboard.id);
+      next.dashboards[dashboardIndex].gauges[interaction.index].box_xywh = box;
       setDraft(next);
     }
     function onUp() {
@@ -224,7 +336,7 @@ function App() {
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp, { once: true });
     return () => window.removeEventListener("pointermove", onMove);
-  }, [interaction]);
+  }, [interaction, dashboard, draft]);
 
   useEffect(() => {
     function onKeyDown(event) {
@@ -241,7 +353,7 @@ function App() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [gauge, selected, draft]);
 
-  if (!draft) return <main className="loading">Loading editor…</main>;
+  if (!draft || !dashboard) return <main className="loading">Loading editor...</main>;
 
   return (
     <main className="shell">
@@ -268,9 +380,9 @@ function App() {
           ))}
         </div>
         <nav>
-          <button onClick={save}>Save</button>
-          <button onClick={() => importRef.current.click()}>Import</button>
-          <button onClick={exportDraft}>Export</button>
+          <button onClick={save}><FaRegSave aria-hidden="true" /> Save</button>
+          <button onClick={() => importRef.current.click()}><FaFileImport aria-hidden="true" /> Import</button>
+          <button onClick={exportDraft}><FaFileExport aria-hidden="true" /> Export</button>
           <input ref={importRef} type="file" accept="application/json" hidden onChange={(e) => importFile(e.target.files[0])} />
         </nav>
       </header>
@@ -287,7 +399,7 @@ function App() {
             </select>
           </div>
           <div className="gauge-list">
-            {draft.gauges.map((item, index) => (
+            {dashboard.gauges.map((item, index) => (
               <button key={`${item.type}-${index}`} className={index === selected ? "selected" : ""} onClick={() => setSelected(index)}>
                 {index + 1}. {item.label || item.type}
               </button>
@@ -296,10 +408,87 @@ function App() {
         </aside>
 
         <div className="preview-column">
+          <div className="dashboard-strip" aria-label="Dashboards">
+            {dashboards.map((item) => (
+              <div
+                key={item.id}
+                role="button"
+                tabIndex="0"
+                className={`dashboard-tile ${item.id === dashboard.id ? "selected" : ""} ${item.id === activeDashboardId ? "active" : ""}`}
+                onClick={() => selectDashboard(item.id).catch((err) => setError(err.message))}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    selectDashboard(item.id).catch((err) => setError(err.message));
+                  }
+                }}
+              >
+                <input
+                  value={item.name}
+                  onClick={(event) => event.stopPropagation()}
+                  onChange={(event) => renameDashboard(item.id, event.target.value)}
+                  onBlur={commitDashboardRename}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") event.currentTarget.blur();
+                  }}
+                />
+                <span className="thumbnail-wrap">
+                  <img src={`/api/preview.png?dashboard_id=${encodeURIComponent(item.id)}&t=${previewNonce}`} width="160" height="96" />
+                  {item.id === activeDashboardId && <span className="active-badge">Active</span>}
+                </span>
+                <span className="dashboard-actions">
+                  {item.id === activeDashboardId ? (
+                    <span className="active-label">Active</span>
+                  ) : (
+                    <button
+                      className="set-active-button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        activateDashboard(item.id).catch((err) => setError(err.message));
+                      }}
+                    >
+                      Set active
+                    </button>
+                  )}
+                  <button
+                    className="icon-button"
+                    title="Duplicate dashboard"
+                    aria-label={`Duplicate ${item.name}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      duplicateDashboard(item.id);
+                    }}
+                  >
+                    <FaRegCopy aria-hidden="true" />
+                  </button>
+                  <button
+                    className="icon-button danger"
+                    title="Delete dashboard"
+                    aria-label={`Delete ${item.name}`}
+                    disabled={dashboards.length <= 1 || item.id === activeDashboardId}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      deleteDashboard(item.id);
+                    }}
+                  >
+                    <FaRegTrashAlt aria-hidden="true" />
+                  </button>
+                </span>
+              </div>
+            ))}
+            <button className="dashboard-tile add-dashboard" onClick={addDashboard}>
+              <span className="plus">+</span>
+            </button>
+          </div>
+
           <div className="preview-toolbar">
             <div className="row actions">
-              <button onClick={duplicateGauge} disabled={!gauge}>Duplicate</button>
-              <button onClick={deleteGauge} disabled={!gauge}>Delete</button>
+              <button className="icon-button toolbar-icon" onClick={duplicateGauge} disabled={!gauge} title="Duplicate gauge" aria-label="Duplicate gauge">
+                <FaRegCopy aria-hidden="true" />
+              </button>
+              <button className="icon-button toolbar-icon danger" onClick={deleteGauge} disabled={!gauge} title="Delete gauge" aria-label="Delete gauge">
+                <FaRegTrashAlt aria-hidden="true" />
+              </button>
             </div>
           </div>
           <div
@@ -311,8 +500,8 @@ function App() {
             }}
             onPointerDown={() => setSelected(null)}
           >
-            <img src={`/api/preview.png?t=${previewNonce}`} width="800" height="480" />
-            {draft.gauges.map((item, index) => {
+            <img src={`/api/preview.png?dashboard_id=${encodeURIComponent(dashboard.id)}&t=${previewNonce}`} width="800" height="480" />
+            {dashboard.gauges.map((item, index) => {
               const [x, y, w, h] = item.box_xywh;
               return (
                 <div
@@ -378,7 +567,6 @@ function App() {
                 />
               </label>
             ))}
-
         </aside>
       </section>
     </main>
@@ -389,7 +577,7 @@ function FieldInput({ field, value, signals, colors, onChange }) {
   if (field.kind === "signal") {
     return (
       <select value={value} onChange={(event) => onChange(event.target.value)}>
-        <option value="">—</option>
+        <option value="">-</option>
         {signals.map((signal) => <option key={signal}>{signal}</option>)}
       </select>
     );
@@ -427,6 +615,3 @@ function FieldInput({ field, value, signals, colors, onChange }) {
 }
 
 createRoot(document.getElementById("root")).render(<App />);
-
-
-

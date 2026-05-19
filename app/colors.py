@@ -5,8 +5,8 @@ import re
 import string
 
 PRUSSIAN_BLUE = (16, 35, 92)
-TERPS_RED = (224, 58, 62)
-TERPS_GOLD = (255, 212, 59)
+UMD_RED = (224, 58, 62)
+UMD_GOLD = (255, 212, 59)
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -17,6 +17,9 @@ GREEN = (0, 200, 0)
 YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
 ORANGE = (255, 165, 0)
+BLUE = (0, 0, 255)
+
+SKY_BLUE = (0, 170, 255)
 
 
 # Type alias for color tuples

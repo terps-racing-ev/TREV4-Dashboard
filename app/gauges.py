@@ -3,6 +3,7 @@
 from typing import Any, Optional, Tuple, Union
 import pygame
 import math
+import colorsys
 from pathlib import Path
 
 from .colors import *
@@ -44,6 +45,8 @@ FONT_HEIGHT_RATIO = 1.3
 FONT_WIDTH_RATIO = 0.7
 
 LABEL_PADDING = 8
+TEXT_STROKE_WIDTH = 1
+TEXT_STROKE_COLOR = BLACK
 STALE_AFTER_SECONDS = 5.0
 
 def _dim_to_font_size(w: int, h: int, text: str) -> int:
@@ -104,10 +107,41 @@ def _interpolate_color(
     ratio: float,
 ) -> Tuple[int, int, int]:
     clamped_ratio = max(0.0, min(1.0, ratio))
+
+    start_rgb = tuple(component / 255 for component in min_color[:3])
+    end_rgb = tuple(component / 255 for component in max_color[:3])
+    start_h, start_s, start_v = colorsys.rgb_to_hsv(*start_rgb)
+    end_h, end_s, end_v = colorsys.rgb_to_hsv(*end_rgb)
+
+    if start_s == 0:
+        start_h = end_h
+    elif end_s == 0:
+        end_h = start_h
+
+    hue_delta = (end_h - start_h + 0.5) % 1.0 - 0.5
+    hue = (start_h + hue_delta * clamped_ratio) % 1.0
+    saturation = start_s + (end_s - start_s) * clamped_ratio
+    value = start_v + (end_v - start_v) * clamped_ratio
+
     return tuple(
-        round(start + (end - start) * clamped_ratio)
-        for start, end in zip(min_color, max_color)
+        round(component * 255)
+        for component in colorsys.hsv_to_rgb(hue, saturation, value)
     )
+
+
+def _blit_text_with_stroke(
+    surface: pygame.Surface,
+    font: pygame.font.Font,
+    text: str,
+    color: Tuple[int, int, int],
+    rect: pygame.Rect,
+) -> None:
+    stroke_text = font.render(text, True, TEXT_STROKE_COLOR)
+    for dx in range(-TEXT_STROKE_WIDTH, TEXT_STROKE_WIDTH + 1):
+        for dy in range(-TEXT_STROKE_WIDTH, TEXT_STROKE_WIDTH + 1):
+            if dx != 0 or dy != 0:
+                surface.blit(stroke_text, rect.move(dx, dy))
+    surface.blit(font.render(text, True, color), rect)
 
 
 class Gauge:
@@ -121,6 +155,12 @@ class Gauge:
         box_color: Tuple[int, int, int] | None = None,
         border_color: Tuple[int, int, int] | None = WHITE,
         text_color: Tuple[int, int, int] = WHITE,
+        min_color: Tuple[int, int, int] = GREEN,
+        max_color: Tuple[int, int, int] = RED,
+        gradient_text: bool = False,
+        gradient_box: bool = False,
+        gradient_border: bool = False,
+        gradient_fill: bool = False,
         shared_data: LatestValuesTable | None = None,
         default_value: int | float = 0,
     ) -> None:
@@ -132,11 +172,32 @@ class Gauge:
         self.box_color = box_color
         self.border_color = border_color
         self.text_color = text_color
+        self.min_color = min_color
+        self.max_color = max_color
+        self.gradient_text = gradient_text
+        self.gradient_box = gradient_box
+        self.gradient_border = gradient_border
+        self.gradient_fill = gradient_fill
         self.shared_data = shared_data
         self.default_value = default_value
 
         self.x, self.y, self.w, self.h = box_xywh
         self.cx, self.cy = self.x + self.w // 2, self.y + self.h // 2
+
+    def _ratio(self, value: int | float) -> float:
+        if self.max_val == self.min_val:
+            return 0.0
+        return (value - self.min_val) / (self.max_val - self.min_val)
+
+    def _clamped_ratio(self, value: int | float) -> float:
+        clamped = max(self.min_val, min(value, self.max_val))
+        return max(0.0, min(1.0, self._ratio(clamped)))
+
+    def _gradient_color(self, value: int | float) -> Tuple[int, int, int]:
+        return _interpolate_color(self.min_color, self.max_color, self._clamped_ratio(value))
+
+    def _mapped_color(self, base_color: Tuple[int, int, int] | None, enabled: bool, value: int | float) -> Tuple[int, int, int] | None:
+        return self._gradient_color(value) if enabled else base_color
 
     def _template_str(self) -> str:
         pos_template = _normalize_chars(self.max_val, self.min_val, self.max_val, self.decimal_places)
@@ -188,13 +249,19 @@ class Gauge:
             return self._make_value_font(True, value)
         return self.data_font
 
-    def _fill_background(self, surface: pygame.Surface) -> None:
-        if self.box_color is not None:
-            pygame.draw.rect(surface, self.box_color, (self.x, self.y, self.w, self.h))
+    def _fill_background(self, surface: pygame.Surface, value: int | float | None = None) -> None:
+        box_color = self.box_color
+        if value is not None:
+            box_color = self._mapped_color(box_color, self.gradient_box, value)
+        if box_color is not None:
+            pygame.draw.rect(surface, box_color, (self.x, self.y, self.w, self.h))
 
-    def _draw_border(self, surface: pygame.Surface) -> None:
-        if self.border_color is not None:
-            pygame.draw.rect(surface, self.border_color, (self.x, self.y, self.w, self.h), BORDER_WIDTH)
+    def _draw_border(self, surface: pygame.Surface, value: int | float | None = None) -> None:
+        border_color = self.border_color
+        if value is not None:
+            border_color = self._mapped_color(border_color, self.gradient_border, value)
+        if border_color is not None:
+            pygame.draw.rect(surface, border_color, (self.x, self.y, self.w, self.h), BORDER_WIDTH)
 
 
 class SimpleGauge(Gauge):
@@ -209,6 +276,12 @@ class SimpleGauge(Gauge):
         box_color: Tuple[int, int, int] | None = None,
         border_color: Tuple[int, int, int] | None = WHITE,
         text_color: Tuple[int, int, int] = WHITE,
+        min_color: Tuple[int, int, int] = GREEN,
+        max_color: Tuple[int, int, int] = RED,
+        gradient_text: bool = False,
+        gradient_box: bool = False,
+        gradient_border: bool = False,
+        show_value: bool = True,
         shared_data: LatestValuesTable | None = None,
     ) -> None:
         super().__init__(
@@ -220,10 +293,16 @@ class SimpleGauge(Gauge):
             box_color=box_color,
             border_color=border_color,
             text_color=text_color,
+            min_color=min_color,
+            max_color=max_color,
+            gradient_text=gradient_text,
+            gradient_box=gradient_box,
+            gradient_border=gradient_border,
             shared_data=shared_data,
         )
         self.label = label
-        self.data_font = self._make_value_font(True)
+        self.show_value = show_value
+        self.data_font = self._make_value_font(show_value)
 
     def update(self, surface: pygame.Surface) -> pygame.Surface:
         value = self._current_value()
@@ -231,28 +310,34 @@ class SimpleGauge(Gauge):
         is_stale = self._signal_is_stale()
 
         # Background + border
-        self._fill_background(surface)
-        self._draw_border(surface)
+        self._fill_background(surface, value)
+        self._draw_border(surface, value)
+        render_text_color = self._mapped_color(self.text_color, self.gradient_text, value)
 
         # Label (static font size)
-        label_text = _get_small_font().render(self.label, True, self.text_color)
-        label_rect = label_text.get_rect(topleft=(self.x + LABEL_PADDING, self.y + LABEL_PADDING))
-        surface.blit(label_text, label_rect)
-
-        # Value (pre-sized font, centered below label accounting for its height)
-        value_str = self._value_text(display_value, stale=is_stale)
-        available_height = self.h - label_rect.height - 2 * LABEL_PADDING
-        # Recalculate font size based on available height to prevent overflow
-        if isinstance(display_value, str):
-            value_font = self._make_value_font(True, value_str)
+        label_font = _get_small_font()
+        label_text = label_font.render(self.label, True, render_text_color)
+        if self.show_value:
+            label_rect = label_text.get_rect(topleft=(self.x + LABEL_PADDING, self.y + LABEL_PADDING))
         else:
-            template = value_str
-            size = int(min(self.w / len(template) / FONT_WIDTH_RATIO, available_height / FONT_HEIGHT_RATIO))
-            value_font = pygame.font.Font(DEFAULT_FONT, max(8, size))
-        value_text = value_font.render(value_str, True, self.text_color)
-        center_y = self.y + label_rect.height + LABEL_PADDING + available_height // 2
-        value_rect = value_text.get_rect(center=(self.cx, center_y))
-        surface.blit(value_text, value_rect)
+            label_rect = label_text.get_rect(center=(self.cx, self.cy))
+        _blit_text_with_stroke(surface, label_font, self.label, render_text_color, label_rect)
+
+        if self.show_value and self.data_font is not None:
+            # Value (pre-sized font, centered below label accounting for its height)
+            value_str = self._value_text(display_value, stale=is_stale)
+            available_height = self.h - label_rect.height - 2 * LABEL_PADDING
+            # Recalculate font size based on available height to prevent overflow
+            if isinstance(display_value, str):
+                value_font = self._make_value_font(True, value_str)
+            else:
+                template = value_str
+                size = int(min(self.w / len(template) / FONT_WIDTH_RATIO, available_height / FONT_HEIGHT_RATIO))
+                value_font = pygame.font.Font(DEFAULT_FONT, max(8, size))
+            value_text = value_font.render(value_str, True, render_text_color)
+            center_y = self.y + label_rect.height + LABEL_PADDING + available_height // 2
+            value_rect = value_text.get_rect(center=(self.cx, center_y))
+            _blit_text_with_stroke(surface, value_font, value_str, render_text_color, value_rect)
 
         return surface
 
@@ -270,6 +355,12 @@ class UnsignedLinearGauge(Gauge):
         border_color: Tuple[int, int, int] | None = WHITE,
         fill_color: Tuple[int, int, int] = GREEN,
         text_color: Tuple[int, int, int] = WHITE,
+        min_color: Tuple[int, int, int] = GREEN,
+        max_color: Tuple[int, int, int] = RED,
+        gradient_text: bool = False,
+        gradient_box: bool = False,
+        gradient_border: bool = False,
+        gradient_fill: bool = False,
         vertical: bool = True,
         show_value: bool = True,
         shared_data: LatestValuesTable | None = None,
@@ -283,6 +374,12 @@ class UnsignedLinearGauge(Gauge):
             box_color=box_color,
             border_color=border_color,
             text_color=text_color,
+            min_color=min_color,
+            max_color=max_color,
+            gradient_text=gradient_text,
+            gradient_box=gradient_box,
+            gradient_border=gradient_border,
+            gradient_fill=gradient_fill,
             shared_data=shared_data,
         )
         self.label = label
@@ -297,42 +394,44 @@ class UnsignedLinearGauge(Gauge):
         is_stale = self._signal_is_stale()
 
         # Compute ratio
-        clamped = max(self.min_val, min(value, self.max_val))
-        ratio = 0.0 if self.max_val == self.min_val else (clamped - self.min_val) / (self.max_val - self.min_val)
+        ratio = self._clamped_ratio(value)
+        fill_color = self._mapped_color(self.fill_color, self.gradient_fill, value)
+        render_text_color = self._mapped_color(self.text_color, self.gradient_text, value)
 
         # Draw background fill
-        self._fill_background(surface)
+        self._fill_background(surface, value)
 
         # Draw fill next
         if self.vertical:
             fill_height = int(self.h * ratio)
-            if fill_height > 0:
-                pygame.draw.rect(surface, self.fill_color, (self.x, self.y + self.h - fill_height, self.w, fill_height))
+            if fill_height > 0 and fill_color is not None:
+                pygame.draw.rect(surface, fill_color, (self.x, self.y + self.h - fill_height, self.w, fill_height))
         else:
             fill_width = int(self.w * ratio)
-            if fill_width > 0:
-                pygame.draw.rect(surface, self.fill_color, (self.x, self.y, fill_width, self.h))
+            if fill_width > 0 and fill_color is not None:
+                pygame.draw.rect(surface, fill_color, (self.x, self.y, fill_width, self.h))
 
         # Draw the border on top
-        self._draw_border(surface)
+        self._draw_border(surface, value)
 
         # Label (static font size)
-        label_text = _get_small_font().render(self.label, True, self.text_color)
-        label_rect = label_text.get_rect(midbottom=(self.cx, self.y + self.h + LABEL_PADDING))
-        surface.blit(label_text, label_rect)
+        label_font = _get_small_font()
+        label_text = label_font.render(self.label, True, render_text_color)
+        label_rect = label_text.get_rect(midtop=(self.cx, self.y + self.h + LABEL_PADDING))
+        _blit_text_with_stroke(surface, label_font, self.label, render_text_color, label_rect)
 
         # Optional value text (accounting for available space)
         if self.show_value and self.data_font is not None:
             value_str = self._value_text(display_value, stale=is_stale)
             value_font = self._make_display_font(display_value)
-            value_text = value_font.render(value_str, True, self.text_color)
+            value_text = value_font.render(value_str, True, render_text_color)
             if self.vertical:
                 # Top center for vertical (account for label padding)
                 value_rect = value_text.get_rect(midtop=(self.cx, self.y + LABEL_PADDING))
             else:
                 # Right middle for horizontal (account for available width)
                 value_rect = value_text.get_rect(midright=(self.x + self.w - LABEL_PADDING, self.cy))
-            surface.blit(value_text, value_rect)
+            _blit_text_with_stroke(surface, value_font, value_str, render_text_color, value_rect)
 
         return surface
 
@@ -351,6 +450,12 @@ class SignedLinearGauge(Gauge):
         pos_color: Tuple[int, int, int] = GREEN,
         neg_color: Tuple[int, int, int] = RED,
         text_color: Tuple[int, int, int] = WHITE,
+        min_color: Tuple[int, int, int] = GREEN,
+        max_color: Tuple[int, int, int] = RED,
+        gradient_text: bool = False,
+        gradient_box: bool = False,
+        gradient_border: bool = False,
+        gradient_fill: bool = False,
         vertical: bool = True,
         show_value: bool = True,
         shared_data: LatestValuesTable | None = None,
@@ -364,6 +469,12 @@ class SignedLinearGauge(Gauge):
             box_color=box_color,
             border_color=border_color,
             text_color=text_color,
+            min_color=min_color,
+            max_color=max_color,
+            gradient_text=gradient_text,
+            gradient_box=gradient_box,
+            gradient_border=gradient_border,
+            gradient_fill=gradient_fill,
             shared_data=shared_data,
         )
         self.label = label
@@ -392,149 +503,63 @@ class SignedLinearGauge(Gauge):
         clamped = max(self.min_val, min(value, self.max_val))
         zero_ratio = self._zero_ratio()
         value_ratio = self._ratio(clamped)
+        pos_color = self._mapped_color(self.pos_color, self.gradient_fill, value)
+        neg_color = self._mapped_color(self.neg_color, self.gradient_fill, value)
+        render_text_color = self._mapped_color(self.text_color, self.gradient_text, value)
 
         # Background fill if requested
-        self._fill_background(surface)
+        self._fill_background(surface, value)
 
         # Draw fill from zero toward value
         if self.vertical:
             zero_y = self.y + self.h - int(self.h * zero_ratio)
             val_y = self.y + self.h - int(self.h * value_ratio)
-            if value_ratio > zero_ratio:
+            if value_ratio > zero_ratio and pos_color is not None:
                 # Positive fill upward from zero
                 top = min(val_y, zero_y)
                 bottom = max(val_y, zero_y)
-                pygame.draw.rect(surface, self.pos_color, (self.x, top, self.w, bottom - top))
-            elif value_ratio < zero_ratio:
+                pygame.draw.rect(surface, pos_color, (self.x, top, self.w, bottom - top))
+            elif value_ratio < zero_ratio and neg_color is not None:
                 # Negative fill downward from zero
                 top = min(val_y, zero_y)
                 bottom = max(val_y, zero_y)
-                pygame.draw.rect(surface, self.neg_color, (self.x, top, self.w, bottom - top))
+                pygame.draw.rect(surface, neg_color, (self.x, top, self.w, bottom - top))
             # Zero marker line
             # todo idk why we need -1, this whole class is fucked
             pygame.draw.line(surface, WHITE, (self.x, zero_y), (self.x + self.w - 1, zero_y), 2)
         else:
             zero_x = self.x + int(self.w * zero_ratio)
             val_x = self.x + int(self.w * value_ratio)
-            if value_ratio > zero_ratio:
+            if value_ratio > zero_ratio and pos_color is not None:
                 left = min(val_x, zero_x)
                 right = max(val_x, zero_x)
-                pygame.draw.rect(surface, self.pos_color, (left, self.y, right - left, self.h))
-            elif value_ratio < zero_ratio:
+                pygame.draw.rect(surface, pos_color, (left, self.y, right - left, self.h))
+            elif value_ratio < zero_ratio and neg_color is not None:
                 left = min(val_x, zero_x)
                 right = max(val_x, zero_x)
-                pygame.draw.rect(surface, self.neg_color, (left, self.y, right - left, self.h))
+                pygame.draw.rect(surface, neg_color, (left, self.y, right - left, self.h))
             # Zero marker line
             pygame.draw.line(surface, WHITE, (zero_x, self.y), (zero_x, self.y + self.h), 2)
 
-        self._draw_border(surface)
+        self._draw_border(surface, value)
 
         # Label
-        label_text = _get_small_font().render(self.label, True, self.text_color)
+        label_font = _get_small_font()
+        label_text = label_font.render(self.label, True, render_text_color)
         label_rect = label_text.get_rect(midtop=(self.cx, self.y + self.h + LABEL_PADDING))
-        surface.blit(label_text, label_rect)
+        _blit_text_with_stroke(surface, label_font, self.label, render_text_color, label_rect)
 
         # Value (accounting for available vertical space)
         if self.show_value and self.data_font is not None:
             value_str = self._value_text(display_value, stale=is_stale)
             value_font = self._make_display_font(display_value)
-            value_text = value_font.render(value_str, True, self.text_color)
+            value_text = value_font.render(value_str, True, render_text_color)
             if self.vertical:
                 # Left middle for vertical, vertically centered in box (so text outside the box)
                 value_rect = value_text.get_rect(midright=(self.x - LABEL_PADDING, self.cy))
             else:
                 # Right middle for horizontal, vertically centered in box
                 value_rect = value_text.get_rect(midright=(self.x + self.w - LABEL_PADDING, self.cy))
-            surface.blit(value_text, value_rect)
+            _blit_text_with_stroke(surface, value_font, value_str, render_text_color, value_rect)
 
         return surface
-
-
-class GradientGauge(Gauge):
-    def __init__(
-        self,
-        signal: str,
-        label: str,
-        min_val: int | float,
-        max_val: int | float,
-        box_xywh: Tuple[int, int, int, int],
-        decimal_places: int = 0,
-        box_color: Tuple[int, int, int] | None = None,
-        border_color: Tuple[int, int, int] | None = WHITE,
-        text_color: Tuple[int, int, int] = WHITE,
-        min_color: Tuple[int, int, int] = GREEN,
-        max_color: Tuple[int, int, int] = RED,
-        gradient_text: bool = True,
-        gradient_box: bool = False,
-        gradient_border: bool = False,
-        show_value: bool = True,
-        shared_data: LatestValuesTable | None = None,
-    ) -> None:
-        super().__init__(
-            signal=signal,
-            min_val=min_val,
-            max_val=max_val,
-            box_xywh=box_xywh,
-            decimal_places=decimal_places,
-            box_color=box_color,
-            border_color=border_color,
-            text_color=text_color,
-            shared_data=shared_data,
-        )
-        self.label = label
-        self.min_color = min_color
-        self.max_color = max_color
-        self.gradient_text = gradient_text
-        self.gradient_box = gradient_box
-        self.gradient_border = gradient_border
-        self.show_value = show_value
-        self.data_font = self._make_value_font(show_value)
-
-    def _gradient_color(self, value: int | float) -> Tuple[int, int, int]:
-        if self.max_val == self.min_val:
-            ratio = 0.0
-        else:
-            clamped = max(self.min_val, min(value, self.max_val))
-            ratio = (clamped - self.min_val) / (self.max_val - self.min_val)
-        return _interpolate_color(self.min_color, self.max_color, ratio)
-
-    def update(self, surface: pygame.Surface) -> pygame.Surface:
-        value = self._current_value()
-        display_value = self._current_display_value()
-        is_stale = self._signal_is_stale()
-        mapped_color = self._gradient_color(value)
-
-        if self.gradient_box:
-            pygame.draw.rect(surface, mapped_color, (self.x, self.y, self.w, self.h))
-        else:
-            self._fill_background(surface)
-
-        border_color = mapped_color if self.gradient_border else self.border_color
-        if border_color is not None:
-            pygame.draw.rect(surface, border_color, (self.x, self.y, self.w, self.h), BORDER_WIDTH)
-
-        render_text_color = mapped_color if self.gradient_text else self.text_color
-        label_text = _get_small_font().render(self.label, True, render_text_color)
-        if self.show_value:
-            label_rect = label_text.get_rect(topleft=(self.x + LABEL_PADDING, self.y + LABEL_PADDING))
-        else:
-            label_rect = label_text.get_rect(center=(self.cx, self.cy))
-        surface.blit(label_text, label_rect)
-
-        if self.show_value and self.data_font is not None:
-            value_str = self._value_text(display_value, stale=is_stale)
-            available_height = self.h - label_rect.height - 2 * LABEL_PADDING
-            if isinstance(display_value, str):
-                value_font = self._make_value_font(True, value_str)
-            else:
-                template = value_str
-                size = int(min(self.w / len(template) / FONT_WIDTH_RATIO, available_height / FONT_HEIGHT_RATIO))
-                value_font = pygame.font.Font(DEFAULT_FONT, max(8, size))
-            value_text = value_font.render(value_str, True, render_text_color)
-            center_y = self.y + label_rect.height + LABEL_PADDING + available_height // 2
-            value_rect = value_text.get_rect(center=(self.cx, center_y))
-            surface.blit(value_text, value_rect)
-
-        return surface
-
-

@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .colors import named_colors, parse_color
-from .gauges import Gauge, GradientGauge, SignedLinearGauge, SimpleGauge, UnsignedLinearGauge
 from .shared_data import LatestValuesTable
 
 DISPLAY_SIZE = (800, 480)
@@ -26,7 +25,7 @@ class FieldSpec:
 @dataclass(frozen=True)
 class GaugeSpec:
     type_name: str
-    cls: type[Gauge]
+    cls: str
     fields: tuple[FieldSpec, ...]
 
     @property
@@ -46,43 +45,56 @@ COMMON_FIELDS = (
     FieldSpec("text_color", "Text Color", "color", "WHITE"),
 )
 
+GRADIENT_FIELDS = (
+    FieldSpec("min_color", "Min Color", "color", "GREEN"),
+    FieldSpec("max_color", "Max Color", "color", "RED"),
+    FieldSpec("gradient_text", "Gradient Text", "bool", False),
+    FieldSpec("gradient_box", "Gradient Box", "bool", False),
+    FieldSpec("gradient_border", "Gradient Border", "bool", False),
+)
+
 GAUGE_SPECS: dict[str, GaugeSpec] = {
-    "SimpleGauge": GaugeSpec("SimpleGauge", SimpleGauge, COMMON_FIELDS),
-    "GradientGauge": GaugeSpec(
-        "GradientGauge",
-        GradientGauge,
+    "SimpleGauge": GaugeSpec(
+        "SimpleGauge",
+        "SimpleGauge",
         COMMON_FIELDS
+        + GRADIENT_FIELDS
         + (
-            FieldSpec("min_color", "Min Color", "color", "GREEN"),
-            FieldSpec("max_color", "Max Color", "color", "RED"),
-            FieldSpec("gradient_text", "Gradient Text", "bool", True),
-            FieldSpec("gradient_box", "Gradient Box", "bool", False),
-            FieldSpec("gradient_border", "Gradient Border", "bool", False),
             FieldSpec("show_value", "Show Value", "bool", True),
         ),
     ),
     "UnsignedLinearGauge": GaugeSpec(
         "UnsignedLinearGauge",
-        UnsignedLinearGauge,
+        "UnsignedLinearGauge",
         COMMON_FIELDS
+        + GRADIENT_FIELDS
         + (
             FieldSpec("fill_color", "Fill", "color", "GREEN"),
+            FieldSpec("gradient_fill", "Gradient Fill", "bool", False),
             FieldSpec("vertical", "Vertical", "bool", True),
             FieldSpec("show_value", "Show Value", "bool", True),
         ),
     ),
     "SignedLinearGauge": GaugeSpec(
         "SignedLinearGauge",
-        SignedLinearGauge,
+        "SignedLinearGauge",
         COMMON_FIELDS
+        + GRADIENT_FIELDS
         + (
             FieldSpec("pos_color", "Positive", "color", "GREEN"),
             FieldSpec("neg_color", "Negative", "color", "RED"),
+            FieldSpec("gradient_fill", "Gradient Fill", "bool", False),
             FieldSpec("vertical", "Vertical", "bool", True),
             FieldSpec("show_value", "Show Value", "bool", True),
         ),
     ),
 }
+
+
+def _resolve_gauge_class(class_name: str) -> Callable[..., Any]:
+    from . import gauges
+
+    return getattr(gauges, class_name)
 
 
 def _coerce_color(value: Any, default: ColorValue) -> ColorValue:
@@ -128,6 +140,68 @@ def normalize_gauge_config(raw: dict[str, Any]) -> dict[str, Any]:
     return normalized
 
 
+def _normalize_display_config(raw: dict[str, Any] | None) -> dict[str, Any]:
+    display = raw or {}
+    return {
+        "width": DISPLAY_SIZE[0],
+        "height": DISPLAY_SIZE[1],
+        "bg_color": list(parse_color(display.get("bg_color", [0, 0, 0])) or (0, 0, 0)),
+    }
+
+
+def normalize_dashboard_config(raw: dict[str, Any]) -> dict[str, Any]:
+    dashboard_id = str(raw.get("id") or "").strip()
+    if not dashboard_id:
+        raise ValueError("Dashboard id is required")
+    name = str(raw.get("name") or "").strip()
+    if not name:
+        raise ValueError("Dashboard name is required")
+    return {
+        "id": dashboard_id,
+        "name": name,
+        "display": _normalize_display_config(raw.get("display")),
+        "gauges": [normalize_gauge_config(gauge) for gauge in raw.get("gauges", [])],
+    }
+
+
+def create_default_dashboard_config(
+    *,
+    dashboard_id: str,
+    name: str,
+) -> dict[str, Any]:
+    return normalize_dashboard_config({"id": dashboard_id, "name": name, "display": {}, "gauges": []})
+
+
+def normalize_dashboard_library_config(raw: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(raw.get("dashboards"), list) or not raw["dashboards"]:
+        raise ValueError("Dashboard config must contain a non-empty dashboards list")
+    dashboards = [normalize_dashboard_config(dashboard) for dashboard in raw["dashboards"]]
+
+    seen_ids: set[str] = set()
+    for dashboard in dashboards:
+        dashboard_id = dashboard["id"]
+        if dashboard_id in seen_ids:
+            raise ValueError(f"Duplicate dashboard id: {dashboard_id}")
+        seen_ids.add(dashboard["id"])
+
+    active_dashboard_id = str(raw.get("active_dashboard_id") or "")
+    if active_dashboard_id not in seen_ids:
+        raise ValueError("active_dashboard_id must match a dashboard id")
+
+    return {"active_dashboard_id": active_dashboard_id, "dashboards": dashboards}
+
+
+def get_dashboard_by_id(library: dict[str, Any], dashboard_id: str | None = None) -> dict[str, Any]:
+    dashboards = library.get("dashboards", [])
+    if not dashboards:
+        raise ValueError("Dashboard library is empty")
+    target_id = dashboard_id or library.get("active_dashboard_id")
+    dashboard = next((item for item in dashboards if item.get("id") == target_id), None)
+    if dashboard is None:
+        raise ValueError(f"Unknown dashboard id: {target_id}")
+    return dashboard
+
+
 def create_default_gauge_config(gauge_type: str, *, offset: int = 0) -> dict[str, Any]:
     if gauge_type not in GAUGE_SPECS:
         raise ValueError(f"Unknown gauge type: {gauge_type}")
@@ -139,12 +213,13 @@ def create_default_gauge_config(gauge_type: str, *, offset: int = 0) -> dict[str
 def instantiate_gauge(config: dict[str, Any], shared_data: LatestValuesTable) -> Gauge:
     cfg = normalize_gauge_config(config)
     gauge_type = cfg.pop("type")
+    cls = _resolve_gauge_class(GAUGE_SPECS[gauge_type].cls)
     cfg["box_xywh"] = tuple(cfg["box_xywh"])
     for name, value in list(cfg.items()):
         if name.endswith("_color") and value is not None:
             cfg[name] = tuple(parse_color(value) or ())
     cfg["shared_data"] = shared_data
-    return GAUGE_SPECS[gauge_type].cls(**cfg)
+    return cls(**cfg)
 
 
 def validate_layout(config: dict[str, Any], *, signal_names: set[str] | None = None) -> list[str]:
@@ -166,28 +241,26 @@ def validate_layout(config: dict[str, Any], *, signal_names: set[str] | None = N
     return warnings
 
 
-def load_dashboard_config(path: Path) -> dict[str, Any]:
+def validate_dashboard_library(config: dict[str, Any], *, signal_names: set[str] | None = None) -> dict[str, list[str]]:
+    library = normalize_dashboard_library_config(config)
+    return {
+        dashboard["id"]: validate_layout(dashboard, signal_names=signal_names)
+        for dashboard in library.get("dashboards", [])
+    }
+
+
+def load_dashboard_library_config(path: Path) -> dict[str, Any]:
     with path.open() as f:
         raw = json.load(f)
-    display = raw.get("display", {})
-    display = {
-        "width": DISPLAY_SIZE[0],
-        "height": DISPLAY_SIZE[1],
-        "bg_color": list(parse_color(display.get("bg_color", [0, 0, 0])) or (0, 0, 0)),
-    }
-    gauges = [normalize_gauge_config(gauge) for gauge in raw.get("gauges", [])]
-    return {"display": display, "gauges": gauges}
+    return normalize_dashboard_library_config(raw)
 
 
-def save_dashboard_config(config: dict[str, Any], path: Path) -> None:
-    normalized = {
-        "display": {
-            "width": DISPLAY_SIZE[0],
-            "height": DISPLAY_SIZE[1],
-            "bg_color": list(parse_color(config.get("display", {}).get("bg_color", [0, 0, 0])) or (0, 0, 0)),
-        },
-        "gauges": [normalize_gauge_config(gauge) for gauge in config.get("gauges", [])],
-    }
+def load_dashboard_config(path: Path) -> dict[str, Any]:
+    return get_dashboard_by_id(load_dashboard_library_config(path))
+
+
+def save_dashboard_library_config(config: dict[str, Any], path: Path) -> None:
+    normalized = normalize_dashboard_library_config(config)
     with path.open("w") as f:
         json.dump(normalized, f, indent=2)
         f.write("\n")
