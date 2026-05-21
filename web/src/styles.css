@@ -235,7 +235,6 @@ aside {
 .preview-column {
   width: min(800px, 100%);
   display: grid;
-  gap: 10px;
   justify-items: start;
   justify-self: center;
 }
@@ -273,10 +272,6 @@ aside {
 .dashboard-tile.selected {
   border-color: #60a5fa;
   box-shadow: 0 0 0 1px #60a5fa inset;
-}
-
-.dashboard-tile.active {
-  border-color: #6ee7b7;
 }
 
 .thumbnail-wrap {
@@ -330,18 +325,6 @@ aside {
   height: 100%;
 }
 
-.active-badge {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  border-radius: 999px;
-  background: #064e3b;
-  color: #a7f3d0;
-  padding: 2px 6px;
-  font-size: 11px;
-  line-height: 1.3;
-}
-
 .dashboard-tile input {
   width: 100%;
   min-width: 0;
@@ -370,18 +353,28 @@ aside {
 .preview-toolbar {
   width: 100%;
   display: flex;
-  justify-content: flex-start;
+  justify-content: flex-end;
 }
 
-.toolbar-icon {
+.toolbar-group {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.toolbar-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   height: 36px;
-  width: 38px;
+  padding: 0 12px;
+  white-space: nowrap;
 }
 
-.canvas img {
-  display: block;
-  width: 100%;
-  height: 100%;
+.toolbar-button svg {
+  width: 15px;
+  height: 15px;
 }
 
 .canvas.with-grid::after {
@@ -393,11 +386,6 @@ aside {
     linear-gradient(to right, rgba(255, 255, 255, 0.12) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
   background-size: var(--grid-size-x) var(--grid-size-y);
-}
-
-.snap-controls {
-  display: flex;
-  justify-content: flex-start;
 }
 
 .overlay {

@@ -429,12 +429,12 @@ function App() {
                   onChange={(event) => renameDashboard(item.id, event.target.value)}
                   onBlur={commitDashboardRename}
                   onKeyDown={(event) => {
+                    event.stopPropagation();
                     if (event.key === "Enter") event.currentTarget.blur();
                   }}
                 />
                 <span className="thumbnail-wrap">
                   <img src={`/api/preview.png?dashboard_id=${encodeURIComponent(item.id)}&t=${previewNonce}`} width="160" height="96" />
-                  {item.id === activeDashboardId && <span className="active-badge">Active</span>}
                 </span>
                 <span className="dashboard-actions">
                   {item.id === activeDashboardId ? (
@@ -482,12 +482,17 @@ function App() {
           </div>
 
           <div className="preview-toolbar">
-            <div className="row actions">
-              <button className="icon-button toolbar-icon" onClick={duplicateGauge} disabled={!gauge} title="Duplicate gauge" aria-label="Duplicate gauge">
-                <FaRegCopy aria-hidden="true" />
+            <div className="toolbar-group">
+              <button className="toolbar-button" onClick={() => setSnapIndex((current) => (current + 1) % SNAP_OPTIONS.length)}>
+                Snap: {snapSize === 0 ? "None" : `${snapSize}px`}
               </button>
-              <button className="icon-button toolbar-icon danger" onClick={deleteGauge} disabled={!gauge} title="Delete gauge" aria-label="Delete gauge">
+              <button className="toolbar-button" onClick={duplicateGauge} disabled={!gauge} title="Duplicate gauge" aria-label="Duplicate gauge">
+                <FaRegCopy aria-hidden="true" />
+                <span>Duplicate gauge</span>
+              </button>
+              <button className="toolbar-button danger" onClick={deleteGauge} disabled={!gauge} title="Delete gauge" aria-label="Delete gauge">
                 <FaRegTrashAlt aria-hidden="true" />
+                <span>Delete gauge</span>
               </button>
             </div>
           </div>
@@ -519,11 +524,6 @@ function App() {
                 </div>
               );
             })}
-          </div>
-          <div className="snap-controls">
-            <button onClick={() => setSnapIndex((current) => (current + 1) % SNAP_OPTIONS.length)}>
-              Snap: {snapSize === 0 ? "None" : `${snapSize}px`}
-            </button>
           </div>
         </div>
 

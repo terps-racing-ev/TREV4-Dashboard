@@ -2,8 +2,8 @@
   "active_dashboard_id": "dash-161f99f6-d4c5-4880-b9a7-1d90094bb854",
   "dashboards": [
     {
-      "id": "dash-main",
-      "name": "Main",
+      "id": "dash-161f99f6-d4c5-4880-b9a7-1d90094bb854",
+      "name": "Caleb's Cool Dash",
       "display": {
         "width": 800,
         "height": 480,
@@ -25,130 +25,6 @@
             120,
             240,
             240
-          ],
-          "decimal_places": 0,
-          "box_color": null,
-          "border_color": [
-            255,
-            255,
-            255
-          ],
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": "GREEN",
-          "max_color": "RED",
-          "gradient_text": false,
-          "gradient_box": false,
-          "gradient_border": false,
-          "show_value": true
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "HVC_Pack_Voltage",
-          "label": "PACK V",
-          "min_val": 0,
-          "max_val": 99,
-          "box_xywh": [
-            80,
-            100,
-            180,
-            140
-          ],
-          "decimal_places": 0,
-          "box_color": null,
-          "border_color": [
-            255,
-            255,
-            255
-          ],
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": "GREEN",
-          "max_color": "RED",
-          "gradient_text": false,
-          "gradient_box": false,
-          "gradient_border": false,
-          "show_value": true
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "HVC_Pack_Current_Hi",
-          "label": "PACK A",
-          "min_val": 0,
-          "max_val": 99,
-          "box_xywh": [
-            540,
-            260,
-            180,
-            140
-          ],
-          "decimal_places": 0,
-          "box_color": null,
-          "border_color": [
-            255,
-            255,
-            255
-          ],
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": "GREEN",
-          "max_color": "RED",
-          "gradient_text": false,
-          "gradient_box": false,
-          "gradient_border": false,
-          "show_value": true
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "HVC_Cell_Volt_Min",
-          "label": "MIN CELL V",
-          "min_val": 0,
-          "max_val": 99,
-          "box_xywh": [
-            540,
-            100,
-            180,
-            140
-          ],
-          "decimal_places": 0,
-          "box_color": null,
-          "border_color": [
-            255,
-            255,
-            255
-          ],
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": "GREEN",
-          "max_color": "RED",
-          "gradient_text": false,
-          "gradient_box": false,
-          "gradient_border": false,
-          "show_value": true
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "HVC_Cell_Temp_Max",
-          "label": "MAX CELL TEMP",
-          "min_val": 0,
-          "max_val": 99,
-          "box_xywh": [
-            80,
-            260,
-            180,
-            140
           ],
           "decimal_places": 0,
           "box_color": null,
@@ -426,12 +302,35 @@
           "gradient_box": true,
           "gradient_border": false,
           "show_value": false
+        },
+        {
+          "type": "SimpleGauge",
+          "signal": "",
+          "label": "GAUGE",
+          "min_val": 0,
+          "max_val": 100,
+          "box_xywh": [
+            120,
+            100,
+            120,
+            80
+          ],
+          "decimal_places": 0,
+          "box_color": null,
+          "border_color": "WHITE",
+          "text_color": "WHITE",
+          "min_color": "GREEN",
+          "max_color": "RED",
+          "gradient_text": false,
+          "gradient_box": false,
+          "gradient_border": false,
+          "show_value": true
         }
       ]
     },
     {
-      "id": "dash-161f99f6-d4c5-4880-b9a7-1d90094bb854",
-      "name": "calebs_cool_dash",
+      "id": "dash-1779330429566-6857",
+      "name": "Brake Dash",
       "display": {
         "width": 800,
         "height": 480,
