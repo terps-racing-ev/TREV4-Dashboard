@@ -8,12 +8,12 @@ from pathlib import Path
 import pygame
 
 from .graphics_driver import *
-from .colors import *
 from .gauge_config import DISPLAY_SIZE, instantiate_gauge, load_dashboard_config
 from .shared_data import LatestValuesTable
 
 FPS_CAP = 30
 ROOT_DIR = Path(__file__).resolve().parents[1]
+BLACK = (0, 0, 0)
 
 class Dashboard:
     """Handles rendering to a Pygame surface."""

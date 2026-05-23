@@ -7,11 +7,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
-from .colors import named_colors, parse_color
 from .shared_data import LatestValuesTable
 
 DISPLAY_SIZE = (800, 480)
-ColorValue = str | list[int] | None
+BLACK = [0, 0, 0]
+WHITE = [255, 255, 255]
+GREEN = [0, 200, 0]
+RED = [255, 0, 0]
 
 
 @dataclass(frozen=True)
@@ -38,16 +40,16 @@ COMMON_FIELDS = (
     FieldSpec("label", "Label", "text", "GAUGE"),
     FieldSpec("min_val", "Min", "number", 0),
     FieldSpec("max_val", "Max", "number", 100),
-    FieldSpec("box_xywh", "Box", "rect", [0, 0, 120, 80]),
+    FieldSpec("box_xywh", "Position (x, y, w, h)", "rect", [0, 0, 120, 80]),
     FieldSpec("decimal_places", "Decimals", "int", 0),
     FieldSpec("box_color", "Box Color", "color", None),
-    FieldSpec("border_color", "Border Color", "color", "WHITE"),
-    FieldSpec("text_color", "Text Color", "color", "WHITE"),
+    FieldSpec("border_color", "Border Color", "color", WHITE),
+    FieldSpec("text_color", "Text Color", "color", WHITE),
 )
 
 GRADIENT_FIELDS = (
-    FieldSpec("min_color", "Min Color", "color", "GREEN"),
-    FieldSpec("max_color", "Max Color", "color", "RED"),
+    FieldSpec("min_color", "Min Color", "color", GREEN),
+    FieldSpec("max_color", "Max Color", "color", RED),
     FieldSpec("gradient_text", "Gradient Text", "bool", False),
     FieldSpec("gradient_box", "Gradient Box", "bool", False),
     FieldSpec("gradient_border", "Gradient Border", "bool", False),
@@ -69,7 +71,7 @@ GAUGE_SPECS: dict[str, GaugeSpec] = {
         COMMON_FIELDS
         + GRADIENT_FIELDS
         + (
-            FieldSpec("fill_color", "Fill", "color", "GREEN"),
+            FieldSpec("fill_color", "Fill", "color", GREEN),
             FieldSpec("gradient_fill", "Gradient Fill", "bool", False),
             FieldSpec("vertical", "Vertical", "bool", True),
             FieldSpec("show_value", "Show Value", "bool", True),
@@ -81,8 +83,8 @@ GAUGE_SPECS: dict[str, GaugeSpec] = {
         COMMON_FIELDS
         + GRADIENT_FIELDS
         + (
-            FieldSpec("pos_color", "Positive", "color", "GREEN"),
-            FieldSpec("neg_color", "Negative", "color", "RED"),
+            FieldSpec("pos_color", "Positive", "color", GREEN),
+            FieldSpec("neg_color", "Negative", "color", RED),
             FieldSpec("gradient_fill", "Gradient Fill", "bool", False),
             FieldSpec("vertical", "Vertical", "bool", True),
             FieldSpec("show_value", "Show Value", "bool", True),
@@ -97,15 +99,18 @@ def _resolve_gauge_class(class_name: str) -> Callable[..., Any]:
     return getattr(gauges, class_name)
 
 
-def _coerce_color(value: Any, default: ColorValue) -> ColorValue:
+def _normalize_color(value: Any) -> list[int] | None:
     if value is None:
         return None
-    if value == "":
-        return default
-    if isinstance(value, str) and value.upper() in named_colors():
-        return value.upper()
-    color = parse_color(value)
-    return None if color is None else list(color[:3])
+    if not isinstance(value, (list, tuple)) or len(value) != 3:
+        raise ValueError("color fields must be null or [r, g, b]")
+    color: list[int] = []
+    for component in value:
+        number = int(component)
+        if number < 0 or number > 255:
+            raise ValueError("color components must be between 0 and 255")
+        color.append(number)
+    return color
 
 
 def normalize_gauge_config(raw: dict[str, Any]) -> dict[str, Any]:
@@ -128,8 +133,7 @@ def normalize_gauge_config(raw: dict[str, Any]) -> dict[str, Any]:
         elif field.kind == "bool":
             normalized[field.name] = bool(value)
         elif field.kind == "color":
-            color = _coerce_color(value, field.default)
-            normalized[field.name] = color
+            normalized[field.name] = _normalize_color(value)
         else:
             normalized[field.name] = value
 
@@ -145,7 +149,7 @@ def _normalize_display_config(raw: dict[str, Any] | None) -> dict[str, Any]:
     return {
         "width": DISPLAY_SIZE[0],
         "height": DISPLAY_SIZE[1],
-        "bg_color": list(parse_color(display.get("bg_color", [0, 0, 0])) or (0, 0, 0)),
+        "bg_color": _normalize_color(display.get("bg_color", BLACK)) or BLACK,
     }
 
 
@@ -217,7 +221,7 @@ def instantiate_gauge(config: dict[str, Any], shared_data: LatestValuesTable) ->
     cfg["box_xywh"] = tuple(cfg["box_xywh"])
     for name, value in list(cfg.items()):
         if name.endswith("_color") and value is not None:
-            cfg[name] = tuple(parse_color(value) or ())
+            cfg[name] = tuple(value)
     cfg["shared_data"] = shared_data
     return cls(**cfg)
 

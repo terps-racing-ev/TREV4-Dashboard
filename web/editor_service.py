@@ -11,7 +11,6 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from app.colors import named_colors
 from app.dashboard import Dashboard
 from app.dbc_utils import load_signal_metadata
 from app.gauge_config import (
@@ -271,10 +270,6 @@ def create_app(config_path: Path = DEFAULT_CONFIG_PATH) -> FastAPI:
             return state.replace_dbc(interface, await request.body())
         except Exception as exc:
             raise HTTPException(status_code=400, detail={"errors": [str(exc)], "warnings": []}) from exc
-
-    @app.get("/api/colors")
-    def colors() -> dict[str, dict[str, list[int]]]:
-        return {"colors": {name: list(value) for name, value in named_colors().items()}}
 
     @app.put("/api/mock-values")
     def mock_values(payload: dict[str, Any]) -> dict[str, Any]:

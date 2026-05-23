@@ -6,11 +6,15 @@ import math
 import colorsys
 from pathlib import Path
 
-from .colors import *
 from .shared_data import LatestValuesTable
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 DEFAULT_FONT = str(ROOT_DIR / "assets" / "fonts" / "monofonto rg.otf")
+
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+GREEN = (0, 200, 0)
+RED = (255, 0, 0)
 
 # Lazy-loaded fonts (initialized on first access)
 _SMALL_FONT = None
@@ -197,6 +201,8 @@ class Gauge:
         return _interpolate_color(self.min_color, self.max_color, self._clamped_ratio(value))
 
     def _mapped_color(self, base_color: Tuple[int, int, int] | None, enabled: bool, value: int | float) -> Tuple[int, int, int] | None:
+        if base_color is None:
+            return None
         return self._gradient_color(value) if enabled else base_color
 
     def _template_str(self) -> str:
@@ -313,6 +319,8 @@ class SimpleGauge(Gauge):
         self._fill_background(surface, value)
         self._draw_border(surface, value)
         render_text_color = self._mapped_color(self.text_color, self.gradient_text, value)
+        if render_text_color is None:
+            return surface
 
         # Label (static font size)
         label_font = _get_small_font()
@@ -415,6 +423,8 @@ class UnsignedLinearGauge(Gauge):
         self._draw_border(surface, value)
 
         # Label (static font size)
+        if render_text_color is None:
+            return surface
         label_font = _get_small_font()
         label_text = label_font.render(self.label, True, render_text_color)
         label_rect = label_text.get_rect(midtop=(self.cx, self.y + self.h + LABEL_PADDING))
@@ -544,6 +554,8 @@ class SignedLinearGauge(Gauge):
         self._draw_border(surface, value)
 
         # Label
+        if render_text_color is None:
+            return surface
         label_font = _get_small_font()
         label_text = label_font.render(self.label, True, render_text_color)
         label_rect = label_text.get_rect(midtop=(self.cx, self.y + self.h + LABEL_PADDING))

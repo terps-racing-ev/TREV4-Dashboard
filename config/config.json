@@ -1,8 +1,8 @@
 {
-  "active_dashboard_id": "dash-161f99f6-d4c5-4880-b9a7-1d90094bb854",
+  "active_dashboard_id": "dash-1779330429566-6857",
   "dashboards": [
     {
-      "id": "dash-161f99f6-d4c5-4880-b9a7-1d90094bb854",
+      "id": "dash-1779330429566-6857",
       "name": "Caleb's Cool Dash",
       "display": {
         "width": 800,
@@ -38,335 +38,16 @@
             255,
             255
           ],
-          "min_color": "GREEN",
-          "max_color": "RED",
-          "gradient_text": false,
-          "gradient_box": false,
-          "gradient_border": false,
-          "show_value": true
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "VCU_State",
-          "label": "VCU STATE",
-          "min_val": 0,
-          "max_val": 5,
-          "box_xywh": [
-            280,
-            20,
-            240,
-            80
-          ],
-          "decimal_places": 0,
-          "box_color": null,
-          "border_color": [
-            255,
-            255,
-            255
-          ],
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": "GREEN",
-          "max_color": "RED",
-          "gradient_text": false,
-          "gradient_box": false,
-          "gradient_border": false,
-          "show_value": true
-        },
-        {
-          "type": "SignedLinearGauge",
-          "signal": "INV_Torque_Feedback_Fast",
-          "label": "TORQUE",
-          "min_val": -230,
-          "max_val": 230,
-          "box_xywh": [
-            740,
-            80,
-            20,
-            350
-          ],
-          "decimal_places": 0,
-          "box_color": [
-            23,
-            23,
-            23
-          ],
-          "border_color": null,
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": "GREEN",
-          "max_color": "RED",
-          "gradient_text": false,
-          "gradient_box": false,
-          "gradient_border": false,
-          "pos_color": [
+          "min_color": [
             0,
-            255,
-            0
-          ],
-          "neg_color": [
-            255,
-            0,
-            0
-          ],
-          "gradient_fill": false,
-          "vertical": true,
-          "show_value": false
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "MOBO_SDC_Raw",
-          "label": "RAW",
-          "min_val": 0,
-          "max_val": 1,
-          "box_xywh": [
-            20,
-            20,
-            60,
-            40
-          ],
-          "decimal_places": 0,
-          "box_color": null,
-          "border_color": "WHITE",
-          "text_color": "WHITE",
-          "min_color": "RED",
-          "max_color": "GREEN",
-          "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
-          "show_value": false
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "MOBO_SDC_Post_IL",
-          "label": "IL",
-          "min_val": 0,
-          "max_val": 1,
-          "box_xywh": [
-            80,
-            20,
-            60,
-            40
-          ],
-          "decimal_places": 0,
-          "box_color": null,
-          "border_color": "WHITE",
-          "text_color": "WHITE",
-          "min_color": "RED",
-          "max_color": "GREEN",
-          "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
-          "show_value": false
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "MOBO_SDC_Post_Loop",
-          "label": "LOOP",
-          "min_val": 0,
-          "max_val": 1,
-          "box_xywh": [
-            140,
-            20,
-            60,
-            40
-          ],
-          "decimal_places": 0,
-          "box_color": null,
-          "border_color": "WHITE",
-          "text_color": "WHITE",
-          "min_color": "RED",
-          "max_color": "GREEN",
-          "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
-          "show_value": false
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "HVC_SDC_OK",
-          "label": "HVC",
-          "min_val": 0,
-          "max_val": 1,
-          "box_xywh": [
             200,
-            20,
-            60,
-            40
+            0
           ],
-          "decimal_places": 0,
-          "box_color": null,
-          "border_color": "WHITE",
-          "text_color": "WHITE",
-          "min_color": "RED",
-          "max_color": "GREEN",
-          "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
-          "show_value": false
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "VCU_APPS1_Valid",
-          "label": "AP1",
-          "min_val": 0,
-          "max_val": 1,
-          "box_xywh": [
-            600,
-            20,
-            60,
-            40
-          ],
-          "decimal_places": 0,
-          "box_color": null,
-          "border_color": "WHITE",
-          "text_color": "WHITE",
-          "min_color": "RED",
-          "max_color": "GREEN",
-          "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
-          "show_value": false
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "VCU_APPS2_Valid",
-          "label": "AP2",
-          "min_val": 0,
-          "max_val": 1,
-          "box_xywh": [
-            660,
-            20,
-            60,
-            40
-          ],
-          "decimal_places": 0,
-          "box_color": null,
-          "border_color": "WHITE",
-          "text_color": "WHITE",
-          "min_color": "RED",
-          "max_color": "GREEN",
-          "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
-          "show_value": false
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "VCU_BSE_Valid",
-          "label": "BSE",
-          "min_val": 0,
-          "max_val": 1,
-          "box_xywh": [
-            720,
-            20,
-            60,
-            40
-          ],
-          "decimal_places": 0,
-          "box_color": null,
-          "border_color": "WHITE",
-          "text_color": "WHITE",
-          "min_color": "RED",
-          "max_color": "GREEN",
-          "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
-          "show_value": false
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "VCU_RTD_Active",
-          "label": "RTD",
-          "min_val": 0,
-          "max_val": 1,
-          "box_xywh": [
-            540,
-            20,
-            60,
-            40
-          ],
-          "decimal_places": 0,
-          "box_color": null,
-          "border_color": "WHITE",
-          "text_color": "WHITE",
-          "min_color": "RED",
-          "max_color": "GREEN",
-          "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
-          "show_value": false
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "",
-          "label": "GAUGE",
-          "min_val": 0,
-          "max_val": 100,
-          "box_xywh": [
-            120,
-            100,
-            120,
-            80
-          ],
-          "decimal_places": 0,
-          "box_color": null,
-          "border_color": "WHITE",
-          "text_color": "WHITE",
-          "min_color": "GREEN",
-          "max_color": "RED",
-          "gradient_text": false,
-          "gradient_box": false,
-          "gradient_border": false,
-          "show_value": true
-        }
-      ]
-    },
-    {
-      "id": "dash-1779330429566-6857",
-      "name": "Brake Dash",
-      "display": {
-        "width": 800,
-        "height": 480,
-        "bg_color": [
-          0,
-          0,
-          0
-        ]
-      },
-      "gauges": [
-        {
-          "type": "SimpleGauge",
-          "signal": "VCU_Speed",
-          "label": "SPEED",
-          "min_val": 0,
-          "max_val": 99,
-          "box_xywh": [
-            280,
-            120,
-            240,
-            240
-          ],
-          "decimal_places": 0,
-          "box_color": null,
-          "border_color": [
+          "max_color": [
             255,
-            255,
-            255
+            0,
+            0
           ],
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": "GREEN",
-          "max_color": "RED",
           "gradient_text": false,
           "gradient_box": false,
           "gradient_border": false,
@@ -385,7 +66,11 @@
             140
           ],
           "decimal_places": 0,
-          "box_color": null,
+          "box_color": [
+            255,
+            255,
+            255
+          ],
           "border_color": [
             255,
             255,
@@ -396,8 +81,16 @@
             255,
             255
           ],
-          "min_color": "RED",
-          "max_color": "GREEN",
+          "min_color": [
+            255,
+            0,
+            0
+          ],
+          "max_color": [
+            0,
+            200,
+            0
+          ],
           "gradient_text": false,
           "gradient_box": true,
           "gradient_border": false,
@@ -416,7 +109,11 @@
             140
           ],
           "decimal_places": 2,
-          "box_color": null,
+          "box_color": [
+            255,
+            255,
+            255
+          ],
           "border_color": [
             255,
             255,
@@ -427,8 +124,16 @@
             255,
             255
           ],
-          "min_color": "RED",
-          "max_color": "GREEN",
+          "min_color": [
+            255,
+            0,
+            0
+          ],
+          "max_color": [
+            0,
+            200,
+            0
+          ],
           "gradient_text": false,
           "gradient_box": true,
           "gradient_border": false,
@@ -447,7 +152,11 @@
             140
           ],
           "decimal_places": 0,
-          "box_color": null,
+          "box_color": [
+            255,
+            255,
+            255
+          ],
           "border_color": [
             255,
             255,
@@ -458,8 +167,16 @@
             255,
             255
           ],
-          "min_color": "GREEN",
-          "max_color": "RED",
+          "min_color": [
+            0,
+            200,
+            0
+          ],
+          "max_color": [
+            255,
+            0,
+            0
+          ],
           "gradient_text": false,
           "gradient_box": true,
           "gradient_border": false,
@@ -489,8 +206,16 @@
             255,
             255
           ],
-          "min_color": "GREEN",
-          "max_color": "RED",
+          "min_color": [
+            0,
+            200,
+            0
+          ],
+          "max_color": [
+            255,
+            0,
+            0
+          ],
           "gradient_text": false,
           "gradient_box": false,
           "gradient_border": false,
@@ -520,21 +245,21 @@
             255,
             255
           ],
-          "min_color": "GREEN",
-          "max_color": "RED",
+          "min_color": [
+            0,
+            200,
+            0
+          ],
+          "max_color": [
+            255,
+            0,
+            0
+          ],
           "gradient_text": false,
           "gradient_box": false,
           "gradient_border": false,
-          "pos_color": [
-            0,
-            255,
-            0
-          ],
-          "neg_color": [
-            255,
-            0,
-            0
-          ],
+          "pos_color": null,
+          "neg_color": null,
           "gradient_fill": false,
           "vertical": true,
           "show_value": false
@@ -552,11 +277,31 @@
             40
           ],
           "decimal_places": 0,
-          "box_color": null,
-          "border_color": "WHITE",
-          "text_color": "WHITE",
-          "min_color": "RED",
-          "max_color": "GREEN",
+          "box_color": [
+            255,
+            255,
+            255
+          ],
+          "border_color": [
+            255,
+            255,
+            255
+          ],
+          "text_color": [
+            255,
+            255,
+            255
+          ],
+          "min_color": [
+            255,
+            0,
+            0
+          ],
+          "max_color": [
+            0,
+            200,
+            0
+          ],
           "gradient_text": false,
           "gradient_box": true,
           "gradient_border": false,
@@ -575,11 +320,31 @@
             40
           ],
           "decimal_places": 0,
-          "box_color": null,
-          "border_color": "WHITE",
-          "text_color": "WHITE",
-          "min_color": "RED",
-          "max_color": "GREEN",
+          "box_color": [
+            255,
+            255,
+            255
+          ],
+          "border_color": [
+            255,
+            255,
+            255
+          ],
+          "text_color": [
+            255,
+            255,
+            255
+          ],
+          "min_color": [
+            255,
+            0,
+            0
+          ],
+          "max_color": [
+            0,
+            200,
+            0
+          ],
           "gradient_text": false,
           "gradient_box": true,
           "gradient_border": false,
@@ -598,11 +363,31 @@
             40
           ],
           "decimal_places": 0,
-          "box_color": null,
-          "border_color": "WHITE",
-          "text_color": "WHITE",
-          "min_color": "RED",
-          "max_color": "GREEN",
+          "box_color": [
+            255,
+            255,
+            255
+          ],
+          "border_color": [
+            255,
+            255,
+            255
+          ],
+          "text_color": [
+            255,
+            255,
+            255
+          ],
+          "min_color": [
+            255,
+            0,
+            0
+          ],
+          "max_color": [
+            0,
+            200,
+            0
+          ],
           "gradient_text": false,
           "gradient_box": true,
           "gradient_border": false,
@@ -621,11 +406,31 @@
             40
           ],
           "decimal_places": 0,
-          "box_color": null,
-          "border_color": "WHITE",
-          "text_color": "WHITE",
-          "min_color": "RED",
-          "max_color": "GREEN",
+          "box_color": [
+            255,
+            255,
+            255
+          ],
+          "border_color": [
+            255,
+            255,
+            255
+          ],
+          "text_color": [
+            255,
+            255,
+            255
+          ],
+          "min_color": [
+            255,
+            0,
+            0
+          ],
+          "max_color": [
+            0,
+            200,
+            0
+          ],
           "gradient_text": false,
           "gradient_box": true,
           "gradient_border": false,
@@ -644,11 +449,31 @@
             40
           ],
           "decimal_places": 0,
-          "box_color": null,
-          "border_color": "WHITE",
-          "text_color": "WHITE",
-          "min_color": "RED",
-          "max_color": "GREEN",
+          "box_color": [
+            255,
+            255,
+            255
+          ],
+          "border_color": [
+            255,
+            255,
+            255
+          ],
+          "text_color": [
+            255,
+            255,
+            255
+          ],
+          "min_color": [
+            255,
+            0,
+            0
+          ],
+          "max_color": [
+            0,
+            200,
+            0
+          ],
           "gradient_text": false,
           "gradient_box": true,
           "gradient_border": false,
@@ -667,11 +492,31 @@
             40
           ],
           "decimal_places": 0,
-          "box_color": null,
-          "border_color": "WHITE",
-          "text_color": "WHITE",
-          "min_color": "RED",
-          "max_color": "GREEN",
+          "box_color": [
+            255,
+            255,
+            255
+          ],
+          "border_color": [
+            255,
+            255,
+            255
+          ],
+          "text_color": [
+            255,
+            255,
+            255
+          ],
+          "min_color": [
+            255,
+            0,
+            0
+          ],
+          "max_color": [
+            0,
+            200,
+            0
+          ],
           "gradient_text": false,
           "gradient_box": true,
           "gradient_border": false,
@@ -690,11 +535,31 @@
             40
           ],
           "decimal_places": 0,
-          "box_color": null,
-          "border_color": "WHITE",
-          "text_color": "WHITE",
-          "min_color": "RED",
-          "max_color": "GREEN",
+          "box_color": [
+            255,
+            255,
+            255
+          ],
+          "border_color": [
+            255,
+            255,
+            255
+          ],
+          "text_color": [
+            255,
+            255,
+            255
+          ],
+          "min_color": [
+            255,
+            0,
+            0
+          ],
+          "max_color": [
+            0,
+            200,
+            0
+          ],
           "gradient_text": false,
           "gradient_box": true,
           "gradient_border": false,
@@ -713,11 +578,31 @@
             40
           ],
           "decimal_places": 0,
-          "box_color": null,
-          "border_color": "WHITE",
-          "text_color": "WHITE",
-          "min_color": "RED",
-          "max_color": "GREEN",
+          "box_color": [
+            255,
+            255,
+            255
+          ],
+          "border_color": [
+            255,
+            255,
+            255
+          ],
+          "text_color": [
+            255,
+            255,
+            255
+          ],
+          "min_color": [
+            255,
+            0,
+            0
+          ],
+          "max_color": [
+            0,
+            200,
+            0
+          ],
           "gradient_text": false,
           "gradient_box": true,
           "gradient_border": false,

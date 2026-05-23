@@ -412,10 +412,68 @@ aside {
   gap: 5px;
 }
 
+.inspector label.inline-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.inspector label.inline-field input[type="checkbox"] {
+  width: auto;
+}
+
 .preview-value-block {
   margin-bottom: 2px;
   padding-bottom: 12px;
   border-bottom: 1px solid #34405f;
+}
+
+.color-editor {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #34405f;
+}
+
+.color-editor h3 {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.color-role,
+.gradient-colors {
+  display: grid;
+  gap: 8px;
+}
+
+.color-role {
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(52, 64, 95, 0.7);
+}
+
+.color-role-header {
+  display: grid;
+  gap: 8px;
+}
+
+.color-role-toggles {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.inline-toggle {
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.inline-toggle input {
+  width: auto;
 }
 
 .actions {
@@ -426,6 +484,36 @@ aside {
 .inspector select {
   width: 100%;
   min-width: 0;
+}
+
+.color-field {
+  display: grid;
+  gap: 8px;
+}
+
+.color-null-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.color-null-toggle input {
+  width: auto;
+}
+
+.color-swatch {
+  width: 100%;
+  height: 28px;
+  border-radius: 5px;
+}
+
+.color-field .react-colorful {
+  width: 100%;
+  height: 140px;
+}
+
+.fixed-color-field .color-swatch {
+  cursor: default;
 }
 
 .inspector span {

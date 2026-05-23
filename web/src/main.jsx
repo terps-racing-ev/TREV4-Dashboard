@@ -1,10 +1,27 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { HexColorPicker } from "react-colorful";
 import { FaFileExport, FaFileImport, FaRegCopy, FaRegSave, FaRegTrashAlt } from "react-icons/fa";
 import "./styles.css";
 
 const CANVAS = { width: 800, height: 480 };
 const SNAP_OPTIONS = [0, 5, 10, 20, 40];
+const DEFAULT_COLOR = [255, 255, 255];
+const COLOR_ROLES = [
+  { label: "Box", colorField: "box_color", gradientField: "gradient_box" },
+  { label: "Border", colorField: "border_color", gradientField: "gradient_border" },
+  { label: "Text", colorField: "text_color", gradientField: "gradient_text" },
+];
+const COLOR_EDITOR_FIELD_NAMES = new Set([
+  "box_color",
+  "border_color",
+  "text_color",
+  "gradient_box",
+  "gradient_border",
+  "gradient_text",
+  "min_color",
+  "max_color",
+]);
 
 async function api(path, options) {
   const response = await fetch(path, {
@@ -20,6 +37,21 @@ async function api(path, options) {
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
+}
+
+function componentToHex(value) {
+  return Math.max(0, Math.min(255, Number(value) || 0)).toString(16).padStart(2, "0");
+}
+
+function rgbToHex(value) {
+  const rgb = Array.isArray(value) ? value : DEFAULT_COLOR;
+  return `#${componentToHex(rgb[0])}${componentToHex(rgb[1])}${componentToHex(rgb[2])}`;
+}
+
+function hexToRgb(value) {
+  const hex = value.replace("#", "");
+  if (!/^[0-9a-fA-F]{6}$/.test(hex)) return DEFAULT_COLOR;
+  return [0, 2, 4].map((index) => parseInt(hex.slice(index, index + 2), 16));
 }
 
 function makeDashboardId() {
@@ -44,7 +76,6 @@ function App() {
   const [gaugeTypes, setGaugeTypes] = useState({});
   const [signals, setSignals] = useState([]);
   const [signalMetadata, setSignalMetadata] = useState({});
-  const [colors, setColors] = useState({});
   const [dbcs, setDbcs] = useState({});
   const [selected, setSelected] = useState(0);
   const [warningsByDashboard, setWarningsByDashboard] = useState({});
@@ -74,10 +105,9 @@ function App() {
       api("/api/config").then((r) => r.json()),
       api("/api/gauge-types").then((r) => r.json()),
       api("/api/signals").then((r) => r.json()),
-      api("/api/colors").then((r) => r.json()),
       api("/api/dbcs").then((r) => r.json()),
     ])
-      .then(([config, types, signalPayload, colorPayload, dbcPayload]) => {
+      .then(([config, types, signalPayload, dbcPayload]) => {
         setSaved(config.saved);
         setDraft(config.draft);
         setActiveDashboardId(config.active_dashboard_id);
@@ -86,7 +116,6 @@ function App() {
         setGaugeTypes(types);
         setSignals(signalPayload.signals);
         setSignalMetadata(signalPayload.metadata);
-        setColors(colorPayload.colors);
         setDbcs(dbcPayload.dbcs);
         setMockValues(
           Object.fromEntries(
@@ -555,25 +584,88 @@ function App() {
             </div>
           )}
           {gauge &&
-            gaugeTypes[gauge.type].fields.map((field) => (
-              <label key={field.name}>
-                <span>{field.label}</span>
-                <FieldInput
-                  field={field}
-                  value={gauge[field.name]}
-                  signals={signals}
-                  colors={colors}
-                  onChange={(value) => updateGauge(selected, { [field.name]: value })}
-                />
-              </label>
-            ))}
+            gaugeTypes[gauge.type].fields
+              .filter((field) => !COLOR_EDITOR_FIELD_NAMES.has(field.name))
+              .map((field) => (
+                <label key={field.name} className={field.name === "show_value" ? "inline-field" : ""}>
+                  <span>{field.label}</span>
+                  <FieldInput
+                    field={field}
+                    value={gauge[field.name]}
+                    signals={signals}
+                    onChange={(value) => updateGauge(selected, { [field.name]: value })}
+                  />
+                </label>
+              ))}
+          {gauge && <GaugeColorEditor gauge={gauge} onChange={(patch) => updateGauge(selected, patch)} />}
         </aside>
       </section>
     </main>
   );
 }
 
-function FieldInput({ field, value, signals, colors, onChange }) {
+function GaugeColorEditor({ gauge, onChange }) {
+  return (
+    <section className="color-editor" aria-label="Colors">
+      <h3>Colors</h3>
+      {COLOR_ROLES.map((role) => {
+        const enabled = gauge[role.colorField] != null;
+        const useGradient = Boolean(gauge[role.gradientField]);
+        return (
+          <div className="color-role" key={role.colorField}>
+            <div className="color-role-header">
+              <span>{role.label}</span>
+              <div className="color-role-toggles">
+                <label className="inline-toggle">
+                  <input
+                    type="checkbox"
+                    checked={enabled}
+                    onChange={(event) =>
+                      onChange({
+                        [role.colorField]: event.target.checked ? DEFAULT_COLOR : null,
+                        ...(event.target.checked ? {} : { [role.gradientField]: false }),
+                      })
+                    }
+                  />
+                  <span>Enabled</span>
+                </label>
+                {enabled && (
+                  <label className="inline-toggle">
+                    <input
+                      type="checkbox"
+                      checked={useGradient}
+                      onChange={(event) => onChange({ [role.gradientField]: event.target.checked })}
+                    />
+                    <span>Use gradient</span>
+                  </label>
+                )}
+              </div>
+            </div>
+            {enabled && !useGradient && (
+              <FixedColorInput
+                value={gauge[role.colorField]}
+                onChange={(value) => onChange({ [role.colorField]: value })}
+              />
+            )}
+          </div>
+        );
+      })}
+      <div className="gradient-colors">
+        <h3>Gradient</h3>
+        <label>
+          <span>Min Color</span>
+          <FixedColorInput value={gauge.min_color} onChange={(value) => onChange({ min_color: value })} />
+        </label>
+        <label>
+          <span>Max Color</span>
+          <FixedColorInput value={gauge.max_color} onChange={(value) => onChange({ max_color: value })} />
+        </label>
+      </div>
+    </section>
+  );
+}
+
+function FieldInput({ field, value, signals, onChange }) {
   if (field.kind === "signal") {
     return (
       <select value={value} onChange={(event) => onChange(event.target.value)}>
@@ -594,16 +686,7 @@ function FieldInput({ field, value, signals, colors, onChange }) {
     );
   }
   if (field.kind === "color") {
-    const currentName =
-      typeof value === "string"
-        ? value
-        : Object.entries(colors).find(([, rgb]) => JSON.stringify(rgb) === JSON.stringify(value))?.[0] ?? "";
-    return (
-      <select value={value == null ? "__none__" : currentName} onChange={(event) => onChange(event.target.value === "__none__" ? null : event.target.value)}>
-        <option value="__none__">None</option>
-        {Object.keys(colors).map((name) => <option key={name}>{name}</option>)}
-      </select>
-    );
+    return <ColorInput value={value} onChange={onChange} />;
   }
   return (
     <input
@@ -611,6 +694,113 @@ function FieldInput({ field, value, signals, colors, onChange }) {
       value={value}
       onChange={(event) => onChange(field.kind === "number" || field.kind === "int" ? Number(event.target.value) : event.target.value)}
     />
+  );
+}
+
+function ColorInput({ value, onChange }) {
+  const enabled = value != null;
+  const [draftHex, setDraftHex] = useState(rgbToHex(value));
+  const draftHexRef = useRef(draftHex);
+
+  useEffect(() => {
+    draftHexRef.current = draftHex;
+  }, [draftHex]);
+
+  useEffect(() => {
+    setDraftHex(rgbToHex(value));
+  }, [value]);
+
+  function commit(nextHex = draftHex) {
+    if (enabled) onChange(hexToRgb(nextHex));
+  }
+
+  function beginPickerDrag() {
+    function finishPickerDrag() {
+      commit(draftHexRef.current);
+    }
+    window.addEventListener("pointerup", finishPickerDrag, { once: true });
+  }
+
+  return (
+    <div className="color-field">
+      <div className="color-null-toggle">
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={(event) => onChange(event.target.checked ? DEFAULT_COLOR : null)}
+        />
+        <span>Enabled</span>
+      </div>
+      {enabled && (
+        <>
+          <button
+            type="button"
+            className="color-swatch"
+            style={{ backgroundColor: draftHex }}
+            aria-label={`Selected color ${draftHex}`}
+            title={draftHex}
+          />
+          <div className="color-picker-wrap" onPointerDown={beginPickerDrag}>
+            <HexColorPicker color={draftHex} onChange={setDraftHex} />
+          </div>
+          <input
+            value={draftHex}
+            onChange={(event) => setDraftHex(event.target.value)}
+            onBlur={() => commit()}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") event.currentTarget.blur();
+            }}
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
+function FixedColorInput({ value, onChange }) {
+  const [draftHex, setDraftHex] = useState(rgbToHex(value));
+  const draftHexRef = useRef(draftHex);
+
+  useEffect(() => {
+    draftHexRef.current = draftHex;
+  }, [draftHex]);
+
+  useEffect(() => {
+    setDraftHex(rgbToHex(value));
+  }, [value]);
+
+  function commit(nextHex = draftHex) {
+    onChange(hexToRgb(nextHex));
+  }
+
+  function beginPickerDrag() {
+    function finishPickerDrag() {
+      commit(draftHexRef.current);
+    }
+    window.addEventListener("pointerup", finishPickerDrag, { once: true });
+  }
+
+  return (
+    <div className="color-field fixed-color-field">
+      <button
+        type="button"
+        className="color-swatch"
+        style={{ backgroundColor: draftHex }}
+        aria-label={`Selected color ${draftHex}`}
+        title={draftHex}
+      />
+      <div className="color-picker-wrap" onPointerDown={beginPickerDrag}>
+        <HexColorPicker color={draftHex} onChange={setDraftHex} />
+      </div>
+      <input
+        value={draftHex}
+        onChange={(event) => setDraftHex(event.target.value)}
+        onBlur={() => commit()}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") event.currentTarget.blur();
+        }}
+      />
+    </div>
   );
 }
 
