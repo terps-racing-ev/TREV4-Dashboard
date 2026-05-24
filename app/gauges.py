@@ -225,14 +225,24 @@ class Gauge:
         return _normalize_chars(value, self.min_val, self.max_val, self.decimal_places)
 
     def _current_value(self) -> int | float:
+        if self.shared_data is None:
+            return self.default_value
         val = self.shared_data.get_signal(self.signal)
-        return val if val is not None else 0
+        if val is None:
+            return self.default_value
+        if hasattr(val, "value"):
+            return val.value
+        return val
 
     def _current_display_value(self) -> Any:
         if self.shared_data is None:
             return self._current_value()
         display_value = self.shared_data.get_display_signal(self.signal)
-        return display_value if display_value is not None else self._current_value()
+        if display_value is None:
+            return self._current_value()
+        if hasattr(display_value, "value"):
+            return display_value.value
+        return display_value
 
     def _signal_is_stale(self) -> bool:
         if self.shared_data is None:
