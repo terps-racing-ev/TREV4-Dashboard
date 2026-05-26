@@ -84,6 +84,7 @@ function App() {
   const [error, setError] = useState("");
   const [interaction, setInteraction] = useState(null);
   const [snapIndex, setSnapIndex] = useState(SNAP_OPTIONS.indexOf(20));
+  const [brightnessDraft, setBrightnessDraft] = useState(100);
   const importRef = useRef(null);
   const dbcInputRefs = useRef({});
   const draftRef = useRef(null);
@@ -98,6 +99,7 @@ function App() {
 
   useEffect(() => {
     draftRef.current = draft;
+    if (draft) setBrightnessDraft(draft.brightness ?? 100);
   }, [draft]);
 
   useEffect(() => {
@@ -153,6 +155,15 @@ function App() {
     const index = next.dashboards.findIndex((item) => item.id === dashboard.id);
     next.dashboards[index] = updater(next.dashboards[index]);
     pushDraft(next, options).catch((err) => setError(err.message));
+  }
+
+  function commitBrightness(value = brightnessDraft) {
+    if (!draft) return;
+    const brightness = Number(value);
+    if (brightness === (draft.brightness ?? 100)) return;
+    const next = clone(draft);
+    next.brightness = brightness;
+    pushDraft(next).catch((err) => setError(err.message));
   }
 
   async function selectDashboard(dashboardId) {
@@ -392,6 +403,20 @@ function App() {
           <span className={dirty ? "dirty" : "clean"}>{dirty ? "Unsaved changes" : "Saved"}</span>
         </div>
         <div className="dbc-center">
+          <label className="brightness-control">
+            <span>Brightness</span>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value={brightnessDraft}
+              onChange={(event) => setBrightnessDraft(Number(event.target.value))}
+              onPointerUp={(event) => commitBrightness(event.currentTarget.value)}
+              onBlur={(event) => commitBrightness(event.currentTarget.value)}
+            />
+            <strong>{brightnessDraft}%</strong>
+          </label>
           {Object.entries(dbcs).map(([interfaceName, dbc]) => (
             <div className="dbc-pill" key={interfaceName}>
               <span>{interfaceName}: {dbc.filename}{dbc.fallback ? " (fallback)" : ""}</span>

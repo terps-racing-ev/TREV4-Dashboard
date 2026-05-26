@@ -51,7 +51,7 @@ def search_for_file(filename: str, search_paths: list | None = None) -> Path | N
 def main():
 
     # Simulate values if you don't have CAN hardware
-    SIM_MODE = False
+    SIM_MODE = True
     CAN_INTERFACES = ("can0", "can1")
     
     ROOT_DIR = Path(__file__).resolve().parents[1]
