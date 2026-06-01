@@ -71,8 +71,39 @@ header nav {
 
 .dbc-center {
   display: flex;
+  align-items: center;
   gap: 8px;
   justify-self: center;
+}
+
+.brightness-control {
+  height: 36px;
+  display: grid;
+  grid-template-columns: auto minmax(100px, 150px) 38px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #34405f;
+  border-radius: 999px;
+  background: #121a31;
+  padding: 4px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.brightness-control span {
+  color: #b8c0d9;
+}
+
+.brightness-control input {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  accent-color: #60a5fa;
+}
+
+.brightness-control strong {
+  text-align: right;
+  font-weight: 600;
 }
 
 .dbc-pill {

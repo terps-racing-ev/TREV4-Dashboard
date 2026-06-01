@@ -14,6 +14,7 @@ BLACK = [0, 0, 0]
 WHITE = [255, 255, 255]
 GREEN = [0, 200, 0]
 RED = [255, 0, 0]
+DEFAULT_BRIGHTNESS = 100
 
 
 @dataclass(frozen=True)
@@ -153,6 +154,13 @@ def _normalize_display_config(raw: dict[str, Any] | None) -> dict[str, Any]:
     }
 
 
+def _normalize_brightness(value: Any) -> int:
+    brightness = int(value)
+    if brightness < 0 or brightness > 100:
+        raise ValueError("brightness must be between 0 and 100")
+    return brightness
+
+
 def normalize_dashboard_config(raw: dict[str, Any]) -> dict[str, Any]:
     dashboard_id = str(raw.get("id") or "").strip()
     if not dashboard_id:
@@ -180,6 +188,7 @@ def normalize_dashboard_library_config(raw: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(raw.get("dashboards"), list) or not raw["dashboards"]:
         raise ValueError("Dashboard config must contain a non-empty dashboards list")
     dashboards = [normalize_dashboard_config(dashboard) for dashboard in raw["dashboards"]]
+    brightness = _normalize_brightness(raw.get("brightness", DEFAULT_BRIGHTNESS))
 
     seen_ids: set[str] = set()
     for dashboard in dashboards:
@@ -192,7 +201,7 @@ def normalize_dashboard_library_config(raw: dict[str, Any]) -> dict[str, Any]:
     if active_dashboard_id not in seen_ids:
         raise ValueError("active_dashboard_id must match a dashboard id")
 
-    return {"active_dashboard_id": active_dashboard_id, "dashboards": dashboards}
+    return {"brightness": brightness, "active_dashboard_id": active_dashboard_id, "dashboards": dashboards}
 
 
 def get_dashboard_by_id(library: dict[str, Any], dashboard_id: str | None = None) -> dict[str, Any]:
@@ -203,7 +212,9 @@ def get_dashboard_by_id(library: dict[str, Any], dashboard_id: str | None = None
     dashboard = next((item for item in dashboards if item.get("id") == target_id), None)
     if dashboard is None:
         raise ValueError(f"Unknown dashboard id: {target_id}")
-    return dashboard
+    selected = dict(dashboard)
+    selected["brightness"] = _normalize_brightness(library.get("brightness", DEFAULT_BRIGHTNESS))
+    return selected
 
 
 def create_default_gauge_config(gauge_type: str, *, offset: int = 0) -> dict[str, Any]:

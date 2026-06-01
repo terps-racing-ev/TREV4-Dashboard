@@ -2,6 +2,7 @@
 
 import time
 import threading
+from numbers import Number
 from pathlib import Path
 from typing import Optional, Dict, Any, Mapping, Sequence
 import can
@@ -12,6 +13,12 @@ from .shared_data import LatestValuesTable
 BAUD_RATE = 500000
 
 # Note: This requires the pi to have can-init.service
+
+
+def _display_value(value: Any) -> Any:
+    """Keep numeric display values numeric; stringify enum labels from cantools."""
+    return value if isinstance(value, Number) else str(value)
+
 
 class CANManager:
     
@@ -120,7 +127,10 @@ class CANManager:
             # Decode the message data twice so we keep raw numbers for gauge math
             # while also preserving enum labels for display.
             decoded = dbc_message.decode(msg.data, decode_choices=False)
-            display_decoded = dbc_message.decode(msg.data)
+            display_decoded = {
+                signal_name: _display_value(value)
+                for signal_name, value in dbc_message.decode(msg.data).items()
+            }
             # Update shared data (now keyed by signal name)
             self.shared_data.update(decoded, display_decoded)
             return display_decoded
@@ -223,7 +233,7 @@ class CANManager:
                                 else:
                                     next_index = 0
                                 value, label = choices[next_index]
-                                display_signals[signal.name] = str(label)
+                                display_signals[signal.name] = _display_value(label)
                             else:
                                 value = current_value if current_value is not None else (signal.minimum or 0)
                                 value += 1

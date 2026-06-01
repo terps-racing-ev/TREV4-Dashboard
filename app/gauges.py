@@ -230,8 +230,6 @@ class Gauge:
         val = self.shared_data.get_signal(self.signal)
         if val is None:
             return self.default_value
-        if hasattr(val, "value"):
-            return val.value
         return val
 
     def _current_display_value(self) -> Any:
@@ -240,8 +238,6 @@ class Gauge:
         display_value = self.shared_data.get_display_signal(self.signal)
         if display_value is None:
             return self._current_value()
-        if hasattr(display_value, "value"):
-            return display_value.value
         return display_value
 
     def _signal_is_stale(self) -> bool:

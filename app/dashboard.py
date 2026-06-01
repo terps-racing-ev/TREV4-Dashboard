@@ -32,6 +32,7 @@ class Dashboard:
         # Default values
         self.font_path = str(ROOT_DIR / "assets" / "fonts" / "monofonto rg.otf")
         self.bg_color = BLACK
+        self.brightness = 100
         self.xres, self.yres = DISPLAY_SIZE
         self.gauges = []
         self._config_mtime_ns: int | None = None
@@ -53,6 +54,7 @@ class Dashboard:
             else:
                 raise ValueError("Either config_path or config must be provided")
             bg_color = tuple(config["display"]["bg_color"])
+            brightness = int(config.get("brightness", 100))
             gauge_configs = config.get("gauges", [])
             if not gauge_configs:
                 print("No gauges in config")
@@ -63,6 +65,7 @@ class Dashboard:
                 gauges.append(instantiate_gauge(gauge_cfg, self.shared_data))
 
             self.bg_color = bg_color
+            self.brightness = brightness
             self.gauges = gauges
             if self.config_path is not None:
                 self._config_mtime_ns = self.config_path.stat().st_mtime_ns
@@ -116,6 +119,10 @@ class Dashboard:
         # Update all gauges
         for gauge in self.gauges:
             gauge.update(frame)
+
+        if self.brightness < 100:
+            level = max(0, min(255, round(self.brightness * 255 / 100)))
+            frame.fill((level, level, level), special_flags=pygame.BLEND_RGB_MULT)
         
         return frame
     
