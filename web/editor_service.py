@@ -5,6 +5,7 @@ import json
 import tempfile
 from pathlib import Path
 from typing import Any
+import time
 
 import pygame
 from fastapi import FastAPI, HTTPException, Request
@@ -64,13 +65,24 @@ class EditorState:
 
     def dbc_payload(self) -> dict[str, Any]:
         paths = self.active_dbc_paths()
+        # list all available dbc files in config dir
+        available = sorted([p.name for p in CONFIG_DIR.glob("*.dbc")])
         return {
             "dbcs": {
-                interface: {
-                    "filename": path.name,
-                    "fallback": path.name != f"{interface}.dbc",
-                }
-                for interface, path in paths.items()
+                interface: (
+                    {
+                        "filename": paths[interface].name,
+                        "fallback": paths[interface].name != f"{interface}.dbc",
+                        "available": available,
+                    }
+                    if interface in paths
+                    else {
+                        "filename": None,
+                        "fallback": None,
+                        "available": available,
+                    }
+                )
+                for interface in CAN_INTERFACES
             }
         }
 
@@ -89,6 +101,50 @@ class EditorState:
         temp_target = target.with_suffix(".dbc.tmp")
         temp_target.write_bytes(content)
         temp_target.replace(target)
+        self.preview_values.clear()
+        self.reload_signal_metadata()
+        self._seed_enum_preview_values()
+        return self.dbc_payload()
+
+    def remove_dbc(self, interface: str) -> dict[str, Any]:
+        if interface not in CAN_INTERFACES:
+            raise ValueError(f"Unknown interface: {interface}")
+        target = CONFIG_DIR / f"{interface}.dbc"
+        if target.exists():
+            target.unlink()
+        self.preview_values.clear()
+        self.reload_signal_metadata()
+        self._seed_enum_preview_values()
+        return self.dbc_payload()
+
+    def add_dbc(self, interface: str, content: bytes, original_name: str) -> dict[str, Any]:
+        if interface not in CAN_INTERFACES:
+            raise ValueError(f"Unknown interface: {interface}")
+        if not content:
+            raise ValueError("DBC upload is empty")
+        safe_name = f"{int(time.time() * 1000)}-{Path(original_name).name}"
+        target = CONFIG_DIR / safe_name
+        target.write_bytes(content)
+        self.reload_signal_metadata()
+        return self.dbc_payload()
+
+    def activate_dbc(self, interface: str, filename: str) -> dict[str, Any]:
+        if interface not in CAN_INTERFACES:
+            raise ValueError(f"Unknown interface: {interface}")
+        source = CONFIG_DIR / filename
+        if not source.exists():
+            raise ValueError(f"Unknown DBC file: {filename}")
+        target = CONFIG_DIR / f"{interface}.dbc"
+        target.write_bytes(source.read_bytes())
+        self.preview_values.clear()
+        self.reload_signal_metadata()
+        self._seed_enum_preview_values()
+        return self.dbc_payload()
+
+    def remove_dbc_file(self, filename: str) -> dict[str, Any]:
+        target = CONFIG_DIR / filename
+        if target.exists():
+            target.unlink()
         self.preview_values.clear()
         self.reload_signal_metadata()
         self._seed_enum_preview_values()
@@ -268,6 +324,39 @@ def create_app(config_path: Path = DEFAULT_CONFIG_PATH) -> FastAPI:
     async def put_dbc(interface: str, request: Request) -> dict[str, Any]:
         try:
             return state.replace_dbc(interface, await request.body())
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail={"errors": [str(exc)], "warnings": []}) from exc
+
+    @app.delete("/api/dbcs/{interface}")
+    def delete_dbc(interface: str) -> dict[str, Any]:
+        try:
+            return state.remove_dbc(interface)
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail={"errors": [str(exc)], "warnings": []}) from exc
+
+    @app.post("/api/dbcs/{interface}/add")
+    async def add_dbc(interface: str, request: Request) -> dict[str, Any]:
+        try:
+            content = await request.body()
+            filename = request.headers.get("x-filename") or "uploaded.dbc"
+            return state.add_dbc(interface, content, filename)
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail={"errors": [str(exc)], "warnings": []}) from exc
+
+    @app.post("/api/dbcs/{interface}/activate")
+    def activate_dbc(interface: str, payload: dict[str, Any]) -> dict[str, Any]:
+        try:
+            filename = payload.get("filename")
+            if not filename:
+                raise ValueError("Missing filename")
+            return state.activate_dbc(interface, filename)
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail={"errors": [str(exc)], "warnings": []}) from exc
+
+    @app.delete("/api/dbcs/{interface}/{filename}")
+    def delete_dbc_file(interface: str, filename: str) -> dict[str, Any]:
+        try:
+            return state.remove_dbc_file(filename)
         except Exception as exc:
             raise HTTPException(status_code=400, detail={"errors": [str(exc)], "warnings": []}) from exc
 

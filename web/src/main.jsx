@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { createPortal } from "react-dom";
 import { HexColorPicker } from "react-colorful";
 import { FaFileExport, FaFileImport, FaRegCopy, FaRegSave, FaRegTrashAlt } from "react-icons/fa";
 import "./styles.css";
@@ -68,6 +69,102 @@ function defaultDashboard(name = "New Dashboard") {
   };
 }
 
+function DbcManager({
+  interfaceName,
+  existingDbc,
+  addedFiles = [],
+  onCreateInput,
+  onActivateFile,
+  onRemoveFile,
+}) {
+  const [open, setOpen] = useState(false);
+  const toggleRef = useRef(null);
+  const menuRef = useRef(null);
+  const [menuStyle, setMenuStyle] = useState({});
+
+  useEffect(() => {
+    if (!open) return;
+    function onDocClick(e) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(e.target) &&
+        toggleRef.current &&
+        !toggleRef.current.contains(e.target)
+      ) {
+        setOpen(false);
+      }
+    }
+    function onKey(e) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    window.addEventListener("mousedown", onDocClick);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("mousedown", onDocClick);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  function openMenu() {
+    if (!toggleRef.current) return setOpen(true);
+    const rect = toggleRef.current.getBoundingClientRect();
+    setMenuStyle({
+      position: "absolute",
+      top: `${rect.bottom + window.scrollY}px`,
+      left: `${rect.left + window.scrollX}px`,
+      minWidth: `${Math.max(160, rect.width)}px`,
+      zIndex: 1000,
+    });
+    setOpen(true);
+  }
+
+  function handleToggle() {
+    if (open) setOpen(false); else openMenu();
+  }
+
+  const menu = open
+    ? createPortal(
+        <div ref={menuRef} className="dbc-dropdown-menu" style={menuStyle} role="menu">
+          {addedFiles.length === 0 && <div className="dbc-empty">No added DBCs</div>}
+          {addedFiles.map((item, idx) => (
+            <div className="dbc-item" key={item.id || `${interfaceName}-${idx}`}>
+              <button className="dbc-item-name" onClick={() => { onActivateFile(interfaceName, idx); setOpen(false); }}>
+                {item.name}
+              </button>
+              <button className="dbc-item-remove" onClick={() => onRemoveFile(interfaceName, idx)} aria-label={`Remove ${item.name}`}>
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>,
+        document.body,
+      )
+    : null;
+
+  return (
+    <div className="dbc-pill" key={interfaceName}>
+      <span className="dbc-name">{interfaceName}: {existingDbc?.filename || "No DBC"}{existingDbc?.fallback ? " (fallback)" : ""}</span>
+      <div className="dbc-actions">
+        <button
+          title={`Add DBC for ${interfaceName}`}
+          onClick={() => {
+            onCreateInput(interfaceName);
+          }}
+        >
+          +
+        </button>
+
+        <div className="dbc-dropdown">
+          <button ref={toggleRef} onClick={handleToggle} aria-expanded={open} aria-haspopup="true">
+            ▾
+          </button>
+        </div>
+        {menu}
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [saved, setSaved] = useState(null);
   const [draft, setDraft] = useState(null);
@@ -76,7 +173,7 @@ function App() {
   const [gaugeTypes, setGaugeTypes] = useState({});
   const [signals, setSignals] = useState([]);
   const [signalMetadata, setSignalMetadata] = useState({});
-  const [dbcs, setDbcs] = useState({});
+  const [dbcs, setDbcs] = useState({}); 
   const [selected, setSelected] = useState(0);
   const [warningsByDashboard, setWarningsByDashboard] = useState({});
   const [mockValues, setMockValues] = useState({});
@@ -86,9 +183,112 @@ function App() {
   const [snapIndex, setSnapIndex] = useState(SNAP_OPTIONS.indexOf(20));
   const [brightnessDraft, setBrightnessDraft] = useState(100);
   const importRef = useRef(null);
-  const dbcInputRefs = useRef({});
+
+// VARUN -- added dbcInputRefs for each bus
+  const dbcInputRefsPerBus = useRef({});
+  const [addedDbcsPerBus, setAddedDbcsPerBus] = useState({});
   const draftRef = useRef(null);
   const canvasRef = useRef(null);
+
+  function createInputForInterface(interfaceName) {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".dbc";
+    input.style.display = "none";
+    input.addEventListener("change", async (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      try {
+        await api(`/api/dbcs/${interfaceName}/add`, {
+          method: "POST",
+          headers: { "Content-Type": "application/octet-stream", "X-Filename": file.name },
+          body: await file.arrayBuffer(),
+        });
+        const dbcPayload = await api("/api/dbcs").then((r) => r.json());
+        setDbcs(dbcPayload.dbcs);
+        setAddedDbcsPerBus((prev) => {
+          const next = { ...prev };
+          next[interfaceName] = (dbcPayload.dbcs[interfaceName]?.available || []).map((name) => ({ id: name, name }));
+          return next;
+        });
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        if (input && input.parentNode) input.parentNode.removeChild(input);
+      }
+    });
+    document.body.appendChild(input);
+    input.click();
+  }
+
+  function removeAddedDbc(interfaceName, index) {
+    const arr = addedDbcsPerBus[interfaceName] || [];
+    const entry = arr[index];
+    if (!entry) return;
+    (async () => {
+      try {
+        const payload = await api(`/api/dbcs/${interfaceName}/${encodeURIComponent(entry.name)}`, { method: "DELETE" }).then((r) => r.json());
+        setDbcs(payload.dbcs);
+        setAddedDbcsPerBus((prev) => {
+          const next = { ...prev };
+          next[interfaceName] = (payload.dbcs[interfaceName]?.available || []).map((name) => ({ id: name, name }));
+          return next;
+        });
+      } catch (err) {
+        setError(err.message);
+      }
+    })();
+  }
+
+  async function activateAddedDbc(interfaceName, index) {
+    const arr = addedDbcsPerBus[interfaceName] || [];
+    const entry = arr[index];
+    if (!entry) return;
+    try {
+      const payload = await api(`/api/dbcs/${interfaceName}/activate`, {
+        method: "POST",
+        body: JSON.stringify({ filename: entry.name }),
+      }).then((r) => r.json());
+      const signalPayload = await api("/api/signals").then((r) => r.json());
+      setDbcs(payload.dbcs);
+      setSignals(signalPayload.signals);
+      setSignalMetadata(signalPayload.metadata);
+      setMockValues(
+        Object.fromEntries(
+          Object.entries(signalPayload.metadata)
+            .filter(([, metadata]) => metadata.choices.length > 0)
+            .map(([name, metadata]) => [name, metadata.choices[0].value]),
+        ),
+      );
+      setPreviewNonce(Date.now());
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  function moveAddedDbc(interfaceName, fromIndex, toIndex) {
+    if (fromIndex === toIndex) return;
+    setAddedDbcsPerBus((prev) => {
+      const next = { ...prev };
+      const arr = (next[interfaceName] || []).slice();
+      const item = arr.splice(fromIndex, 1)[0];
+      if (!item) return prev;
+      arr.splice(Math.max(0, Math.min(arr.length, toIndex)), 0, item);
+      next[interfaceName] = arr;
+      return next;
+    });
+  }
+
+  function setAddedDbcPriority(interfaceName, index, priority) {
+    setAddedDbcsPerBus((prev) => {
+      const next = { ...prev };
+      const arr = (next[interfaceName] || []).slice();
+      if (!arr[index]) return prev;
+      arr[index] = { ...arr[index], priority };
+      next[interfaceName] = arr;
+      return next;
+    });
+  }
 
   const dashboards = draft?.dashboards ?? [];
   const dashboard = dashboards.find((item) => item.id === selectedDashboardId) ?? dashboards[0];
@@ -119,6 +319,14 @@ function App() {
         setSignals(signalPayload.signals);
         setSignalMetadata(signalPayload.metadata);
         setDbcs(dbcPayload.dbcs);
+        // initialize added DBCs per bus from server-available list
+        setAddedDbcsPerBus(() => {
+          const next = {};
+          Object.keys(dbcPayload.dbcs || {}).forEach((iface) => {
+            next[iface] = (dbcPayload.dbcs[iface].available || []).map((name) => ({ id: name, name }));
+          });
+          return next;
+        });
         setMockValues(
           Object.fromEntries(
             Object.entries(signalPayload.metadata)
@@ -322,6 +530,28 @@ function App() {
     setPreviewNonce(Date.now());
   }
 
+  async function replaceDbc(interfaceName, file) {
+    if (!file) return;
+    const payload = await api(`/api/dbcs/${interfaceName}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/octet-stream" },
+      body: await file.arrayBuffer(),
+    }).then((r) => r.json());
+    const signalPayload = await api("/api/signals").then((r) => r.json());
+    setDbcs(payload.dbcs);
+    setSignals(signalPayload.signals);
+    setSignalMetadata(signalPayload.metadata);
+    setMockValues(
+      Object.fromEntries(
+        Object.entries(signalPayload.metadata)
+          .filter(([, metadata]) => metadata.choices.length > 0)
+          .map(([name, metadata]) => [name, metadata.choices[0].value]),
+      ),
+    );
+    setPreviewNonce(Date.now());
+  }
+
+
   async function setMock(signal, value) {
     const next = { ...mockValues, [signal]: Number(value) };
     setMockValues(next);
@@ -417,21 +647,21 @@ function App() {
             />
             <strong>{brightnessDraft}%</strong>
           </label>
-          {Object.entries(dbcs).map(([interfaceName, dbc]) => (
-            <div className="dbc-pill" key={interfaceName}>
-              <span>{interfaceName}: {dbc.filename}{dbc.fallback ? " (fallback)" : ""}</span>
-              <button onClick={() => dbcInputRefs.current[interfaceName]?.click()}>Swap</button>
-              <input
-                ref={(node) => {
-                  dbcInputRefs.current[interfaceName] = node;
-                }}
-                type="file"
-                accept=".dbc"
-                hidden
-                onChange={(event) => replaceDbc(interfaceName, event.target.files[0]).catch((err) => setError(err.message))}
-              />
-            </div>
+
+          {/* VARUN CHANGES */}
+          <p>Per-bus DBCs:</p>
+          {Object.keys(dbcs).map((interfaceName) => (
+            <DbcManager
+              key={interfaceName}
+              interfaceName={interfaceName}
+              existingDbc={dbcs[interfaceName]}
+              addedFiles={addedDbcsPerBus[interfaceName] || []}
+              onCreateInput={createInputForInterface}
+              onActivateFile={activateAddedDbc}
+              onRemoveFile={removeAddedDbc}
+            />
           ))}
+          {/* END VARUN CHANGES */}
         </div>
         <nav>
           <button onClick={save}><FaRegSave aria-hidden="true" /> Save</button>
