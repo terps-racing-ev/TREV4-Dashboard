@@ -6,6 +6,7 @@ Handles RX, TX, and UI threads
 import threading
 import time
 import glob
+import os
 import sys
 from pathlib import Path
 
@@ -50,8 +51,8 @@ def search_for_file(filename: str, search_paths: list | None = None) -> Path | N
 
 def main():
 
-    # Simulate values if you don't have CAN hardware
-    SIM_MODE = True
+    # Enable simulation explicitly with TREV_SIM_MODE=1 when no CAN hardware is present.
+    sim_mode = os.getenv("TREV_SIM_MODE", "").strip().lower() in {"1", "true", "yes", "on"}
     CAN_INTERFACES = ("can0", "can1")
     
     ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -80,7 +81,7 @@ def main():
     # Shared state for all threads to access values
     shared_data = LatestValuesTable()
     
-    can_mgr = CANManager(shared_data=shared_data, dbc_paths=dbc_paths, sim_mode=SIM_MODE)
+    can_mgr = CANManager(shared_data=shared_data, dbc_paths=dbc_paths, sim_mode=sim_mode)
     dashboard = Dashboard(shared_data=shared_data, config_path=config_path)
     
     # Load DBC
@@ -89,6 +90,7 @@ def main():
         return
     
     print("Starting CAN listener...")
+    print(f"Simulation mode: {'enabled' if sim_mode else 'disabled'}")
     if not can_mgr.start_can_listener(CAN_INTERFACES):
         print("Failed to start CAN listener. Exiting.")
         return

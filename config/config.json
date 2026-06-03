@@ -1,5 +1,5 @@
 {
-  "brightness": 22,
+  "brightness": 100,
   "active_dashboard_id": "dash-1779601525114-84301",
   "dashboards": [
     {
@@ -833,7 +833,7 @@
         },
         {
           "type": "SignedLinearGauge",
-          "signal": "INV_Torque_Command_Fast",
+          "signal": "VCU_INV_Torque_Cmd",
           "label": "TORQUE",
           "min_val": -230,
           "max_val": 230,
@@ -857,11 +857,11 @@
           ],
           "min_color": [
             0,
-            200,
+            176,
             0
           ],
           "max_color": [
-            255,
+            171,
             0,
             0
           ],
@@ -1227,7 +1227,7 @@
           "box_xywh": [
             520,
             60,
-            170,
+            220,
             80
           ],
           "decimal_places": 0,
@@ -1270,7 +1270,7 @@
           "box_xywh": [
             520,
             140,
-            170,
+            220,
             80
           ],
           "decimal_places": 0,
@@ -1317,45 +1317,6 @@
             80
           ],
           "decimal_places": 1,
-          "box_color": null,
-          "border_color": [
-            255,
-            255,
-            255
-          ],
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": [
-            0,
-            200,
-            0
-          ],
-          "max_color": [
-            255,
-            0,
-            0
-          ],
-          "gradient_text": false,
-          "gradient_box": false,
-          "gradient_border": false,
-          "show_value": true
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "VCU_Heartbeat",
-          "label": "vcuheart",
-          "min_val": 0,
-          "max_val": 100,
-          "box_xywh": [
-            620,
-            280,
-            80,
-            60
-          ],
-          "decimal_places": 0,
           "box_color": null,
           "border_color": [
             255,

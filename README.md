@@ -7,6 +7,7 @@ python -m app.main
 ```
 
 Runtime configuration now lives in `config/config.json`; DBC files live in `config/`.
+Simulation is off by default. To force the old demo behavior, start the app with `TREV_SIM_MODE=1 python -m app.main`.
 
 ## Browser editor
 
