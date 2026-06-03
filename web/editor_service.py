@@ -12,7 +12,15 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from app.dashboard import Dashboard
-from app.dbc_utils import load_signal_metadata
+from app.dbc_utils import (
+    load_dbc_catalog,
+    load_signal_metadata,
+    relative_dbc_path,
+    reserve_dbc_upload_path,
+    resolve_active_dbc_paths,
+    save_dbc_catalog,
+    sort_dbc_entries,
+)
 from app.gauge_config import (
     GAUGE_SPECS,
     get_dashboard_by_id,
@@ -52,46 +60,90 @@ class EditorState:
         self.reload_signal_metadata()
         self._seed_enum_preview_values()
 
-    def active_dbc_paths(self) -> dict[str, Path]:
-        available = sorted(CONFIG_DIR.glob("*.dbc"))
-        fallback = next((path for path in available if path.name not in {f"{interface}.dbc" for interface in CAN_INTERFACES}), None)
-        fallback = fallback or (available[0] if available else None)
-        return {
-            interface: (CONFIG_DIR / f"{interface}.dbc") if (CONFIG_DIR / f"{interface}.dbc").exists() else fallback
-            for interface in CAN_INTERFACES
-            if (CONFIG_DIR / f"{interface}.dbc").exists() or fallback is not None
-        }
+    def dbc_catalog(self) -> dict[str, list[dict[str, Any]]]:
+        return load_dbc_catalog(CONFIG_DIR, CAN_INTERFACES)
+
+    def active_dbc_paths(self) -> dict[str, list[Path]]:
+        return resolve_active_dbc_paths(CONFIG_DIR, CAN_INTERFACES)
 
     def dbc_payload(self) -> dict[str, Any]:
-        paths = self.active_dbc_paths()
+        catalog = self.dbc_catalog()
         return {
             "dbcs": {
                 interface: {
-                    "filename": path.name,
-                    "fallback": path.name != f"{interface}.dbc",
+                    "files": [
+                        {
+                            "id": entry["path"],
+                            "filename": Path(entry["path"]).name,
+                            "enabled": bool(entry.get("enabled", True)),
+                            "priority": int(entry.get("priority", 0)),
+                            "missing": not (CONFIG_DIR / entry["path"]).exists(),
+                            "active": bool(entry.get("enabled", True)) and (CONFIG_DIR / entry["path"]).exists(),
+                        }
+                        for entry in sort_dbc_entries(catalog.get(interface, []))
+                    ],
                 }
-                for interface, path in paths.items()
+                for interface in CAN_INTERFACES
             }
         }
 
     def reload_signal_metadata(self) -> None:
-        unique_paths = sorted(set(self.active_dbc_paths().values()))
-        self.signal_metadata = load_signal_metadata(unique_paths)
+        self.signal_metadata = load_signal_metadata(self.active_dbc_paths())
         self.signal_names = list(self.signal_metadata)
 
-    def replace_dbc(self, interface: str, content: bytes) -> dict[str, Any]:
+    def _refresh_after_dbc_change(self) -> None:
+        self.preview_values.clear()
+        self.reload_signal_metadata()
+        self._seed_enum_preview_values()
+
+    def replace_dbc(self, interface: str, filename: str, content: bytes) -> dict[str, Any]:
         if interface not in CAN_INTERFACES:
             raise ValueError(f"Unknown interface: {interface}")
         if not content:
             raise ValueError("DBC upload is empty")
 
-        target = CONFIG_DIR / f"{interface}.dbc"
+        catalog = self.dbc_catalog()
+        target = reserve_dbc_upload_path(CONFIG_DIR, interface, filename)
         temp_target = target.with_suffix(".dbc.tmp")
         temp_target.write_bytes(content)
         temp_target.replace(target)
-        self.preview_values.clear()
-        self.reload_signal_metadata()
-        self._seed_enum_preview_values()
+        catalog[interface].append(
+            {
+                "path": relative_dbc_path(CONFIG_DIR, target),
+                "enabled": True,
+                "priority": max((int(entry.get("priority", 0)) for entry in catalog[interface]), default=-1) + 1,
+            }
+        )
+        catalog[interface] = sort_dbc_entries(catalog[interface])
+        save_dbc_catalog(CONFIG_DIR, catalog, CAN_INTERFACES)
+        self._refresh_after_dbc_change()
+        return self.dbc_payload()
+
+    def update_dbc_catalog(self, interface: str, files: list[dict[str, Any]]) -> dict[str, Any]:
+        if interface not in CAN_INTERFACES:
+            raise ValueError(f"Unknown interface: {interface}")
+
+        catalog = self.dbc_catalog()
+        existing = {entry["path"]: dict(entry) for entry in catalog[interface]}
+        seen: set[str] = set()
+        next_entries: list[dict[str, Any]] = []
+
+        for item in files:
+            entry_id = str(item.get("id", "")).strip()
+            if not entry_id or entry_id not in existing:
+                raise ValueError(f"Unknown DBC entry: {entry_id}")
+            if entry_id in seen:
+                raise ValueError(f"Duplicate DBC entry: {entry_id}")
+            seen.add(entry_id)
+            current = existing[entry_id]
+            current["enabled"] = bool(item.get("enabled", current.get("enabled", True)))
+            current["priority"] = int(item.get("priority", current.get("priority", 0)))
+            next_entries.append(current)
+
+        next_entries.extend(entry for path, entry in existing.items() if path not in seen)
+        catalog[interface] = sort_dbc_entries(next_entries)
+        save_dbc_catalog(CONFIG_DIR, catalog, CAN_INTERFACES)
+        self._refresh_after_dbc_change()
         return self.dbc_payload()
 
     def _seed_enum_preview_values(self) -> None:
@@ -267,7 +319,15 @@ def create_app(config_path: Path = DEFAULT_CONFIG_PATH) -> FastAPI:
     @app.put("/api/dbcs/{interface}")
     async def put_dbc(interface: str, request: Request) -> dict[str, Any]:
         try:
-            return state.replace_dbc(interface, await request.body())
+            filename = request.headers.get("x-file-name", f"{interface}.dbc")
+            return state.replace_dbc(interface, filename, await request.body())
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail={"errors": [str(exc)], "warnings": []}) from exc
+
+    @app.put("/api/dbcs/{interface}/catalog")
+    def put_dbc_catalog(interface: str, payload: dict[str, Any]) -> dict[str, Any]:
+        try:
+            return state.update_dbc_catalog(interface, payload.get("files", []))
         except Exception as exc:
             raise HTTPException(status_code=400, detail={"errors": [str(exc)], "warnings": []}) from exc
 

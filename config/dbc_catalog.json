@@ -1,0 +1,81 @@
+{
+  "can0": [
+    {
+      "path": "dbcs/can0/Inverter.dbc",
+      "enabled": true,
+      "priority": 5
+    },
+    {
+      "path": "dbcs/can0/VCU.dbc",
+      "enabled": true,
+      "priority": 4
+    },
+    {
+      "path": "dbcs/can0/hvc.dbc",
+      "enabled": true,
+      "priority": 3
+    },
+    {
+      "path": "dbcs/can0/DAQ-Firmware.dbc",
+      "enabled": true,
+      "priority": 2
+    },
+    {
+      "path": "dbcs/can0/Baby_MOBO.dbc",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "path": "dbcs/can0/ControlsBus.dbc",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "path": "dbcs/can0/master.dbc",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "path": "can0.dbc",
+      "enabled": true,
+      "priority": 0
+    }
+  ],
+  "can1": [
+    {
+      "path": "dbcs/can1/master-2.dbc",
+      "enabled": false,
+      "priority": 6
+    },
+    {
+      "path": "dbcs/can1/master.dbc",
+      "enabled": true,
+      "priority": 5
+    },
+    {
+      "path": "dbcs/can1/Inverter.dbc",
+      "enabled": true,
+      "priority": 4
+    },
+    {
+      "path": "dbcs/can1/hvc.dbc",
+      "enabled": true,
+      "priority": 3
+    },
+    {
+      "path": "dbcs/can1/DAQ-Firmware.dbc",
+      "enabled": true,
+      "priority": 2
+    },
+    {
+      "path": "dbcs/can1/Baby_MOBO.dbc",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "path": "can1.dbc",
+      "enabled": true,
+      "priority": 0
+    }
+  ]
+}

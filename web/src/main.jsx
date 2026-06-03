@@ -68,6 +68,14 @@ function defaultDashboard(name = "New Dashboard") {
   };
 }
 
+function defaultMockValues(metadata) {
+  return Object.fromEntries(
+    Object.entries(metadata)
+      .filter(([, signal]) => signal.choices.length > 0)
+      .map(([name, signal]) => [name, signal.choices[0].value]),
+  );
+}
+
 function App() {
   const [saved, setSaved] = useState(null);
   const [draft, setDraft] = useState(null);
@@ -119,16 +127,24 @@ function App() {
         setSignals(signalPayload.signals);
         setSignalMetadata(signalPayload.metadata);
         setDbcs(dbcPayload.dbcs);
-        setMockValues(
-          Object.fromEntries(
-            Object.entries(signalPayload.metadata)
-              .filter(([, metadata]) => metadata.choices.length > 0)
-              .map(([name, metadata]) => [name, metadata.choices[0].value]),
-          ),
-        );
+        setMockValues(defaultMockValues(signalPayload.metadata));
       })
       .catch((err) => setError(err.message));
   }, []);
+
+  function applySignalPayload(signalPayload) {
+    setSignals(signalPayload.signals);
+    setSignalMetadata(signalPayload.metadata);
+    setMockValues(defaultMockValues(signalPayload.metadata));
+  }
+
+  async function refreshDbcState(dbcPayload) {
+    const signalPayload = await api("/api/signals").then((r) => r.json());
+    setDbcs(dbcPayload.dbcs);
+    applySignalPayload(signalPayload);
+    setError("");
+    setPreviewNonce(Date.now());
+  }
 
   function applyConfigPayload(payload) {
     setSaved(payload.saved);
@@ -305,21 +321,57 @@ function App() {
     if (!file) return;
     const payload = await api(`/api/dbcs/${interfaceName}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/octet-stream" },
+      headers: { "Content-Type": "application/octet-stream", "X-File-Name": file.name },
       body: await file.arrayBuffer(),
     }).then((r) => r.json());
-    const signalPayload = await api("/api/signals").then((r) => r.json());
-    setDbcs(payload.dbcs);
-    setSignals(signalPayload.signals);
-    setSignalMetadata(signalPayload.metadata);
-    setMockValues(
-      Object.fromEntries(
-        Object.entries(signalPayload.metadata)
-          .filter(([, metadata]) => metadata.choices.length > 0)
-          .map(([name, metadata]) => [name, metadata.choices[0].value]),
-      ),
-    );
-    setPreviewNonce(Date.now());
+    await refreshDbcState(payload);
+  }
+
+  async function replaceDbcs(interfaceName, files) {
+    let latestPayload = null;
+    for (const file of files) {
+      latestPayload = await api(`/api/dbcs/${interfaceName}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/octet-stream", "X-File-Name": file.name },
+        body: await file.arrayBuffer(),
+      }).then((r) => r.json());
+    }
+    if (latestPayload) {
+      await refreshDbcState(latestPayload);
+    }
+  }
+
+  async function updateDbcCatalog(interfaceName, files) {
+    const payload = await api(`/api/dbcs/${interfaceName}/catalog`, {
+      method: "PUT",
+      body: JSON.stringify({
+        files: files.map(({ id, enabled, priority }) => ({ id, enabled, priority })),
+      }),
+    }).then((r) => r.json());
+    await refreshDbcState(payload);
+  }
+
+  function patchDbcFile(interfaceName, fileId, patch) {
+    const currentFiles = dbcs[interfaceName]?.files ?? [];
+    const nextFiles = currentFiles.map((file) => (file.id === fileId ? { ...file, ...patch } : file));
+
+    setDbcs((current) => ({
+      ...current,
+      [interfaceName]: {
+        ...(current[interfaceName] ?? {}),
+        files: nextFiles,
+      },
+    }));
+
+    updateDbcCatalog(interfaceName, nextFiles).catch(async (err) => {
+      setError(err.message);
+      try {
+        const latestDbcPayload = await api("/api/dbcs").then((r) => r.json());
+        setDbcs(latestDbcPayload.dbcs);
+      } catch {
+        return;
+      }
+    });
   }
 
   async function setMock(signal, value) {
@@ -418,19 +470,61 @@ function App() {
             <strong>{brightnessDraft}%</strong>
           </label>
           {Object.entries(dbcs).map(([interfaceName, dbc]) => (
-            <div className="dbc-pill" key={interfaceName}>
-              <span>{interfaceName}: {dbc.filename}{dbc.fallback ? " (fallback)" : ""}</span>
-              <button onClick={() => dbcInputRefs.current[interfaceName]?.click()}>Swap</button>
+            <section className="dbc-card" key={interfaceName}>
+              <div className="dbc-card-header">
+                <div className="dbc-card-title">
+                  <strong>{interfaceName}</strong>
+                  <span>Higher priority wins for duplicate messages</span>
+                </div>
+                <button type="button" onClick={() => dbcInputRefs.current[interfaceName]?.click()}>Upload DBC</button>
+              </div>
+              <div className="dbc-file-list">
+                {(dbc.files ?? []).length === 0 ? (
+                  <div className="dbc-empty">No DBC files configured.</div>
+                ) : (
+                  dbc.files.map((file) => {
+                    const status = file.missing ? "Missing" : file.active ? "Active" : "Disabled";
+                    const statusClass = file.missing ? "is-missing" : file.active ? "is-active" : "is-disabled";
+
+                    return (
+                      <div className={`dbc-file-row ${file.active ? "" : "inactive"}`.trim()} key={file.id}>
+                        <input
+                          type="checkbox"
+                          checked={file.enabled}
+                          onChange={(event) => patchDbcFile(interfaceName, file.id, { enabled: event.target.checked })}
+                        />
+                        <div className="dbc-file-info">
+                          <span className="dbc-file-name">{file.filename}</span>
+                          <span className={`dbc-file-status ${statusClass}`}>{status}</span>
+                        </div>
+                        <label className="dbc-priority">
+                          <span>Priority</span>
+                          <input
+                            type="number"
+                            value={file.priority}
+                            onChange={(event) => patchDbcFile(interfaceName, file.id, { priority: Number(event.target.value) || 0 })}
+                          />
+                        </label>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
               <input
                 ref={(node) => {
                   dbcInputRefs.current[interfaceName] = node;
                 }}
                 type="file"
                 accept=".dbc"
+                multiple
                 hidden
-                onChange={(event) => replaceDbc(interfaceName, event.target.files[0]).catch((err) => setError(err.message))}
+                onChange={(event) => {
+                  const files = Array.from(event.target.files ?? []);
+                  event.target.value = "";
+                  replaceDbcs(interfaceName, files).catch((err) => setError(err.message));
+                }}
               />
-            </div>
+            </section>
           ))}
         </div>
         <nav>

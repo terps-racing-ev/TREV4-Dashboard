@@ -17,10 +17,12 @@ if __package__ in (None, ""):
     from app.shared_data import LatestValuesTable
     from app.can_manager import CANManager
     from app.dashboard import Dashboard
+    from app.dbc_utils import resolve_active_dbc_paths
 else:
     from .shared_data import LatestValuesTable
     from .can_manager import CANManager
     from .dashboard import Dashboard
+    from .dbc_utils import resolve_active_dbc_paths
 
 
 def search_for_file(filename: str, search_paths: list | None = None) -> Path | None:
@@ -57,21 +59,14 @@ def main():
     
     ROOT_DIR = Path(__file__).resolve().parents[1]
     SEARCH_PATHS = [str(ROOT_DIR / "config"), str(ROOT_DIR)]  # TODO: add USB mount paths
-    
-    # Search for files
-    print("Searching for .dbc file...")
-    dbc_path = search_for_file("*.dbc", SEARCH_PATHS)
-    if not dbc_path:
-        return
+
     def resolve_dbc_paths() -> dict[str, Path]:
-        return {
-            interface: (ROOT_DIR / "config" / f"{interface}.dbc")
-            if (ROOT_DIR / "config" / f"{interface}.dbc").exists()
-            else dbc_path
-            for interface in CAN_INTERFACES
-        }
+        return resolve_active_dbc_paths(ROOT_DIR / "config", CAN_INTERFACES)
 
     dbc_paths = resolve_dbc_paths()
+    if not any(dbc_paths.values()):
+        print("No active DBC files found. Exiting.")
+        return
     
     print("Searching for config.json...")
     config_path = search_for_file("config.json", SEARCH_PATHS)

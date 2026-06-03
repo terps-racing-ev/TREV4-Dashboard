@@ -9,6 +9,7 @@ import can
 import cantools
 
 from .shared_data import LatestValuesTable
+from .dbc_utils import load_merged_dbc
 
 BAUD_RATE = 500000
 
@@ -25,7 +26,7 @@ class CANManager:
     def __init__(
         self,
         shared_data: LatestValuesTable,
-        dbc_paths: Path | Mapping[str, Path] | None = None,
+        dbc_paths: Path | Mapping[str, Path | Sequence[Path]] | None = None,
         sim_mode: bool = False,
         dbc_path: Path | None = None,
     ):
@@ -33,7 +34,7 @@ class CANManager:
         dbc_paths = dbc_paths or dbc_path
         if dbc_paths is None:
             raise ValueError("A DBC path or interface-to-DBC mapping is required")
-        self.dbc_paths = dict(dbc_paths) if isinstance(dbc_paths, Mapping) else {"default": dbc_paths}
+        self.dbc_paths = self._normalize_dbc_paths(dbc_paths)
         self.dbs: dict[str, cantools.database.Database] = {}
         self._dbc_mtimes_ns: dict[str, int] = {}
         self._next_dbc_check_at = 0.0
@@ -49,20 +50,53 @@ class CANManager:
         
         # Simulation mode
         self.sim_mode = sim_mode
+
+    @staticmethod
+    def _coerce_paths(value: Path | Sequence[Path]) -> tuple[Path, ...]:
+        if isinstance(value, Path):
+            return (value,)
+        return tuple(Path(path) for path in value)
+
+    def _normalize_dbc_paths(
+        self,
+        dbc_paths: Path | Mapping[str, Path | Sequence[Path]],
+    ) -> dict[str, tuple[Path, ...]]:
+        if isinstance(dbc_paths, Mapping):
+            return {
+                str(interface): self._coerce_paths(paths)
+                for interface, paths in dbc_paths.items()
+            }
+        return {"default": (dbc_paths,)}
+
+    def _all_dbc_paths(self) -> list[Path]:
+        unique_paths: dict[str, Path] = {}
+        for paths in self.dbc_paths.values():
+            for path in paths:
+                unique_paths[str(path)] = path
+        return list(unique_paths.values())
+
+    def _current_dbc_mtimes(self) -> dict[str, int]:
+        return {
+            str(path): path.stat().st_mtime_ns
+            for path in self._all_dbc_paths()
+        }
     
     def load_dbc(self) -> bool:
         try:
             self.dbs = {
-                interface: cantools.database.load_file(str(path))
-                for interface, path in self.dbc_paths.items()
+                interface: load_merged_dbc(paths)
+                for interface, paths in self.dbc_paths.items()
+                if paths
             }
+            if not self.dbs:
+                print("No active DBC files configured")
+                return False
             self.db = next(iter(self.dbs.values()), None)
-            self._dbc_mtimes_ns = {
-                interface: path.stat().st_mtime_ns
-                for interface, path in self.dbc_paths.items()
-            }
+            self._dbc_mtimes_ns = self._current_dbc_mtimes()
             for interface, db in self.dbs.items():
-                print(f"Loaded {len(db.messages)} message(s) from {interface} dbc")
+                print(
+                    f"Loaded {len(db.messages)} message(s) from {len(self.dbc_paths[interface])} DBC file(s) for {interface}"
+                )
             return True
         except Exception as e:
             print(f"Error loading .dbc file: {e}")
@@ -76,10 +110,7 @@ class CANManager:
         self._next_dbc_check_at = now + 1.0
 
         try:
-            latest_mtimes = {
-                interface: path.stat().st_mtime_ns
-                for interface, path in self.dbc_paths.items()
-            }
+            latest_mtimes = self._current_dbc_mtimes()
         except OSError as exc:
             print(f"Could not check DBC files for reload: {exc}")
             return False
@@ -96,9 +127,9 @@ class CANManager:
         print("DBC reload failed; keeping previous databases")
         return False
 
-    def replace_dbc_paths(self, dbc_paths: Mapping[str, Path]) -> bool:
+    def replace_dbc_paths(self, dbc_paths: Mapping[str, Path | Sequence[Path]]) -> bool:
         """Switch to a new interface-to-DBC mapping and rebuild the signal table."""
-        next_paths = dict(dbc_paths)
+        next_paths = self._normalize_dbc_paths(dbc_paths)
         if next_paths == self.dbc_paths:
             return False
         previous_paths = self.dbc_paths

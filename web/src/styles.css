@@ -45,7 +45,7 @@ h2 {
   margin: 0;
 }
 
-header div {
+header > div {
   display: flex;
   align-items: baseline;
   gap: 12px;
@@ -70,9 +70,10 @@ header nav {
 }
 
 .dbc-center {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: minmax(180px, 210px) repeat(2, minmax(240px, 300px));
+  align-items: start;
+  gap: 12px;
   justify-self: center;
 }
 
@@ -106,18 +107,112 @@ header nav {
   font-weight: 600;
 }
 
-.dbc-pill {
-  display: flex;
-  align-items: center;
+.dbc-card {
+  display: grid;
   gap: 8px;
   border: 1px solid #34405f;
-  border-radius: 999px;
+  border-radius: 16px;
   background: #121a31;
-  padding: 4px 4px 4px 10px;
+  padding: 10px;
+  min-width: 0;
+}
+
+.dbc-card button {
+  padding: 5px 8px;
+}
+
+.dbc-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dbc-card-title {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dbc-card-title strong {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dbc-card-title span,
+.dbc-empty,
+.dbc-priority span {
+  color: #b8c0d9;
+  font-size: 11px;
+}
+
+.dbc-file-list {
+  display: grid;
+  gap: 6px;
+}
+
+.dbc-file-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #28324d;
+  border-radius: 10px;
+  padding: 8px 10px;
   font-size: 12px;
 }
 
-.dbc-pill button {
+.dbc-file-row.inactive {
+  opacity: 0.7;
+}
+
+.dbc-file-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+}
+
+.dbc-file-info {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.dbc-file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dbc-file-status {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dbc-file-status.is-active {
+  color: #6ee7b7;
+}
+
+.dbc-file-status.is-disabled {
+  color: #b8c0d9;
+}
+
+.dbc-file-status.is-missing {
+  color: #fda4af;
+}
+
+.dbc-priority {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.dbc-priority input {
+  width: 72px;
   padding: 5px 8px;
 }
 
@@ -574,6 +669,20 @@ aside {
 
   header nav,
   .dbc-center {
+    justify-self: start;
+  }
+
+  .dbc-center {
+    grid-template-columns: 1fr;
+    width: min(100%, 480px);
+  }
+
+  .dbc-file-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .dbc-priority {
+    grid-column: 2;
     justify-self: start;
   }
 

@@ -7,6 +7,7 @@ python -m app.main
 ```
 
 Runtime configuration now lives in `config/config.json`; DBC files live in `config/`.
+Per-bus DBC selection now lives in `config/dbc_catalog.json`. The editor can upload multiple DBC files for each CAN bus, enable or disable them individually, and assign numeric priorities. Higher priority files win when the same frame exists in more than one active DBC.
 Simulation is off by default. To force the old demo behavior, start the app with `TREV_SIM_MODE=1 python -m app.main`.
 
 ## Browser editor
