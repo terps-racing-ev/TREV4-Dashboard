@@ -3,615 +3,6 @@
   "active_dashboard_id": "dash-1780453775974-76300",
   "dashboards": [
     {
-      "id": "dash-1779330429566-6857",
-      "name": "Caleb's Cool Dash",
-      "display": {
-        "width": 800,
-        "height": 480,
-        "bg_color": [
-          0,
-          0,
-          0
-        ]
-      },
-      "gauges": [
-        {
-          "type": "SimpleGauge",
-          "signal": "VCU_Speed",
-          "label": "SPEED",
-          "min_val": 0,
-          "max_val": 99,
-          "box_xywh": [
-            260,
-            140,
-            240,
-            240
-          ],
-          "decimal_places": 0,
-          "box_color": null,
-          "border_color": [
-            255,
-            255,
-            255
-          ],
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": [
-            0,
-            200,
-            0
-          ],
-          "max_color": [
-            255,
-            0,
-            0
-          ],
-          "gradient_text": false,
-          "gradient_box": false,
-          "gradient_border": false,
-          "show_value": true
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "HVC_Pack_Voltage",
-          "label": "PACK V",
-          "min_val": 300,
-          "max_val": 455,
-          "box_xywh": [
-            60,
-            100,
-            180,
-            180
-          ],
-          "decimal_places": 0,
-          "box_color": [
-            255,
-            255,
-            255
-          ],
-          "border_color": [
-            255,
-            255,
-            255
-          ],
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": [
-            255,
-            0,
-            0
-          ],
-          "max_color": [
-            0,
-            200,
-            0
-          ],
-          "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
-          "show_value": true
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "HVC_Cell_Volt_Min",
-          "label": "MIN CELL V",
-          "min_val": 2.8,
-          "max_val": 4.2,
-          "box_xywh": [
-            540,
-            100,
-            180,
-            140
-          ],
-          "decimal_places": 2,
-          "box_color": [
-            255,
-            255,
-            255
-          ],
-          "border_color": [
-            255,
-            255,
-            255
-          ],
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": [
-            255,
-            0,
-            0
-          ],
-          "max_color": [
-            0,
-            200,
-            0
-          ],
-          "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
-          "show_value": true
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "HVC_Cell_Temp_Max",
-          "label": "MAX CELL TEMP",
-          "min_val": 0,
-          "max_val": 60,
-          "box_xywh": [
-            540,
-            260,
-            180,
-            140
-          ],
-          "decimal_places": 0,
-          "box_color": [
-            255,
-            255,
-            255
-          ],
-          "border_color": [
-            255,
-            255,
-            255
-          ],
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": [
-            0,
-            200,
-            0
-          ],
-          "max_color": [
-            255,
-            0,
-            0
-          ],
-          "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
-          "show_value": true
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "VCU_State",
-          "label": "VCU STATE",
-          "min_val": 0,
-          "max_val": 5,
-          "box_xywh": [
-            280,
-            20,
-            240,
-            80
-          ],
-          "decimal_places": 0,
-          "box_color": null,
-          "border_color": [
-            255,
-            255,
-            255
-          ],
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": [
-            0,
-            200,
-            0
-          ],
-          "max_color": [
-            255,
-            0,
-            0
-          ],
-          "gradient_text": false,
-          "gradient_box": false,
-          "gradient_border": false,
-          "show_value": true
-        },
-        {
-          "type": "SignedLinearGauge",
-          "signal": "INV_Torque_Feedback_Fast",
-          "label": "TORQUE",
-          "min_val": -230,
-          "max_val": 230,
-          "box_xywh": [
-            740,
-            80,
-            20,
-            350
-          ],
-          "decimal_places": 0,
-          "box_color": [
-            23,
-            23,
-            23
-          ],
-          "border_color": null,
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": [
-            0,
-            200,
-            0
-          ],
-          "max_color": [
-            255,
-            0,
-            0
-          ],
-          "gradient_text": false,
-          "gradient_box": false,
-          "gradient_border": false,
-          "pos_color": null,
-          "neg_color": null,
-          "gradient_fill": false,
-          "vertical": true,
-          "show_value": false
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "MOBO_SDC_Raw",
-          "label": "RAW",
-          "min_val": 0,
-          "max_val": 1,
-          "box_xywh": [
-            20,
-            20,
-            60,
-            40
-          ],
-          "decimal_places": 0,
-          "box_color": [
-            255,
-            255,
-            255
-          ],
-          "border_color": [
-            255,
-            255,
-            255
-          ],
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": [
-            255,
-            0,
-            0
-          ],
-          "max_color": [
-            0,
-            200,
-            0
-          ],
-          "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
-          "show_value": false
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "MOBO_SDC_Post_IL",
-          "label": "IL",
-          "min_val": 0,
-          "max_val": 1,
-          "box_xywh": [
-            80,
-            20,
-            60,
-            40
-          ],
-          "decimal_places": 0,
-          "box_color": [
-            255,
-            255,
-            255
-          ],
-          "border_color": [
-            255,
-            255,
-            255
-          ],
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": [
-            255,
-            0,
-            0
-          ],
-          "max_color": [
-            0,
-            200,
-            0
-          ],
-          "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
-          "show_value": false
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "MOBO_SDC_Post_Loop",
-          "label": "LOOP",
-          "min_val": 0,
-          "max_val": 1,
-          "box_xywh": [
-            140,
-            20,
-            60,
-            40
-          ],
-          "decimal_places": 0,
-          "box_color": [
-            255,
-            255,
-            255
-          ],
-          "border_color": [
-            255,
-            255,
-            255
-          ],
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": [
-            255,
-            0,
-            0
-          ],
-          "max_color": [
-            0,
-            200,
-            0
-          ],
-          "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
-          "show_value": false
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "HVC_SDC_OK",
-          "label": "HVC",
-          "min_val": 0,
-          "max_val": 1,
-          "box_xywh": [
-            200,
-            20,
-            60,
-            40
-          ],
-          "decimal_places": 0,
-          "box_color": [
-            255,
-            255,
-            255
-          ],
-          "border_color": [
-            255,
-            255,
-            255
-          ],
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": [
-            255,
-            0,
-            0
-          ],
-          "max_color": [
-            0,
-            200,
-            0
-          ],
-          "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
-          "show_value": false
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "VCU_APPS1_Valid",
-          "label": "AP1",
-          "min_val": 0,
-          "max_val": 1,
-          "box_xywh": [
-            600,
-            20,
-            60,
-            40
-          ],
-          "decimal_places": 0,
-          "box_color": [
-            255,
-            255,
-            255
-          ],
-          "border_color": [
-            255,
-            255,
-            255
-          ],
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": [
-            255,
-            0,
-            0
-          ],
-          "max_color": [
-            0,
-            200,
-            0
-          ],
-          "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
-          "show_value": false
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "VCU_APPS2_Valid",
-          "label": "AP2",
-          "min_val": 0,
-          "max_val": 1,
-          "box_xywh": [
-            660,
-            20,
-            60,
-            40
-          ],
-          "decimal_places": 0,
-          "box_color": [
-            255,
-            255,
-            255
-          ],
-          "border_color": [
-            255,
-            255,
-            255
-          ],
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": [
-            255,
-            0,
-            0
-          ],
-          "max_color": [
-            0,
-            200,
-            0
-          ],
-          "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
-          "show_value": false
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "VCU_BSE_Valid",
-          "label": "BSE",
-          "min_val": 0,
-          "max_val": 1,
-          "box_xywh": [
-            720,
-            20,
-            60,
-            40
-          ],
-          "decimal_places": 0,
-          "box_color": [
-            255,
-            255,
-            255
-          ],
-          "border_color": [
-            255,
-            255,
-            255
-          ],
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": [
-            255,
-            0,
-            0
-          ],
-          "max_color": [
-            0,
-            200,
-            0
-          ],
-          "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
-          "show_value": false
-        },
-        {
-          "type": "SimpleGauge",
-          "signal": "VCU_RTD_Active",
-          "label": "RTD",
-          "min_val": 0,
-          "max_val": 1,
-          "box_xywh": [
-            540,
-            20,
-            60,
-            40
-          ],
-          "decimal_places": 0,
-          "box_color": [
-            255,
-            255,
-            255
-          ],
-          "border_color": [
-            255,
-            255,
-            255
-          ],
-          "text_color": [
-            255,
-            255,
-            255
-          ],
-          "min_color": [
-            255,
-            0,
-            0
-          ],
-          "max_color": [
-            0,
-            200,
-            0
-          ],
-          "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
-          "show_value": false
-        }
-      ]
-    },
-    {
       "id": "dash-1779601525114-84301",
       "name": "Simple Driving Dash",
       "display": {
@@ -1581,7 +972,7 @@
     },
     {
       "id": "dash-1780453775974-76300",
-      "name": "Simple Driving Dash Copy",
+      "name": "Best Dash",
       "display": {
         "width": 800,
         "height": 480,
@@ -1594,15 +985,15 @@
       "gauges": [
         {
           "type": "SimpleGauge",
-          "signal": "INV_Motor_Speed",
-          "label": "SPEED",
+          "signal": "VCU_Speed_MPH",
+          "label": "SPEED MPH",
           "min_val": 0,
           "max_val": 99,
           "box_xywh": [
-            285,
-            95,
-            215,
-            225
+            280,
+            100,
+            220,
+            160
           ],
           "decimal_places": 0,
           "box_color": null,
@@ -1714,19 +1105,19 @@
           ],
           "gradient_text": false,
           "gradient_box": true,
-          "gradient_border": false,
+          "gradient_border": true,
           "show_value": true
         },
         {
           "type": "SimpleGauge",
           "signal": "HVC_Cell_Temp_Max",
-          "label": "MAX CELL TEMP",
-          "min_val": 0,
-          "max_val": 60,
+          "label": "MAX CELL T",
+          "min_val": 45,
+          "max_val": 55,
           "box_xywh": [
             0,
             200,
-            180,
+            140,
             80
           ],
           "decimal_places": 1,
@@ -1747,8 +1138,8 @@
           ],
           "min_color": [
             0,
-            200,
-            0
+            199,
+            9
           ],
           "max_color": [
             255,
@@ -1757,7 +1148,7 @@
           ],
           "gradient_text": false,
           "gradient_box": true,
-          "gradient_border": false,
+          "gradient_border": true,
           "show_value": true
         },
         {
@@ -1801,13 +1192,13 @@
         },
         {
           "type": "SignedLinearGauge",
-          "signal": "VCU_INV_Torque_Cmd",
-          "label": "TORQUE",
-          "min_val": -230,
+          "signal": "HS_Torque_Command",
+          "label": "",
+          "min_val": -80,
           "max_val": 230,
           "box_xywh": [
-            750,
-            80,
+            760,
+            60,
             30,
             350
           ],
@@ -1825,20 +1216,28 @@
           ],
           "min_color": [
             0,
-            176,
+            255,
             0
           ],
           "max_color": [
-            171,
+            255,
             0,
             0
           ],
           "gradient_text": false,
           "gradient_box": false,
           "gradient_border": false,
-          "pos_color": null,
-          "neg_color": null,
-          "gradient_fill": true,
+          "pos_color": [
+            255,
+            255,
+            255
+          ],
+          "neg_color": [
+            0,
+            255,
+            0
+          ],
+          "gradient_fill": false,
           "vertical": true,
           "show_value": false
         },
@@ -1930,7 +1329,7 @@
         },
         {
           "type": "SimpleGauge",
-          "signal": "MOBO_SDC_Post_Loop",
+          "signal": "MOBO_SDC3_Debounced",
           "label": "LOOP",
           "min_val": 0,
           "max_val": 1,
@@ -1973,7 +1372,7 @@
         },
         {
           "type": "SimpleGauge",
-          "signal": "HVC_SDC_OK",
+          "signal": "HVC_SDC_Open",
           "label": "HVC",
           "min_val": 0,
           "max_val": 1,
@@ -2000,13 +1399,13 @@
             255
           ],
           "min_color": [
-            255,
             0,
+            200,
             0
           ],
           "max_color": [
+            255,
             0,
-            200,
             0
           ],
           "gradient_text": false,
@@ -2188,22 +1587,18 @@
         },
         {
           "type": "SimpleGauge",
-          "signal": "FR_BrakeTemp_Ch3",
-          "label": "FR BRAKE TEMP",
+          "signal": "FR_BrakeTemp_Ch4",
+          "label": "FR BT",
           "min_val": 0,
           "max_val": 999,
           "box_xywh": [
-            520,
+            640,
             60,
-            220,
-            60
+            80,
+            80
           ],
           "decimal_places": 0,
-          "box_color": [
-            255,
-            255,
-            255
-          ],
+          "box_color": null,
           "border_color": [
             255,
             255,
@@ -2225,28 +1620,24 @@
             0
           ],
           "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
+          "gradient_box": false,
+          "gradient_border": true,
           "show_value": true
         },
         {
           "type": "SimpleGauge",
-          "signal": "BL_BrakeTemp_Ch3",
-          "label": "RL BRAKE TEMP",
+          "signal": "BL_BrakeTemp_Ch4",
+          "label": "FL BT",
           "min_val": 0,
           "max_val": 999,
           "box_xywh": [
-            520,
-            120,
-            220,
-            60
+            560,
+            60,
+            80,
+            80
           ],
           "decimal_places": 0,
-          "box_color": [
-            255,
-            255,
-            255
-          ],
+          "box_color": null,
           "border_color": [
             255,
             255,
@@ -2268,20 +1659,20 @@
             0
           ],
           "gradient_text": false,
-          "gradient_box": true,
-          "gradient_border": false,
+          "gradient_box": false,
+          "gradient_border": true,
           "show_value": true
         },
         {
           "type": "SimpleGauge",
           "signal": "HVC_Cell_Temp_Min",
-          "label": "MIN CELL TEMP",
+          "label": "MIN CELL T",
           "min_val": 0,
           "max_val": 60,
           "box_xywh": [
             0,
             280,
-            180,
+            140,
             80
           ],
           "decimal_places": 1,
@@ -2320,7 +1711,7 @@
           "box_xywh": [
             0,
             400,
-            120,
+            80,
             80
           ],
           "decimal_places": 0,
@@ -2353,13 +1744,13 @@
         {
           "type": "SimpleGauge",
           "signal": "MOBO_Battery_Voltage",
-          "label": "LVBATT V",
+          "label": "LVB V",
           "min_val": 0,
           "max_val": 15,
           "box_xywh": [
-            120,
+            80,
             400,
-            120,
+            80,
             80
           ],
           "decimal_places": 2,
@@ -2392,13 +1783,13 @@
         {
           "type": "SimpleGauge",
           "signal": "MOBO_LV_Current",
-          "label": "LVBATT A",
+          "label": "LVB A",
           "min_val": 0,
           "max_val": 50,
           "box_xywh": [
-            240,
+            160,
             400,
-            120,
+            80,
             80
           ],
           "decimal_places": 2,
@@ -2435,7 +1826,7 @@
           "min_val": 0,
           "max_val": 1,
           "box_xywh": [
-            360,
+            340,
             400,
             60,
             80
@@ -2464,7 +1855,7 @@
           ],
           "gradient_text": true,
           "gradient_box": false,
-          "gradient_border": false,
+          "gradient_border": true,
           "show_value": true
         },
         {
@@ -2474,7 +1865,7 @@
           "min_val": 0,
           "max_val": 1,
           "box_xywh": [
-            420,
+            400,
             400,
             60,
             80
@@ -2503,7 +1894,7 @@
           ],
           "gradient_text": true,
           "gradient_box": false,
-          "gradient_border": false,
+          "gradient_border": true,
           "show_value": true
         },
         {
@@ -2513,7 +1904,7 @@
           "min_val": 0,
           "max_val": 1,
           "box_xywh": [
-            480,
+            460,
             400,
             60,
             80
@@ -2542,19 +1933,19 @@
           ],
           "gradient_text": true,
           "gradient_box": false,
-          "gradient_border": false,
+          "gradient_border": true,
           "show_value": true
         },
         {
           "type": "SimpleGauge",
           "signal": "VCU_BSE_PSI",
-          "label": "FRONT BSE PSI",
+          "label": "F BSE",
           "min_val": 0,
           "max_val": 100,
           "box_xywh": [
-            520,
-            180,
-            220,
+            540,
+            400,
+            80,
             80
           ],
           "decimal_places": 0,
@@ -2587,13 +1978,13 @@
         {
           "type": "SimpleGauge",
           "signal": "MOBO_BSE_PSI_Rear",
-          "label": "REAR BSE PSI",
+          "label": "R BSE",
           "min_val": 0,
           "max_val": 100,
           "box_xywh": [
-            520,
-            260,
-            220,
+            620,
+            400,
+            80,
             80
           ],
           "decimal_places": 0,
@@ -2626,14 +2017,287 @@
         {
           "type": "SimpleGauge",
           "signal": "CMD_Torque_Command",
-          "label": "TORQUE RQ",
+          "label": "TRQ",
           "min_val": 0,
           "max_val": 100,
           "box_xywh": [
-            560,
-            340,
-            140,
+            700,
+            400,
+            60,
             80
+          ],
+          "decimal_places": 0,
+          "box_color": null,
+          "border_color": [
+            255,
+            255,
+            255
+          ],
+          "text_color": [
+            255,
+            255,
+            255
+          ],
+          "min_color": [
+            0,
+            200,
+            0
+          ],
+          "max_color": [
+            255,
+            0,
+            0
+          ],
+          "gradient_text": false,
+          "gradient_box": false,
+          "gradient_border": false,
+          "show_value": true
+        },
+        {
+          "type": "SimpleGauge",
+          "signal": "HVC_SOC",
+          "label": "SOC %",
+          "min_val": 0,
+          "max_val": 99,
+          "box_xywh": [
+            560,
+            140,
+            160,
+            100
+          ],
+          "decimal_places": 0,
+          "box_color": null,
+          "border_color": [
+            255,
+            255,
+            255
+          ],
+          "text_color": [
+            255,
+            255,
+            255
+          ],
+          "min_color": [
+            199,
+            0,
+            0
+          ],
+          "max_color": [
+            23,
+            255,
+            0
+          ],
+          "gradient_text": true,
+          "gradient_box": false,
+          "gradient_border": true,
+          "show_value": true
+        },
+        {
+          "type": "SimpleGauge",
+          "signal": "MOBO_LV_Ah_Consumed",
+          "label": "LVB Ah",
+          "min_val": 0,
+          "max_val": 30,
+          "box_xywh": [
+            240,
+            400,
+            80,
+            80
+          ],
+          "decimal_places": 2,
+          "box_color": null,
+          "border_color": [
+            255,
+            255,
+            255
+          ],
+          "text_color": [
+            255,
+            255,
+            255
+          ],
+          "min_color": [
+            0,
+            200,
+            0
+          ],
+          "max_color": [
+            255,
+            0,
+            0
+          ],
+          "gradient_text": false,
+          "gradient_box": false,
+          "gradient_border": false,
+          "show_value": true
+        },
+        {
+          "type": "SimpleGauge",
+          "signal": "INV_Coolant_Temp",
+          "label": "CLNT",
+          "min_val": 0,
+          "max_val": 100,
+          "box_xywh": [
+            140,
+            280,
+            100,
+            80
+          ],
+          "decimal_places": 0,
+          "box_color": null,
+          "border_color": [
+            255,
+            255,
+            255
+          ],
+          "text_color": [
+            255,
+            255,
+            255
+          ],
+          "min_color": [
+            0,
+            200,
+            0
+          ],
+          "max_color": [
+            255,
+            0,
+            0
+          ],
+          "gradient_text": false,
+          "gradient_box": false,
+          "gradient_border": false,
+          "show_value": true
+        },
+        {
+          "type": "SimpleGauge",
+          "signal": "HVC_Cell_Volt_Max",
+          "label": "MAX C V",
+          "min_val": 2.8,
+          "max_val": 4.2,
+          "box_xywh": [
+            140,
+            200,
+            100,
+            80
+          ],
+          "decimal_places": 2,
+          "box_color": null,
+          "border_color": [
+            255,
+            255,
+            255
+          ],
+          "text_color": [
+            255,
+            255,
+            255
+          ],
+          "min_color": [
+            0,
+            200,
+            0
+          ],
+          "max_color": [
+            255,
+            0,
+            0
+          ],
+          "gradient_text": false,
+          "gradient_box": false,
+          "gradient_border": false,
+          "show_value": true
+        },
+        {
+          "type": "SimpleGauge",
+          "signal": "VCU_Launch_State_Machine",
+          "label": "LAUNCH",
+          "min_val": 0,
+          "max_val": 100,
+          "box_xywh": [
+            360,
+            340,
+            120,
+            60
+          ],
+          "decimal_places": 0,
+          "box_color": null,
+          "border_color": [
+            255,
+            255,
+            255
+          ],
+          "text_color": [
+            255,
+            255,
+            255
+          ],
+          "min_color": [
+            0,
+            200,
+            0
+          ],
+          "max_color": [
+            255,
+            0,
+            0
+          ],
+          "gradient_text": false,
+          "gradient_box": false,
+          "gradient_border": false,
+          "show_value": true
+        },
+        {
+          "type": "SimpleGauge",
+          "signal": "DBF_Lap_Timer_Lap_Count",
+          "label": "LAP #",
+          "min_val": 0,
+          "max_val": 50,
+          "box_xywh": [
+            520,
+            280,
+            100,
+            100
+          ],
+          "decimal_places": 0,
+          "box_color": null,
+          "border_color": [
+            255,
+            255,
+            255
+          ],
+          "text_color": [
+            255,
+            255,
+            255
+          ],
+          "min_color": [
+            0,
+            200,
+            0
+          ],
+          "max_color": [
+            255,
+            0,
+            0
+          ],
+          "gradient_text": false,
+          "gradient_box": false,
+          "gradient_border": false,
+          "show_value": true
+        },
+        {
+          "type": "SimpleGauge",
+          "signal": "DBF_Lap_Timer_Current_Lap",
+          "label": "CURR LAP",
+          "min_val": 0,
+          "max_val": 200,
+          "box_xywh": [
+            620,
+            280,
+            120,
+            100
           ],
           "decimal_places": 0,
           "box_color": null,

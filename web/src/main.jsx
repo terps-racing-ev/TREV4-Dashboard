@@ -351,6 +351,13 @@ function App() {
     await refreshDbcState(payload);
   }
 
+  async function deleteDbc(interfaceName, fileId) {
+    const payload = await api(`/api/dbcs/${interfaceName}/${fileId}`, {
+      method: "DELETE",
+    }).then((r) => r.json());
+    await refreshDbcState(payload);
+  }
+
   function patchDbcFile(interfaceName, fileId, patch) {
     const currentFiles = dbcs[interfaceName]?.files ?? [];
     const nextFiles = currentFiles.map((file) => (file.id === fileId ? { ...file, ...patch } : file));
@@ -505,6 +512,14 @@ function App() {
                             onChange={(event) => patchDbcFile(interfaceName, file.id, { priority: Number(event.target.value) || 0 })}
                           />
                         </label>
+                        <button
+                          type="button"
+                          className="dbc-delete-btn"
+                          title="Delete DBC file"
+                          onClick={() => deleteDbc(interfaceName, file.id).catch((err) => setError(err.message))}
+                        >
+                          <FaRegTrashAlt aria-hidden="true" />
+                        </button>
                       </div>
                     );
                   })

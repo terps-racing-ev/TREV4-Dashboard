@@ -103,17 +103,56 @@ class EditorState:
             raise ValueError("DBC upload is empty")
 
         catalog = self.dbc_catalog()
-        target = reserve_dbc_upload_path(CONFIG_DIR, interface, filename)
+        uploaded_stem = Path(filename).stem.strip()
+
+        # Check if a DBC with the same base name already exists in the catalog
+        existing_entry = None
+        for entry in catalog[interface]:
+            if Path(entry["path"]).stem == uploaded_stem:
+                existing_entry = entry
+                break
+
+        if existing_entry is not None:
+            # Overwrite the existing file in-place
+            target = CONFIG_DIR / existing_entry["path"]
+        else:
+            target = reserve_dbc_upload_path(CONFIG_DIR, interface, filename)
+
         temp_target = target.with_suffix(".dbc.tmp")
         temp_target.write_bytes(content)
         temp_target.replace(target)
-        catalog[interface].append(
-            {
-                "path": relative_dbc_path(CONFIG_DIR, target),
-                "enabled": True,
-                "priority": max((int(entry.get("priority", 0)) for entry in catalog[interface]), default=-1) + 1,
-            }
-        )
+
+        if existing_entry is None:
+            # Only append a new catalog entry if this is a new file
+            catalog[interface].append(
+                {
+                    "path": relative_dbc_path(CONFIG_DIR, target),
+                    "enabled": True,
+                    "priority": max((int(entry.get("priority", 0)) for entry in catalog[interface]), default=-1) + 1,
+                }
+            )
+        catalog[interface] = sort_dbc_entries(catalog[interface])
+        save_dbc_catalog(CONFIG_DIR, catalog, CAN_INTERFACES)
+        self._refresh_after_dbc_change()
+        return self.dbc_payload()
+
+    def delete_dbc(self, interface: str, file_id: str) -> dict[str, Any]:
+        if interface not in CAN_INTERFACES:
+            raise ValueError(f"Unknown interface: {interface}")
+
+        catalog = self.dbc_catalog()
+        original_len = len(catalog[interface])
+        catalog[interface] = [
+            entry for entry in catalog[interface] if entry["path"] != file_id
+        ]
+        if len(catalog[interface]) == original_len:
+            raise ValueError(f"Unknown DBC entry: {file_id}")
+
+        # Optionally remove the file from disk
+        file_path = CONFIG_DIR / file_id
+        if file_path.exists():
+            file_path.unlink()
+
         catalog[interface] = sort_dbc_entries(catalog[interface])
         save_dbc_catalog(CONFIG_DIR, catalog, CAN_INTERFACES)
         self._refresh_after_dbc_change()
@@ -321,6 +360,13 @@ def create_app(config_path: Path = DEFAULT_CONFIG_PATH) -> FastAPI:
         try:
             filename = request.headers.get("x-file-name", f"{interface}.dbc")
             return state.replace_dbc(interface, filename, await request.body())
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail={"errors": [str(exc)], "warnings": []}) from exc
+
+    @app.delete("/api/dbcs/{interface}/{file_path:path}")
+    def delete_dbc(interface: str, file_path: str) -> dict[str, Any]:
+        try:
+            return state.delete_dbc(interface, file_path)
         except Exception as exc:
             raise HTTPException(status_code=400, detail={"errors": [str(exc)], "warnings": []}) from exc
 

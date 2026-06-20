@@ -154,7 +154,7 @@ header nav {
 
 .dbc-file-row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 8px;
   border: 1px solid #28324d;
@@ -214,6 +214,24 @@ header nav {
 .dbc-priority input {
   width: 72px;
   padding: 5px 8px;
+}
+
+.dbc-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: none;
+  background: transparent;
+  color: #b8c0d9;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.dbc-delete-btn:hover {
+  background: #3b1b2b;
+  color: #fda4af;
 }
 
 button,
