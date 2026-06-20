@@ -29,6 +29,7 @@ from app.gauge_config import (
     save_dashboard_library_config,
     validate_layout,
 )
+from app.lap_timer import lap_timer_signal_metadata
 from app.shared_data import LatestValuesTable
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -89,6 +90,8 @@ class EditorState:
 
     def reload_signal_metadata(self) -> None:
         self.signal_metadata = load_signal_metadata(self.active_dbc_paths())
+        self.signal_metadata.update(lap_timer_signal_metadata(self.draft.get("lap_timer")))
+        self.signal_metadata = dict(sorted(self.signal_metadata.items()))
         self.signal_names = list(self.signal_metadata)
 
     def _refresh_after_dbc_change(self) -> None:
@@ -194,6 +197,9 @@ class EditorState:
                 first_choice = choices[0]
                 raw_values[name] = first_choice["value"]
                 display_values[name] = first_choice["label"]
+        for name in lap_timer_signal_metadata(self.draft.get("lap_timer")):
+            raw_values.setdefault(name, 0)
+            display_values.setdefault(name, 0)
         self.preview_values.update(raw_values, display_values)
 
     def update_preview_values(self, payload: dict[str, Any]) -> None:
@@ -231,6 +237,7 @@ class EditorState:
 
     def replace_draft(self, raw: dict[str, Any]) -> dict[str, Any]:
         self.draft = normalize_dashboard_library_config(raw)
+        self.reload_signal_metadata()
         if not any(dashboard["id"] == self.selected_dashboard_id for dashboard in self.draft["dashboards"]):
             self.selected_dashboard_id = self.draft["active_dashboard_id"]
         return self.response_payload()

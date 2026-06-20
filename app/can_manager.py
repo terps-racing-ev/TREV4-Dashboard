@@ -10,6 +10,7 @@ import cantools
 
 from .shared_data import LatestValuesTable
 from .dbc_utils import load_merged_dbc
+from .lap_timer import LapTimer
 
 BAUD_RATE = 500000
 
@@ -29,6 +30,7 @@ class CANManager:
         dbc_paths: Path | Mapping[str, Path | Sequence[Path]] | None = None,
         sim_mode: bool = False,
         dbc_path: Path | None = None,
+        lap_timer_config: dict[str, Any] | None = None,
     ):
         self.db: Optional[cantools.database.Database] = None
         dbc_paths = dbc_paths or dbc_path
@@ -43,6 +45,7 @@ class CANManager:
         
         # Shared state for latest values
         self.shared_data = shared_data
+        self.lap_timer = LapTimer(shared_data, lap_timer_config)
         
         # Thread control
         self._rx_thread_active = False
@@ -164,6 +167,7 @@ class CANManager:
             }
             # Update shared data (now keyed by signal name)
             self.shared_data.update(decoded, display_decoded)
+            self.lap_timer.process_signals(decoded)
             return display_decoded
         except KeyError:
             # Message ID not in database
@@ -278,6 +282,7 @@ class CANManager:
                         # Update shared data
                         if sim_signals:
                             self.shared_data.update(sim_signals, display_signals)
+                            self.lap_timer.process_signals(sim_signals)
                 
                 time.sleep(0.5)
         except Exception as e:

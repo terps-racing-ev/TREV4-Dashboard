@@ -2250,7 +2250,7 @@
         },
         {
           "type": "SimpleGauge",
-          "signal": "DBF_Lap_Timer_Lap_Count",
+          "signal": "Dashboard_Lap_Count",
           "label": "LAP #",
           "min_val": 0,
           "max_val": 50,
@@ -2289,7 +2289,7 @@
         },
         {
           "type": "SimpleGauge",
-          "signal": "DBF_Lap_Timer_Current_Lap",
+          "signal": "Dashboard_Current_Lap_s",
           "label": "CURR LAP",
           "min_val": 0,
           "max_val": 200,
@@ -2328,5 +2328,13 @@
         }
       ]
     }
-  ]
+  ],
+  "lap_timer": {
+    "enabled": true,
+    "latitude_signal": "Latitude",
+    "pit_limit_latitude": 42.0681971316922,
+    "bucket_samples": 10,
+    "lap_count_signal": "Dashboard_Lap_Count",
+    "current_lap_signal": "Dashboard_Current_Lap_s"
+  }
 }

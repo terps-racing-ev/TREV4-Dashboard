@@ -93,6 +93,7 @@ function App() {
   const [interaction, setInteraction] = useState(null);
   const [snapIndex, setSnapIndex] = useState(SNAP_OPTIONS.indexOf(20));
   const [brightnessDraft, setBrightnessDraft] = useState(100);
+  const [pitLimitDraft, setPitLimitDraft] = useState(42.0681971316922);
   const importRef = useRef(null);
   const dbcInputRefs = useRef({});
   const draftRef = useRef(null);
@@ -107,7 +108,10 @@ function App() {
 
   useEffect(() => {
     draftRef.current = draft;
-    if (draft) setBrightnessDraft(draft.brightness ?? 100);
+    if (draft) {
+      setBrightnessDraft(draft.brightness ?? 100);
+      setPitLimitDraft(draft.lap_timer?.pit_limit_latitude ?? 42.0681971316922);
+    }
   }, [draft]);
 
   useEffect(() => {
@@ -179,6 +183,19 @@ function App() {
     if (brightness === (draft.brightness ?? 100)) return;
     const next = clone(draft);
     next.brightness = brightness;
+    pushDraft(next).catch((err) => setError(err.message));
+  }
+
+  function commitPitLimit(value = pitLimitDraft) {
+    if (!draft) return;
+    const pitLimit = Number(value);
+    if (!Number.isFinite(pitLimit)) return;
+    if (pitLimit === (draft.lap_timer?.pit_limit_latitude ?? 42.0681971316922)) return;
+    const next = clone(draft);
+    next.lap_timer = {
+      ...(next.lap_timer ?? {}),
+      pit_limit_latitude: pitLimit,
+    };
     pushDraft(next).catch((err) => setError(err.message));
   }
 
@@ -475,6 +492,19 @@ function App() {
               onBlur={(event) => commitBrightness(event.currentTarget.value)}
             />
             <strong>{brightnessDraft}%</strong>
+          </label>
+          <label className="brightness-control">
+            <span>Pit latitude</span>
+            <input
+              type="number"
+              step="0.0000000000001"
+              value={pitLimitDraft}
+              onChange={(event) => setPitLimitDraft(event.target.value)}
+              onBlur={(event) => commitPitLimit(event.currentTarget.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") event.currentTarget.blur();
+              }}
+            />
           </label>
           {Object.entries(dbcs).map(([interfaceName, dbc]) => (
             <section className="dbc-card" key={interfaceName}>

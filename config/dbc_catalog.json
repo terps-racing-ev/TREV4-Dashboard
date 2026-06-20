@@ -1,6 +1,11 @@
 {
   "can0": [
     {
+      "path": "dbcs/can0/can9-database-01.09.dbc",
+      "enabled": true,
+      "priority": 8
+    },
+    {
       "path": "dbcs/can0/Baby_MOBO.dbc",
       "enabled": true,
       "priority": 7

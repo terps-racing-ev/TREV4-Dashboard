@@ -18,11 +18,13 @@ if __package__ in (None, ""):
     from app.can_manager import CANManager
     from app.dashboard import Dashboard
     from app.dbc_utils import resolve_active_dbc_paths
+    from app.gauge_config import load_dashboard_library_config
 else:
     from .shared_data import LatestValuesTable
     from .can_manager import CANManager
     from .dashboard import Dashboard
     from .dbc_utils import resolve_active_dbc_paths
+    from .gauge_config import load_dashboard_library_config
 
 
 def search_for_file(filename: str, search_paths: list | None = None) -> Path | None:
@@ -72,11 +74,17 @@ def main():
     config_path = search_for_file("config.json", SEARCH_PATHS)
     if not config_path:
         return
+    library_config = load_dashboard_library_config(config_path)
     
     # Shared state for all threads to access values
     shared_data = LatestValuesTable()
     
-    can_mgr = CANManager(shared_data=shared_data, dbc_paths=dbc_paths, sim_mode=sim_mode)
+    can_mgr = CANManager(
+        shared_data=shared_data,
+        dbc_paths=dbc_paths,
+        sim_mode=sim_mode,
+        lap_timer_config=library_config.get("lap_timer"),
+    )
     dashboard = Dashboard(shared_data=shared_data, config_path=config_path)
     
     # Load DBC

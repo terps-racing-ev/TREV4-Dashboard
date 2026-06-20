@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
+from .lap_timer import normalize_lap_timer_config
 from .shared_data import LatestValuesTable
 
 DISPLAY_SIZE = (800, 480)
@@ -201,7 +202,12 @@ def normalize_dashboard_library_config(raw: dict[str, Any]) -> dict[str, Any]:
     if active_dashboard_id not in seen_ids:
         raise ValueError("active_dashboard_id must match a dashboard id")
 
-    return {"brightness": brightness, "active_dashboard_id": active_dashboard_id, "dashboards": dashboards}
+    return {
+        "brightness": brightness,
+        "active_dashboard_id": active_dashboard_id,
+        "lap_timer": normalize_lap_timer_config(raw.get("lap_timer")),
+        "dashboards": dashboards,
+    }
 
 
 def get_dashboard_by_id(library: dict[str, Any], dashboard_id: str | None = None) -> dict[str, Any]:
