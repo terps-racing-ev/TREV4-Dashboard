@@ -10,6 +10,7 @@ import pygame
 from .graphics_driver import *
 from .gauge_config import DISPLAY_SIZE, instantiate_gauge, load_dashboard_config
 from .shared_data import LatestValuesTable
+from .generic_textmenu import *
 
 FPS_CAP = 30
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -39,6 +40,12 @@ class Dashboard:
         self._next_config_check_at = 0.0
 
         self._ui_thread_active = False
+
+        # Initialize the system which lets you scroll
+        # through options on the dashboard using the rotary encoder (or the keyboard
+        # if you just need to test it)
+        self.encoder_menu_state_machine = TextMenu(TEST_MENU_TREE_1)
+        self.encoder_menu_visible = True
         
         # Load config and instantiate gauges
         if not self.load_config():
@@ -109,7 +116,8 @@ class Dashboard:
     
     def render_frame(self) -> pygame.Surface:
         """
-        Create a surface using the data from the shared state.
+        Create a surface using the data from the shared state and the locally
+        stored rotary encoder menu state. 
         Called by UI thread.
         Returns the rendered surface.
         """
@@ -123,6 +131,16 @@ class Dashboard:
         if self.brightness < 100:
             level = max(0, min(255, round(self.brightness * 255 / 100)))
             frame.fill((level, level, level), special_flags=pygame.BLEND_RGB_MULT)
+
+        # If the rotary encoder menu is supposed to be visible, 
+        # blit it 
+        if self.encoder_menu_visible:
+            font = pygame.font.SysFont('Consolas', 35)
+            transparent_bgd_surface = pygame.Surface((DISPLAY_SIZE[0], DISPLAY_SIZE[1]), pygame.SRCALPHA)
+            pygame.draw.rect(transparent_bgd_surface, (0, 0, 0, 220), transparent_bgd_surface.get_rect())
+            text_surface = font.render(self.encoder_menu_state_machine.draw_text(), True, (255, 255, 255))
+            transparent_bgd_surface.blit(text_surface)
+            frame.blit(transparent_bgd_surface, (0, 0))
         
         return frame
     
@@ -142,10 +160,21 @@ class Dashboard:
                 # Process Pygame events to prevent freezing
                 if pygame.display.get_init():
                     for event in pygame.event.get():
+                        # Stop signal handle
                         if event.type == pygame.QUIT:
                             print("\nWindow closed by user")
                             cleanup()
                             sys.exit(0)
+
+                        # Forward up/down/select events to the rotary encoder 
+                        # menu handler
+                        elif event.type == pygame.KEYDOWN:
+                            if event.key == pygame.K_UP:
+                                self.encoder_menu_state_machine.scroll_up()
+                            elif event.key == pygame.K_DOWN:
+                                self.encoder_menu_state_machine.scroll_down()
+                            elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                                self.encoder_menu_state_machine.select()
                                 
                 frame = self.render_frame()
                 blit_surface(frame)

@@ -12,6 +12,34 @@ This file contains the following classes:
 from .graphics_driver import *
 from .gauge_config import DISPLAY_SIZE
 import pygame
+from .generic_textmenu import *
+
+
+# initialize state machine for config menu
+MENU = {
+    "option1": [
+        "enum",
+        ["Primary", "Off"],
+        function1_1
+    ],
+
+    "option2": {
+        "option2.1": [
+            "range",
+            0,
+            100,
+            5,
+            function2_1
+        ],
+
+        "option2.2": [
+            "enum",
+            ["A", "B", "Off"],
+            function2_2
+        ]
+    }
+}
+MENU_SM = TextMenu(MENU)
 
 POPUP_MENU_BGD = (0, 0, 40)
 
@@ -44,7 +72,7 @@ class RotaryConfigMenu:
 
         # 2. Draw the text on it
         font = pygame.font.SysFont('Consolas', 35)
-        text_surface = font.render('- (up one menu)\n> Option 1\n- Option 2', True, (255, 255, 255))
+        text_surface = font.render(MENU_SM.draw_text(), True, (255, 255, 255))
         frame.blit(text_surface, (10, 10))
 
         # 3. Return the frame 
@@ -62,8 +90,18 @@ while running:
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
     for event in pygame.event.get():
+        # Handle stop signal
         if event.type == pygame.QUIT:
             running = False
+
+        # Handle key presses
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_UP:
+                MENU_SM.scroll_up()
+            elif event.key == pygame.K_DOWN:
+                MENU_SM.scroll_down()
+            elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                MENU_SM.select()
 
     # fill the screen with a color to wipe away anything from last frame
     screen.fill("purple")
