@@ -139,7 +139,7 @@ class Dashboard:
             transparent_bgd_surface = pygame.Surface((DISPLAY_SIZE[0], DISPLAY_SIZE[1]), pygame.SRCALPHA)
             pygame.draw.rect(transparent_bgd_surface, (0, 0, 0, 220), transparent_bgd_surface.get_rect())
             text_surface = font.render(self.encoder_menu_state_machine.draw_text(), True, (255, 255, 255))
-            transparent_bgd_surface.blit(text_surface)
+            transparent_bgd_surface.blit(text_surface, (10, 10))
             frame.blit(transparent_bgd_surface, (0, 0))
         
         return frame
