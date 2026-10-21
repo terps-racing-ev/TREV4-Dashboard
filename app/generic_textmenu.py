@@ -51,7 +51,7 @@ class TextMenu:
     The class itself knows nothing about the keyboard.
     """
 
-    def __init__(self, menu):
+    def __init__(self, menu, exit_handler = None):
         self.root = menu
 
         # Stack of dictionaries representing our path through the tree.
@@ -59,6 +59,14 @@ class TextMenu:
 
         # Current menu dictionary.
         self.current_menu = self.root
+        
+        # Callback function for when the user hits prev page 
+        # when they're on the top layer of navigation
+        if exit_handler is None: 
+            self.exit_handler = lambda: print("User tried to break out of nav tree \
+             using prev page/exit but no handler is specified")
+        else:
+            self.exit_handler = exit_handler
 
         # Index of currently highlighted item.
         # -2 = Prev Page
@@ -144,9 +152,14 @@ class TextMenu:
         # Prev Page
         # --------------------------------------------------------
         if self.selected == 0:
+            # If we are not in the top-level, go up one level
             if self.menu_stack:
                 self.current_menu = self.menu_stack.pop()
                 self.selected = 0
+            # If we're on the top level, call the exit handler 
+            # which should do smth like hide a UI element, etc. 
+            else:
+                self.exit_handler()
 
             return
 
@@ -291,7 +304,7 @@ class TextMenu:
 
         lines.append(
             ("> " if self.selected == 0 else ". ") +
-            "(Prev Page)"
+            ("(Prev Page)" if (len(self.menu_stack) > 0) else "(Exit)")
         )
 
         lines.append(
@@ -373,7 +386,7 @@ def function2_2(value):
 # Example menu
 # ================================================================
 
-MENU = {
+TEST_MENU_TREE_1 = {
     "option1": [
         "enum",
         ["Primary", "Off"],
@@ -397,122 +410,3 @@ MENU = {
     }
 }
 
-
-# ================================================================
-# Keyboard driver
-# ================================================================
-
-def clear_screen():
-    # ANSI escape sequences work in modern Windows terminals,
-    # Linux terminals, macOS terminals, etc.
-    os.system("cls")
-
-
-def get_key():
-    """
-    Get one keypress without requiring Enter.
-
-    Returns:
-        "up"
-        "down"
-        "select"
-        "quit"
-    """
-
-    if os.name == "nt":
-        import msvcrt
-
-        while True:
-            key = msvcrt.getch()
-
-            # Arrow keys produce 0x00 or 0xe0 followed by another byte.
-            if key in (b"\x00", b"\xe0"):
-                key = msvcrt.getch()
-
-                if key == b"H":
-                    return "up"
-
-                if key == b"P":
-                    return "down"
-
-            elif key in (b"\r", b" "):
-                return "select"
-
-            elif key.lower() == b"q":
-                return "quit"
-
-    else:
-        import tty
-        import termios
-
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
-
-        try:
-            tty.setraw(fd)
-            key = sys.stdin.read(1)
-
-            if key == "\x1b":
-                # Arrow key sequence: ESC [ A/B
-                key2 = sys.stdin.read(1)
-
-                if key2 == "[":
-                    key3 = sys.stdin.read(1)
-
-                    if key3 == "A":
-                        return "up"
-
-                    if key3 == "B":
-                        return "down"
-
-            elif key in ("\r", "\n", " "):
-                return "select"
-
-            elif key.lower() == "q":
-                return "quit"
-
-        finally:
-            termios.tcsetattr(
-                fd,
-                termios.TCSADRAIN,
-                old_settings
-            )
-
-def main():
-    menu = TextMenu(MENU)
-
-    try:
-        while True:
-            clear_screen()
-
-            print(menu.draw_text())
-
-            print()
-            print("Arrow keys: navigate    Enter/Space: select    Q: quit")
-
-            key = get_key()
-
-            if key == "up":
-                menu.scroll_up()
-
-            elif key == "down":
-                menu.scroll_down()
-
-            elif key == "select":
-                menu.select()
-
-            elif key == "quit":
-                break
-
-    except KeyboardInterrupt:
-        pass
-
-    finally:
-        clear_screen()
-
-    print("Final configuration:")
-    print(json.dumps(menu.get_values(), indent=4))
-
-
-if __name__ == "__main__":
-    main()
