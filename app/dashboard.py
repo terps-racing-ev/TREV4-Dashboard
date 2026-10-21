@@ -138,8 +138,11 @@ class Dashboard:
             font = pygame.font.SysFont('Consolas', 35)
             transparent_bgd_surface = pygame.Surface((DISPLAY_SIZE[0], DISPLAY_SIZE[1]), pygame.SRCALPHA)
             pygame.draw.rect(transparent_bgd_surface, (0, 0, 0, 220), transparent_bgd_surface.get_rect())
-            text_surface = font.render(self.encoder_menu_state_machine.draw_text(), True, (255, 255, 255))
-            transparent_bgd_surface.blit(text_surface, (10, 10))
+            y_offset = 20
+            for line in self.encoder_menu_state_machine.draw_text().split("\n"):
+                text_surface = font.render(line, True, (255, 255, 255))
+                transparent_bgd_surface.blit(text_surface, (10, y_offset))
+                y_offset += font.get_linesize()  # Move down by the font's line height
             frame.blit(transparent_bgd_surface, (0, 0))
         
         return frame
