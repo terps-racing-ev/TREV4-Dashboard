@@ -36,6 +36,11 @@
       "priority": 1
     },
     {
+      "path": "dbcs/can0/BMS-Firmware-RTOS-Complete.dbc",
+      "enabled": true,
+      "priority": 0
+    },
+    {
       "path": "can0.dbc",
       "enabled": true,
       "priority": 0
@@ -66,6 +71,16 @@
       "path": "dbcs/can1/DAQ-Firmware.dbc",
       "enabled": true,
       "priority": 2
+    },
+    {
+      "path": "dbcs/can1/can9-database-01.09.dbc",
+      "enabled": true,
+      "priority": 0
+    },
+    {
+      "path": "dbcs/can1/telemetry/DAQ-Firmware.dbc",
+      "enabled": true,
+      "priority": -1
     },
     {
       "path": "can1.dbc",

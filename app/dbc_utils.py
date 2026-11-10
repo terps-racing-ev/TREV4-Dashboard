@@ -149,10 +149,20 @@ def reserve_dbc_upload_path(config_dir: Path, interface: str, filename: str) -> 
     return candidate
 
 
-def load_merged_dbc(paths: Sequence[Path]) -> cantools.database.Database:
+def load_merged_dbc(
+    paths: Sequence[Path], *, message_sources: dict[object, str] | None = None,
+) -> cantools.database.Database:
     database = cantools.database.Database()
+    # Supplemental telemetry DBCs load first at lower priority. They fill in
+    # missing CAN IDs while existing dashboard definitions win overlapping IDs.
     for path in paths:
+        first_new_message = len(database.messages)
         database.add_dbc_file(str(path))
+        if message_sources is not None:
+            # Each parsed definition keeps its source filename. The database's
+            # existing priority rules select the winning Message object by ID.
+            for message in database.messages[first_new_message:]:
+                message_sources[message] = path.name
     return database
 
 

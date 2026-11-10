@@ -24,3 +24,9 @@ python web/dash_editor.py
 ```
 
 Open `http://<raspberry-pi-ip>:8000` from a laptop on the car network. The editor keeps changes in a draft until `Save` is pressed and renders previews through the real Pygame gauge code.
+
+## Telemetry
+
+The dashboard opens a nonblocking local socket and forwards raw CAN frames and
+their decoded values to a separate telemetry process. Dashboard CAN reception
+and gauge updates continue independently of telemetry.

@@ -73,9 +73,12 @@ def main():
     if not config_path:
         return
     
-    # Shared state for all threads to access values
+    # Latest dashboard values stay inside this process. CANManager also
+    # forwards each raw/decoded frame to the separate telemetry sender.
     shared_data = LatestValuesTable()
     
+    # Keep CAN reception and DBC reloads here; telemetry Start/Stop controls
+    # only the external receiver and never stop dashboard CAN reception.
     can_mgr = CANManager(shared_data=shared_data, dbc_paths=dbc_paths, sim_mode=sim_mode)
     dashboard = Dashboard(shared_data=shared_data, config_path=config_path)
     

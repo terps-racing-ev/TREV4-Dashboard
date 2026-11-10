@@ -9,11 +9,13 @@ import can
 import cantools
 
 from .shared_data import LatestValuesTable
+from .telemetry_data import TelemetryData  # Import the local socket sender that forwards CAN frames to telemetry.
 from .dbc_utils import load_merged_dbc
 
 BAUD_RATE = 500000
 
 # Note: This requires the pi to have can-init.service
+
 
 
 def _display_value(value: Any) -> Any:
@@ -36,6 +38,7 @@ class CANManager:
             raise ValueError("A DBC path or interface-to-DBC mapping is required")
         self.dbc_paths = self._normalize_dbc_paths(dbc_paths)
         self.dbs: dict[str, cantools.database.Database] = {}
+        self._message_sources: dict[object, str] = {}  # Map each parsed message definition to its original DBC filename.
         self._dbc_mtimes_ns: dict[str, int] = {}
         self._next_dbc_check_at = 0.0
         self.buses: list[can.Bus] = []
@@ -43,6 +46,10 @@ class CANManager:
         
         # Shared state for latest values
         self.shared_data = shared_data
+
+        # This is an output connection, not another latest-values table or
+        # buffer. The telemetry process owns its CarBuffer and sequence numbers.
+        self.telemetry_data = TelemetryData()  # Create the nonblocking local sender before CAN receive threads start.
         
         # Thread control
         self._rx_thread_active = False
@@ -80,11 +87,11 @@ class CANManager:
             str(path): path.stat().st_mtime_ns
             for path in self._all_dbc_paths()
         }
-    
+
     def load_dbc(self) -> bool:
         try:
             self.dbs = {
-                interface: load_merged_dbc(paths)
+                interface: load_merged_dbc(paths, message_sources=self._message_sources)  # Also record each definition's filename for telemetry.
                 for interface, paths in self.dbc_paths.items()
                 if paths
             }
@@ -142,17 +149,25 @@ class CANManager:
         self.dbc_paths = previous_paths
         print("DBC mapping reload failed; keeping previous databases")
         return False
-    
+
     def _db_for(self, interface: str | None) -> Optional[cantools.database.Database]:
         return self.dbs.get(str(interface)) or self.dbs.get("default")
 
-    def decode_message(self, msg: can.Message, db: Optional[cantools.database.Database] = None) -> Dict[str, Any]:
+    def decode_message(
+        self, msg: can.Message, db: Optional[cantools.database.Database] = None,
+        *, interface: str | None = None,
+    ) -> Dict[str, Any]:
         """Decode a CAN message with the DBC for its bus and update shared data."""
+        timestamp_ns = time.time_ns()
         db = db or self._db_for(msg.channel)
-        if db is None:
-            return {}
+        decoded = {}
+        display_decoded = {}
+        dbc_message = None
 
         try:
+            if db is None:
+                return {}
+
             # Find the message definition by arbitration ID
             dbc_message = db.get_message_by_frame_id(msg.arbitration_id)
             # Decode the message data twice so we keep raw numbers for gauge math
@@ -167,11 +182,26 @@ class CANManager:
             return display_decoded
         except KeyError:
             # Message ID not in database
+            decoded, display_decoded = {}, {}
             return {}
         except Exception as e:
             print(f"Error decoding message {msg.arbitration_id:X}: {e}")
+            decoded, display_decoded = {}, {}
             return {}
-    
+        finally:
+            # Forward the same results, including raw frames that could not be
+            # decoded, to the telemetry process for logging and display.
+            try:
+                self.telemetry_data.put(
+                    msg, decoded, timestamp_ns=timestamp_ns,
+                    labels={name: value for name, value in display_decoded.items()
+                            if not isinstance(value, Number)},
+                    dbc=self._message_sources.get(dbc_message, ""),
+                    message=dbc_message.name if dbc_message is not None else "",
+                    bus=interface)
+            except Exception as e:
+                print(f"Error forwarding telemetry: {e}")
+
     def start_can_listener(
         self, interfaces: str | Sequence[str] = ("can0", "can1"), bitrate: int = BAUD_RATE
     ) -> bool:
@@ -209,7 +239,7 @@ class CANManager:
                     self.buses.append(bus)
                 msg = bus.recv(timeout=1.0)
                 if msg is not None:
-                    self.decode_message(msg, self._db_for(interface))
+                    self.decode_message(msg, self._db_for(interface), interface=interface)
             except Exception as e:
                 if not self._rx_thread_active:
                     break
@@ -323,5 +353,7 @@ class CANManager:
             bus.shutdown()
         for thread in self.threads:
             thread.join(timeout=2.0)
+        # Release the shared sending socket after waiting for the bus RX threads above.
+        self.telemetry_data.close()  # Close our sending socket without stopping the separate telemetry receiver.
         self.buses = []
         self.threads = []
